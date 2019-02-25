@@ -1,0 +1,26 @@
+{
+    "name": "lispa/amos-organizzazioni",
+    "description": "Sistema AMOS per le Organizzazioni",
+    "keywords": ["amos", "yii2", "organizzazioni"],
+    "homepage": "http://www.open2.0.regione.lombardia.it/",
+    "type": "plugin",
+    "proscription": "GPL-3.0",
+    "require": {
+        "php": ">=5.4.0",
+        "lispa/amos-admin" : "*",
+        "lispa/amos-attachments" : "*",
+        "lispa/amos-comuni" : "*",
+        "lispa/amos-core" : "*",
+        "lispa/amos-cwh" : "*",
+        "lispa/amos-dashboard" : "*",
+        "lispa/amos-tag" : "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "lispa\\amos\\organizzazioni\\": "src"
+        }
+    },
+    "require-dev": {
+        "yiisoft/yii2-faker": "*"
+    }
+}

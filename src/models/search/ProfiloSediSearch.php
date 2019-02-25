@@ -1,0 +1,109 @@
+<?php
+
+/**
+ * Lombardia Informatica S.p.A.
+ * OPEN 2.0
+ *
+ *
+ * @package    lispa\amos\organizzazioni\models\search
+ * @category   CategoryName
+ */
+
+namespace lispa\amos\organizzazioni\models\search;
+
+use lispa\amos\organizzazioni\models\ProfiloSedi;
+use yii\base\Model;
+use yii\data\ActiveDataProvider;
+
+/**
+ * Class ProfiloSediSearch
+ * ProfiloSediSearch represents the model behind the search form about `lispa\amos\organizzazioni\models\ProfiloSedi`.
+ * @package lispa\amos\organizzazioni\models\search
+ */
+class ProfiloSediSearch extends ProfiloSedi
+{
+    /**
+     * @inheritdoc
+     */
+    public function rules()
+    {
+        return [
+            [[
+                'is_main',
+                'active',
+                'profilo_id',
+                'profilo_sedi_type_id',
+                'created_by',
+                'updated_by',
+                'deleted_by'
+            ], 'integer'],
+            [[
+                'name',
+                'description',
+                'phone',
+                'fax',
+                'email',
+                'address',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ], 'safe'],
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function scenarios()
+    {
+        // bypass scenarios() implementation in the parent class
+        return Model::scenarios();
+    }
+
+    public function getScope($params)
+    {
+        $scope = $this->formName();
+        if (!isset($params[$scope])) {
+            $scope = '';
+        }
+        return $scope;
+    }
+
+    public function search($params)
+    {
+        $query = ProfiloSedi::find();
+
+        $dataProvider = new ActiveDataProvider([
+            'query' => $query,
+        ]);
+
+        $scope = $this->getScope($params);
+
+        if (!($this->load($params, $scope) && $this->validate())) {
+            return $dataProvider;
+        }
+
+        $query->andFilterWhere([
+            'is_main' => $this->is_main,
+            'active' => $this->active,
+            'profilo_id' => $this->profilo_id,
+            'profilo_sedi_type_id' => $this->profilo_sedi_type_id,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+            'deleted_at' => $this->deleted_at,
+            'created_by' => $this->created_by,
+            'updated_by' => $this->updated_by,
+            'deleted_by' => $this->deleted_by,
+        ]);
+
+        $query->andFilterWhere(['like', 'name', $this->name])
+            ->andFilterWhere(['like', 'description', $this->description])
+            ->andFilterWhere(['like', 'phone', $this->phone])
+            ->andFilterWhere(['like', 'fax', $this->fax])
+            ->andFilterWhere(['like', 'email', $this->email])
+            ->andFilterWhere(['like', 'pec', $this->pec])
+            ->andFilterWhere(['like', 'address', $this->address]);
+
+        return $dataProvider;
+    }
+}
