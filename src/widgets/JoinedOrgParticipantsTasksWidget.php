@@ -5,29 +5,25 @@
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    lispa\amos\organizzazioni\widgets
  * @category   CategoryName
  */
 
 namespace lispa\amos\organizzazioni\widgets;
 
-use lispa\amos\community\models\CommunityUserMm;
+use lispa\amos\core\forms\editors\m2mWidget\M2MWidget;
 use lispa\amos\core\helpers\Html;
-use lispa\amos\core\module\AmosModule;
 use lispa\amos\projectmanagement\models\Projects;
 use lispa\amos\projectmanagement\Module;
-use Yii;
 use yii\base\InvalidConfigException;
 use yii\base\Widget;
-use yii\helpers\ArrayHelper;
 
 /**
- * Class ProjectOrganizationsWidget
- * @package lispa\amos\community\widgets
+ * Class JoinedOrgParticipantsTasksWidget
+ * @package lispa\amos\organizzazioni\widgets
  */
 class JoinedOrgParticipantsTasksWidget extends Widget
 {
-
     /**
      * @var Projects $model
      */
@@ -43,9 +39,7 @@ class JoinedOrgParticipantsTasksWidget extends Widget
      * @var bool $forceReadOnly
      */
     public $forceReadOnly = false;
-    
-    
-    
+
     public $permissions = null;
 
     /**
@@ -58,9 +52,9 @@ class JoinedOrgParticipantsTasksWidget extends Widget
         if (!$this->model) {
             throw new InvalidConfigException($this->throwErrorMessage('model'));
         }
-        
+
         // Init of permissions...
-        if (is_null($this->permissions)){
+        if (is_null($this->permissions)) {
             $this->permissions = [
                 'add' => ($this->forceReadOnly ? null : 'PROJECT_MANAGER'),
             ];
@@ -82,7 +76,7 @@ class JoinedOrgParticipantsTasksWidget extends Widget
 
         $model = $this->model;
         //pr($model->getJoinedOrganizations()->prepare(Yii::$app->db->queryBuilder)->createCommand()->rawSql);
-        $widget = \lispa\amos\core\forms\editors\m2mWidget\M2MWidget::widget([
+        $widget = M2MWidget::widget([
             'model' => $model,
             'modelId' => $model->id,
             'modelData' => $model->getJoinedOrganizations(),
@@ -116,7 +110,7 @@ class JoinedOrgParticipantsTasksWidget extends Widget
                         'headers' => Module::t('amosproject_management', 'name'),
                     ]
                 ],
-                'addressField',
+                'addressField:raw',
 //                'numero_civico',
 //                'cap',
 //                [

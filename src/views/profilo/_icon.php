@@ -16,6 +16,11 @@ use lispa\amos\core\forms\CreatedUpdatedWidget;
 use lispa\amos\organizzazioni\Module;
 use lispa\amos\organizzazioni\assets\OrganizzazioniAsset;
 
+/**
+ * @var yii\web\View $this
+ * @var lispa\amos\organizzazioni\models\Profilo $model
+ */
+
 $moduleL = \Yii::$app->getModule('layout');
 if (!empty($moduleL)) {
     OrganizzazioniAsset::register($this);
@@ -27,8 +32,8 @@ if (!empty($moduleL)) {
     <div class="col-xs-12 nop icon-header">
         <?= ContextMenuWidget::widget([
             'model' => $model,
-            'actionModify' => '/organizzazioni/profilo/update?id=' . $model->id,
-            'disableDelete' => true
+            'actionModify' => $model->getFullUpdateUrl(),
+            'actionDelete' => $model->getFullDeleteUrl()
         ]) ?>
         <?php
         if (!is_null($model->logoOrganization)) {

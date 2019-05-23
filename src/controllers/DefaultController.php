@@ -5,23 +5,33 @@
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    lispa\amos\organizzazioni\controllers
  * @category   CategoryName
  */
 
 namespace lispa\amos\organizzazioni\controllers;
 
-use Yii;
-use yii\helpers\Url;
-use yii\web\Controller;
 use lispa\amos\dashboard\controllers\base\DashboardController;
 
+/**
+ * Class DefaultController
+ * @package lispa\amos\organizzazioni\controllers
+ */
 class DefaultController extends DashboardController
 {
-   /**
+    /**
      * @var string $layout Layout per la dashboard interna.
      */
-    public $layout = "@vendor/lispa/amos-core/views/layouts/dashboard_interna";
+    public $layout = "dashboard_interna";
+
+    /**
+     * @inheritdoc
+     */
+    public function init()
+    {
+        parent::init();
+        $this->setUpLayout();
+    }
 
     /**
      * Lists all organizzazioni models.
@@ -29,7 +39,6 @@ class DefaultController extends DashboardController
      */
     public function actionIndex()
     {
-        return $this->redirect('/organizzazioni/profilo');
+        return $this->redirect('/organizzazioni/profilo/index');
     }
 }
-

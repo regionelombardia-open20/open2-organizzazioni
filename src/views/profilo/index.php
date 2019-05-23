@@ -19,35 +19,21 @@ use lispa\amos\organizzazioni\Module;
  */
 
 $this->title = Module::t('amosorganizzazioni', 'Organizzazioni');
-$this->params['breadcrumbs'][] = ['label' => Module::t('amosorganizzazioni', 'Organizzazioni'), 'url' => ['/organizzazioni']];
 $this->params['breadcrumbs'][] = $this->title;
+
+/** @var \lispa\amos\organizzazioni\models\Profilo $profiloModel */
+$profiloModel = Module::instance()->createModel('Profilo');
 
 ?>
 
 <div class="are-profilo-index">
     <?= $this->render('_search', ['model' => $model]); ?>
-    <?php echo DataProviderView::widget([
+    <?= DataProviderView::widget([
         'dataProvider' => $dataProvider,
         //'filterModel' => $model,
         'currentView' => $currentView,
         'gridView' => [
-            'columns' => [
-                'profilo_enti_type_id' => [
-                    'attribute' => 'profilo_enti_type_id',
-                    'value' => 'profiloEntiType.name'
-                ],
-                'name',
-                'formaLegale.name',
-                'operativeHeadquarter.website',
-                //'facebook',
-                'addressField',
-                'operativeHeadquarter.phone',
-                //'operativeHeadquarter.fax',
-                'operativeHeadquarter.email',
-                [
-                    'class' => 'lispa\amos\core\views\grid\ActionColumn',
-                ],
-            ],
-        ],
+            'columns' => $profiloModel->getGridViewColumns()
+        ]
     ]); ?>
 </div>

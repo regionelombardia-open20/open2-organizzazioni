@@ -60,7 +60,7 @@ abstract class ProfiloUserMm extends Record
             [['profilo_id', 'user_id', 'user_profile_area_id', 'user_profile_role_id', 'created_by', 'updated_by', 'deleted_by'], 'integer'],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
             [['status', 'role'], 'string', 'max' => 255],
-            [['profilo_id'], 'exist', 'skipOnError' => true, 'targetClass' => \lispa\amos\organizzazioni\models\Profilo::className(), 'targetAttribute' => ['profilo_id' => 'id']],
+            [['profilo_id'], 'exist', 'skipOnError' => true, 'targetClass' => Module::instance()->createModel('Profilo')->className(), 'targetAttribute' => ['profilo_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => \lispa\amos\core\user\User::className(), 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
@@ -92,7 +92,7 @@ abstract class ProfiloUserMm extends Record
      */
     public function getProfilo()
     {
-        return $this->hasOne(\lispa\amos\organizzazioni\models\Profilo::className(), ['id' => 'profilo_id']);
+        return $this->hasOne(Module::instance()->createModel('Profilo')->className(), ['id' => 'profilo_id']);
     }
 
     /**

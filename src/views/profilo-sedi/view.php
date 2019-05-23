@@ -34,7 +34,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'attribute' => 'profiloSediType.name',
                 'label' => $model->getAttributeLabel('profiloSediType')
             ],
-            'addressField',
+            'addressField:raw',
             'phone',
             'fax',
             'email:email',

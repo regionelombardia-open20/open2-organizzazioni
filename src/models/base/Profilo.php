@@ -11,6 +11,7 @@
 
 namespace lispa\amos\organizzazioni\models\base;
 
+use lispa\amos\admin\AmosAdmin;
 use lispa\amos\core\helpers\Html;
 use lispa\amos\core\record\NetworkModel;
 use lispa\amos\organizzazioni\Module;
@@ -49,6 +50,7 @@ use yii\helpers\ArrayHelper;
  * @property string $sede_legale_pec
  * @property string $responsabile
  * @property string $rappresentante_legale
+ * @property string $rappresentante_legale_text
  * @property string $referente_operativo
  * @property string $parent_id
  * @property string $profilo_enti_type_id
@@ -66,6 +68,8 @@ use yii\helpers\ArrayHelper;
  * @property \lispa\amos\organizzazioni\models\Profilo $parent
  * @property \lispa\amos\organizzazioni\models\Profilo $children
  * @property \lispa\amos\organizzazioni\models\ProfiloSedi[] $profiloSedi
+ * @property \lispa\amos\organizzazioni\models\ProfiloSedi[] $otherHeadquarters
+ * @property \lispa\amos\organizzazioni\models\ProfiloSedi[] $otherActiveHeadquarters
  * @property \lispa\amos\organizzazioni\models\ProfiloEntiType $profiloEntiType
  * @property \lispa\amos\organizzazioni\models\ProfiloUserMm[] $profiloUserMms
  * @property \lispa\amos\core\user\User[] $profiloUsers
@@ -74,6 +78,11 @@ use yii\helpers\ArrayHelper;
  */
 abstract class Profilo extends NetworkModel
 {
+    /**
+     * @var Module $organizzazioniModule
+     */
+    protected $organizzazioniModule;
+
     /**
      * @inheritdoc
      */
@@ -85,27 +94,42 @@ abstract class Profilo extends NetworkModel
     /**
      * @inheritdoc
      */
+    public function init()
+    {
+        $this->organizzazioniModule = Module::instance();
+        parent::init();
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function rules()
     {
+        $organizzazioniModule = Module::instance();
+        /** @var \lispa\amos\organizzazioni\models\ProfiloEntiType $profiloEntiTypeModel */
+        $profiloEntiTypeModel = $organizzazioniModule->model('ProfiloEntiType');
+        $typeMunicipalityId = $profiloEntiTypeModel::TYPE_MUNICIPALITY;
+
         return [
             [[
                 'name',
-                'la_sede_legale_e_la_stessa_del',
                 'profilo_enti_type_id'
             ], 'required'],
-            [['istat_code'], 'required', 'when' => function ($model) {
+            [['istat_code'], 'required', 'when' => function ($model) use ($typeMunicipalityId) {
                 /** @var \lispa\amos\organizzazioni\models\Profilo $model */
-                return ($model->profilo_enti_type_id == \lispa\amos\organizzazioni\models\ProfiloEntiType::TYPE_MUNICIPALITY);
+                return ($model->profilo_enti_type_id == $typeMunicipalityId);
             }, 'whenClient' => "function (attribute, value) {
-                return $('#" . Html::getInputId($this, 'profilo_enti_type_id') . "').val() == " . \lispa\amos\organizzazioni\models\ProfiloEntiType::TYPE_MUNICIPALITY . ";
+                return $('#" . Html::getInputId($this, 'profilo_enti_type_id') . "').val() == " . $typeMunicipalityId . ";
             }"],
-            [['created_at', 'updated_at', 'deleted_at'], 'safe'],
+            [['created_at', 'updated_at', 'deleted_at', 'rappresentante_legale'], 'safe'],
             [[
                 'created_by',
                 'updated_by',
                 'deleted_by',
                 'parent_id',
                 'profilo_enti_type_id',
+                'referente_operativo',
+                'rappresentante_legale',
             ], 'integer'],
             [[
                 'presentazione_della_organizzaz',
@@ -133,8 +157,7 @@ abstract class Profilo extends NetworkModel
                 'sede_legale_email',
                 'sede_legale_pec',
                 'responsabile',
-                'rappresentante_legale',
-                'referente_operativo'
+                'rappresentante_legale_text'
             ], 'string', 'max' => 255],
             [['istat_code'], 'string', 'max' => 10],
             [['logoOrganization'], 'file', 'extensions' => 'jpeg, jpg, png, gif', 'maxFiles' => 1],
@@ -175,6 +198,7 @@ abstract class Profilo extends NetworkModel
             'sede_legale_pec' => Module::t('amosorganizzazioni', 'Sede legale PEC'),
             'responsabile' => Module::t('amosorganizzazioni', 'Responsabile'),
             'rappresentante_legale' => Module::t('amosorganizzazioni', 'Rappresentante legale'),
+            'rappresentante_legale_text' => Module::t('amosorganizzazioni', 'Rappresentante legale'),
             'referente_operativo' => Module::t('amosorganizzazioni', 'Referente operativo'),
             'parent_id' => Module::t('amosorganizzazioni', 'Membership organization'),
             'profilo_enti_type_id' => Module::t('amosorganizzazioni', 'Tipologia di ente'),
@@ -192,7 +216,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getRappresentanteLegale()
     {
-        return $this->hasOne(\lispa\amos\admin\models\UserProfile::className(), ['id' => 'rappresentante_legale']);
+        return $this->hasOne(AmosAdmin::instance()->createModel('UserProfile')->className(), ['user_id' => 'rappresentante_legale']);
     }
 
     /**
@@ -200,7 +224,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getReferenteOperativo()
     {
-        return $this->hasOne(\lispa\amos\admin\models\UserProfile::className(), ['id' => 'referente_operativo']);
+        return $this->hasOne(AmosAdmin::instance()->createModel('UserProfile')->className(), ['user_id' => 'referente_operativo']);
     }
 
     /**
@@ -208,7 +232,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getTipologiaDiOrganizzazione()
     {
-        return $this->hasOne(\lispa\amos\organizzazioni\models\ProfiloTypesPmi::className(), ['id' => 'tipologia_di_organizzazione']);
+        return $this->hasOne(Module::instance()->createModel('ProfiloTypesPmi')->className(), ['id' => 'tipologia_di_organizzazione']);
     }
 
     /**
@@ -216,7 +240,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getFormaLegale()
     {
-        return $this->hasOne(\lispa\amos\organizzazioni\models\ProfiloLegalForm::className(), ['id' => 'forma_legale']);
+        return $this->hasOne(Module::instance()->createModel('ProfiloLegalForm')->className(), ['id' => 'forma_legale']);
     }
 
     /**
@@ -224,7 +248,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getParent()
     {
-        return $this->hasOne(\lispa\amos\organizzazioni\models\Profilo::className(), ['id' => 'parent_id']);
+        return $this->hasOne(Module::instance()->createModel('Profilo')->className(), ['id' => 'parent_id']);
     }
 
     /**
@@ -232,7 +256,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getChildren()
     {
-        return $this->hasMany(\lispa\amos\organizzazioni\models\Profilo::className(), ['parent_id' => 'id']);
+        return $this->hasMany(Module::instance()->createModel('Profilo')->className(), ['parent_id' => 'id']);
     }
 
     /**
@@ -240,7 +264,23 @@ abstract class Profilo extends NetworkModel
      */
     public function getProfiloSedi()
     {
-        return $this->hasMany(\lispa\amos\organizzazioni\models\ProfiloSedi::className(), ['profilo_id' => 'id']);
+        return $this->hasMany(Module::instance()->createModel('ProfiloSedi')->className(), ['profilo_id' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getOtherHeadquarters()
+    {
+        return $this->getProfiloSedi()->andWhere(['is_main' => 0]);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getOtherActiveHeadquarters()
+    {
+        return $this->getOtherHeadquarters()->andWhere(['active' => 1]);
     }
 
     /**
@@ -248,7 +288,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getProfiloEntiType()
     {
-        return $this->hasOne(\lispa\amos\organizzazioni\models\ProfiloEntiType::className(), ['id' => 'profilo_enti_type_id']);
+        return $this->hasOne(Module::instance()->createModel('ProfiloEntiType')->className(), ['id' => 'profilo_enti_type_id']);
     }
 
     /**
@@ -256,7 +296,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getProfiloUserMms()
     {
-        return $this->hasMany(\lispa\amos\organizzazioni\models\ProfiloUserMm::className(), ['profilo_id' => 'id']);
+        return $this->hasMany(Module::instance()->createModel('ProfiloUserMm')->className(), ['profilo_id' => 'id']);
     }
 
     /**

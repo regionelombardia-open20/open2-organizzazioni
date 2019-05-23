@@ -14,8 +14,6 @@ namespace lispa\amos\organizzazioni\controllers\base;
 use lispa\amos\core\controllers\CrudController;
 use lispa\amos\core\helpers\Html;
 use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\organizzazioni\models\ProfiloSedi;
-use lispa\amos\organizzazioni\models\search\ProfiloSediSearch;
 use lispa\amos\organizzazioni\Module;
 use Yii;
 use yii\helpers\Url;
@@ -32,12 +30,22 @@ use yii\helpers\Url;
 class ProfiloSediController extends CrudController
 {
     /**
+     * @var Module|null $organizzazioniModule
+     */
+    public $organizzazioniModule = null;
+
+    /**
      * @inheritdoc
      */
     public function init()
     {
-        $this->setModelObj(new ProfiloSedi());
-        $this->setModelSearch(new ProfiloSediSearch());
+        $model = Module::instance()->createModel('ProfiloSedi');
+        $modelSearch = Module::instance()->createModel('ProfiloSediSearch');
+
+        $this->organizzazioniModule = Module::instance();
+
+        $this->setModelObj($model);
+        $this->setModelSearch($modelSearch);
 
         $this->viewGrid = [
             'name' => 'grid',
@@ -155,15 +163,22 @@ class ProfiloSediController extends CrudController
     {
         $this->setUpLayout('form');
 
-        $this->model = new ProfiloSedi();
+        $this->model = Module::instance()->createModel('ProfiloSedi');
         $this->model->profilo_id = $profiloId;
 
         if ($this->model->load(Yii::$app->request->post()) && $this->model->validate()) {
-            if ($this->model->save()) {
-                Yii::$app->getSession()->addFlash('success', Module::t('amoscore', 'Element successfully created.'));
-                return $this->redirect(['update', 'id' => $this->model->id]);
-            } else {
-                Yii::$app->getSession()->addFlash('danger', Module::t('amoscore', 'Element not created, check the data entered.'));
+            $transaction = Yii::$app->db->beginTransaction();
+            try {
+                if ($this->model->save()) {
+                    $transaction->commit();
+                    Yii::$app->getSession()->addFlash('success', Module::t('amoscore', 'Element successfully created.'));
+                    return $this->redirect(['update', 'id' => $this->model->id]);
+                } else {
+                    $transaction->rollBack();
+                    Yii::$app->getSession()->addFlash('danger', Module::t('amoscore', 'Element not created, check the data entered.'));
+                }
+            } catch (\Exception $exception) {
+                $transaction->rollBack();
             }
         }
 
@@ -186,11 +201,18 @@ class ProfiloSediController extends CrudController
         $this->model = $this->findModel($id);
 
         if ($this->model->load(Yii::$app->request->post()) && $this->model->validate()) {
-            if ($this->model->save()) {
-                Yii::$app->getSession()->addFlash('success', Module::t('amoscore', 'Element successfully updated.'));
-                return $this->redirect(['update', 'id' => $this->model->id]);
-            } else {
-                Yii::$app->getSession()->addFlash('danger', Module::t('amoscore', 'Element not updated, check the data entered.'));
+            $transaction = Yii::$app->db->beginTransaction();
+            try {
+                if ($this->model->save()) {
+                    $transaction->commit();
+                    Yii::$app->getSession()->addFlash('success', Module::t('amoscore', 'Element successfully updated.'));
+                    return $this->redirect(['update', 'id' => $this->model->id]);
+                } else {
+                    $transaction->rollBack();
+                    Yii::$app->getSession()->addFlash('danger', Module::t('amoscore', 'Element not updated, check the data entered.'));
+                }
+            } catch (\Exception $exception) {
+                $transaction->rollBack();
             }
         }
 

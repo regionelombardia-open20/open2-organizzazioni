@@ -20,6 +20,10 @@ use lispa\amos\organizzazioni\Module;
 
 $this->title = Module::t('amosorganizzazioni', 'Profilo Sedi');
 $this->params['breadcrumbs'][] = $this->title;
+
+/** @var \lispa\amos\organizzazioni\models\ProfiloSedi $profiloSediModel */
+$profiloSediModel = Module::instance()->createModel('ProfiloSedi');
+
 ?>
 <div class="profilo-sedi-index">
     <?= $this->render('_search', ['model' => $model]); ?>
@@ -27,7 +31,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'dataProvider' => $dataProvider,
         'currentView' => $currentView,
         'gridView' => [
-            'columns' => $model->getGridViewColumns()
+            'columns' => $profiloSediModel->getGridViewColumns()
         ],
     ]); ?>
 </div>

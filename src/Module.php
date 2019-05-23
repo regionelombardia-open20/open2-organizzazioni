@@ -11,16 +11,20 @@
 
 namespace lispa\amos\organizzazioni;
 
+use lispa\amos\core\exceptions\AmosException;
 use lispa\amos\core\interfaces\OrganizationsModuleInterface;
 use lispa\amos\core\interfaces\SearchModuleInterface;
 use lispa\amos\core\module\AmosModule;
-use lispa\amos\organizzazioni\i18n\grammar\OrganizzazioniGrammar;
+use lispa\amos\core\widget\WidgetAbstract;
+use lispa\amos\organizzazioni\i18n\grammar\ProfiloGrammar;
 use lispa\amos\organizzazioni\models\Profilo;
 use lispa\amos\organizzazioni\models\ProfiloUserMm;
+use lispa\amos\organizzazioni\utility\OrganizzazioniUtility;
 use lispa\amos\organizzazioni\widgets\JoinedOrganizationsWidget;
 use lispa\amos\organizzazioni\widgets\JoinedOrgParticipantsTasksWidget;
 use lispa\amos\organizzazioni\widgets\ProfiloCardWidget;
 use Yii;
+use yii\helpers\ArrayHelper;
 
 /**
  * Class Module
@@ -46,7 +50,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     public $defaultListViews = ['grid'/*, 'icon'*/];
 
     /**
-     * @var bool $enableAddOtherLegalHeadquarters If true it's possible to add other legal headquarters. The headquarter type is visible in create headquarted select.
+     * @var bool $enableAddOtherLegalHeadquarters If true it's possible to add other legal headquarters. The headquarter type is visible in create headquarter select.
      */
     public $enableAddOtherLegalHeadquarters = false;
 
@@ -62,6 +66,53 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     ];
 
     /**
+     * @var bool $enableSocial
+     */
+    public $enableSocial = true;
+
+    /**
+     * @var bool $oldStyleAddressEnabled
+     */
+    public $oldStyleAddressEnabled = false;
+
+    /**
+     * @var bool $enableSediRequired
+     */
+    public $enableSediRequired = true;
+
+    /**
+     * @var bool $enableRappresentanteLegaleText
+     */
+    public $enableRappresentanteLegaleText = false;
+
+    /**
+     * @var bool $forceSameSede
+     */
+    public $forceSameSede = false;
+
+    /**
+     * If true this configuration enable the user to request to join an organization and a validator confirm the request.
+     * The confirm can be made by legal representative, operative referee and the validator.
+     * @var bool $enableConfirmUsersJoinRequests
+     */
+    public $enableConfirmUsersJoinRequests = false;
+
+    /**
+     * @var array $htmlMailSubject
+     */
+    public $htmlMailSubject = [];
+
+    /**
+     * @var array $htmlMailContent
+     */
+    public $htmlMailContent = [];
+
+    /**
+     * @var bool $enabled_widget_sedi
+     */
+    public $enabled_widget_sedi = true;
+
+    /**
      * @inheritdoc
      */
     public function init()
@@ -70,7 +121,8 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
 
         \Yii::setAlias('@lispa/amos/' . static::getModuleName() . '/controllers/', __DIR__ . '/controllers/');
         // custom initialization code goes here
-        \Yii::configure($this, require(__DIR__ . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php'));
+        $config = require(__DIR__ . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php');
+        \Yii::configure($this, ArrayHelper::merge($config, ["params" => $this->params]));
     }
 
     /**
@@ -79,8 +131,19 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     protected function getDefaultModels()
     {
         return [
+            'OrganizationsPlaces' => __NAMESPACE__ . '\\' . 'models\OrganizationsPlaces',
             'Profilo' => __NAMESPACE__ . '\\' . 'models\Profilo',
+            'ProfiloEntiType' => __NAMESPACE__ . '\\' . 'models\ProfiloEntiType',
+            'ProfiloLegalForm' => __NAMESPACE__ . '\\' . 'models\ProfiloLegalForm',
+            'ProfiloSedi' => __NAMESPACE__ . '\\' . 'models\ProfiloSedi',
+            'ProfiloSediLegal' => __NAMESPACE__ . '\\' . 'models\ProfiloSediLegal',
+            'ProfiloSediOperative' => __NAMESPACE__ . '\\' . 'models\ProfiloSediOperative',
+            'ProfiloSediTypes' => __NAMESPACE__ . '\\' . 'models\ProfiloSediTypes',
+            'ProfiloSediUserMm' => __NAMESPACE__ . '\\' . 'models\ProfiloSediUserMm',
+            'ProfiloTypesPmi' => __NAMESPACE__ . '\\' . 'models\ProfiloTypesPmi',
+            'ProfiloUserMm' => __NAMESPACE__ . '\\' . 'models\ProfiloUserMm',
             'ProfiloSearch' => __NAMESPACE__ . '\\' . 'models\search\ProfiloSearch',
+            'ProfiloSediSearch' => __NAMESPACE__ . '\\' . 'models\search\ProfiloSediSearch',
         ];
     }
 
@@ -105,11 +168,15 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      */
     public static function getModuleIconName()
     {
-        return 'linentita';
+        if (!empty(\Yii::$app->params['dashboardEngine']) && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
+            return 'organizzazioni';
+        } else {
+            return 'building-o';
+        }
     }
 
     /**
-     * @inheritdoc
+     * @return |null
      */
     public function getWidgetGraphics()
     {
@@ -117,7 +184,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     }
 
     /**
-     * @inheritdoc
+     * @return array
      */
     public function getWidgetIcons()
     {
@@ -151,7 +218,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     }
 
     /**
-     * @return string
+     * @inheritdoc
      */
     public function getAssociateOrgsToProjectTaskWidgetClass()
     {
@@ -165,14 +232,14 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         $query = Profilo::find();
         $query->orderBy(['name' => SORT_ASC]);
+
         return $query;
     }
 
     /**
-     * @param $user_id
-     * @param $organization_id
+     * @inheritdoc
      */
-    public function saveOrganizationUserMm($user_id, $organization_id)
+    public function saveOrganizationUserMm($user_id, $organization_id, $user_profile_role_id = null, $user_profile_area_id = null)
     {
         try {
             $org = ProfiloUserMm::findOne(['profilo_id' => $organization_id, 'user_id' => $user_id]);
@@ -180,16 +247,23 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
                 $org = new ProfiloUserMm();
                 $org->profilo_id = $organization_id;
                 $org->user_id = $user_id;
-                $org->save();
+                if (!empty($user_profile_role_id)) {
+                    $org->user_profile_role_id = $user_profile_role_id;
+                }
+                if (!empty($user_profile_area_id)) {
+                    $org->user_profile_area_id = $user_profile_area_id;
+                }
+                return $org->save(false);
             }
+            return true;
         } catch (\Exception $ex) {
             Yii::getLogger()->log($ex->getMessage(), \yii\log\Logger::LEVEL_ERROR);
+            return false;
         }
     }
 
     /**
-     * @param int $id
-     * @return null|Profilo
+     * @inheritdoc
      */
     public function getOrganization($id)
     {
@@ -203,10 +277,39 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     }
 
     /**
-     * @return OrganizzazioniGrammar
+     * @inheritdoc
+     */
+    public function getUserOrganizations($userId)
+    {
+        return OrganizzazioniUtility::getUserOrganizations($userId);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getUserHeadquarters($userId)
+    {
+        return OrganizzazioniUtility::getUserHeadquarters($userId);
+    }
+
+    /**
+     * @return ProfiloGrammar
      */
     public function getGrammar()
     {
-        return new OrganizzazioniGrammar();
+        return new ProfiloGrammar();
     }
+
+    /**
+     * @param int $userId
+     * @param bool $onlyIds
+     * @param bool $returnQuery
+     * @return array|\yii\db\ActiveQuery|\yii\db\ActiveRecord[]
+     * @throws AmosException
+     */
+    public function getOrganizationsRepresentedOrReferredByUserId($userId, $onlyIds = false, $returnQuery = false)
+    {
+        return OrganizzazioniUtility::getOrganizationsRepresentedOrReferredByUserId($userId, $onlyIds, $returnQuery);
+    }
+
 }

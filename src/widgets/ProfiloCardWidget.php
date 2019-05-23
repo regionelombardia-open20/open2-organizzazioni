@@ -13,6 +13,7 @@ namespace lispa\amos\organizzazioni\widgets;
 
 use lispa\amos\core\forms\ContextMenuWidget;
 use lispa\amos\core\helpers\Html;
+use lispa\amos\core\module\BaseAmosModule;
 use lispa\amos\organizzazioni\models\Profilo;
 use lispa\amos\organizzazioni\Module;
 use Yii;
@@ -50,6 +51,11 @@ class ProfiloCardWidget extends Widget
     public $absoluteUrl = false;
 
     /**
+     * @var bool $inEmail
+     */
+    public $inEmail = false;
+
+    /**
      * @inheritdoc
      */
     public function init()
@@ -74,8 +80,12 @@ class ProfiloCardWidget extends Widget
         $url = $model->getModelImageUrl('square_small', $this->absoluteUrl, '/img/img_default.jpg', true);
         $htmlOptions = [
             'class' => !empty($class) ? 'img-responsive ' . $class : 'img-responsive',
-            'alt' => $model->getAttributeLabel('communityLogo')
+            'alt' => $model->getAttributeLabel('logoOrganization')
         ];
+
+        if ($this->inEmail) {
+            $htmlOptions['style'] = 'width:50px; height:auto;';
+        }
 
         $htmlTag = Html::img($url, $htmlOptions);
         $img = Html::tag('div', $htmlTag, ['class' => 'container-img']);
@@ -170,7 +180,7 @@ class ProfiloCardWidget extends Widget
         $controller = Yii::$app->controller;
         $isActionUpdate = ($controller->action->id == 'update');
         $confirm = $isActionUpdate ? [
-            'confirm' => \lispa\amos\core\module\BaseAmosModule::t('amoscore', '#confirm_exit_without_saving')
+            'confirm' => BaseAmosModule::t('amoscore', '#confirm_exit_without_saving')
         ] : null;
         return $confirm;
     }

@@ -24,7 +24,8 @@ use yii\web\View;
  * @var bool $isView
  */
 
-$emptyProfiloSede = new ProfiloSedi();
+/** @var ProfiloSedi $emptyProfiloSede */
+$emptyProfiloSede = Module::instance()->createModel('ProfiloSedi');
 $createBtnId = 'create-other-headquarter-btn-id';
 $defaultDataConfirm = Module::t('amosorganizzazioni', '#create_profilo_sede_data_confirm_msg');
 $deleteMsg = Module::t('amosorganizzazioni', '#delete_headquarter_from_profilo_form_msg');
@@ -90,7 +91,7 @@ $this->registerJs($js, View::POS_READY);
     <div>
         <?= AmosGridView::widget([
             'dataProvider' => new ActiveDataProvider([
-                'query' => $model->getProfiloSedi()->andWhere(['is_main' => 0])
+                'query' => $model->getOtherHeadquarters()
             ]),
             'columns' => $emptyProfiloSede->getGridViewColumns(!$isView)
         ]); ?>

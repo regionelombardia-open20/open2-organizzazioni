@@ -25,13 +25,17 @@ use lispa\amos\organizzazioni\Module;
  * @property string $address
  * @property integer $is_main
  * @property integer $active
- * @property string $website
  * @property string $phone
  * @property string $fax
  * @property string $email
  * @property string $pec
+ * @property string $address_text
+ * @property string $cap_text
  * @property integer $profilo_id
  * @property integer $profilo_sedi_type_id
+ * @property integer $country_id
+ * @property integer $province_id
+ * @property integer $city_id
  * @property string $created_at
  * @property string $updated_at
  * @property string $deleted_at
@@ -41,11 +45,21 @@ use lispa\amos\organizzazioni\Module;
  *
  * @property \lispa\amos\organizzazioni\models\Profilo $profilo
  * @property \lispa\amos\organizzazioni\models\ProfiloSediTypes $profiloSediType
+ * @property \lispa\amos\organizzazioni\models\ProfiloSediUserMm[] $profiloSediUserMms
+ * @property \lispa\amos\core\user\User[] $profiloSediUsers
+ * @property \lispa\amos\comuni\models\IstatNazioni $country
+ * @property \lispa\amos\comuni\models\IstatProvince $province
+ * @property \lispa\amos\comuni\models\IstatComuni $city
  *
  * @package lispa\amos\organizzazioni\models\base
  */
 abstract class ProfiloSedi extends Record
 {
+    /**
+     * @var Module $organizzazioniModule
+     */
+    protected $organizzazioniModule;
+
     /**
      * @inheritdoc
      */
@@ -57,20 +71,42 @@ abstract class ProfiloSedi extends Record
     /**
      * @inheritdoc
      */
+    public function init()
+    {
+        $this->organizzazioniModule = Module::instance();
+        parent::init();
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function rules()
     {
+        $requiredFields = [
+            'name',
+            'profilo_id',
+            'profilo_sedi_type_id',
+        ];
+        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+            $requiredFields[] = 'cap_text';
+            $requiredFields[] = 'address_text';
+            $requiredFields[] = 'country_id';
+            $requiredFields[] = 'province_id';
+            $requiredFields[] = 'city_id';
+        } else {
+            $requiredFields[] = 'address';
+        }
         return [
-            [[
-                'name',
-                'profilo_id',
-                'profilo_sedi_type_id',
-            ], 'required'],
+            [$requiredFields, 'required'],
             [['description'], 'string'],
             [[
                 'is_main',
                 'active',
                 'profilo_id',
                 'profilo_sedi_type_id',
+                'country_id',
+                'province_id',
+                'city_id',
                 'created_by',
                 'updated_by',
                 'deleted_by'
@@ -80,12 +116,12 @@ abstract class ProfiloSedi extends Record
                 'updated_at',
                 'deleted_at'
             ], 'safe'],
-            [['name'], 'string', 'max' => 100],
+            [['cap_text'], 'string', 'max' => 5],
             [['phone', 'fax'], 'string', 'max' => 50],
-            [['address', 'website', 'email', 'pec'], 'string', 'max' => 255],
+            [['name', 'address', 'email', 'pec', 'address_text'], 'string', 'max' => 255],
             [['email', 'pec'], 'email'],
-            [['profilo_id'], 'exist', 'skipOnError' => true, 'targetClass' => \lispa\amos\organizzazioni\models\Profilo::className(), 'targetAttribute' => ['profilo_id' => 'id']],
-            [['profilo_sedi_type_id'], 'exist', 'skipOnError' => true, 'targetClass' => \lispa\amos\organizzazioni\models\ProfiloSediTypes::className(), 'targetAttribute' => ['profilo_sedi_type_id' => 'id']],
+            [['profilo_id'], 'exist', 'skipOnError' => true, 'targetClass' => $this->organizzazioniModule->createModel('Profilo')->className(), 'targetAttribute' => ['profilo_id' => 'id']],
+            [['profilo_sedi_type_id'], 'exist', 'skipOnError' => true, 'targetClass' => $this->organizzazioniModule->createModel('ProfiloSediTypes')->className(), 'targetAttribute' => ['profilo_sedi_type_id' => 'id']],
         ];
     }
 
@@ -101,13 +137,17 @@ abstract class ProfiloSedi extends Record
             'address' => Module::t('amosorganizzazioni', 'Address'),
             'is_main' => Module::t('amosorganizzazioni', 'Is Main'),
             'active' => Module::t('amosorganizzazioni', 'Active'),
-            'website' => Module::t('amosorganizzazioni', 'Web Site'),
             'phone' => Module::t('amosorganizzazioni', 'Phone'),
             'fax' => Module::t('amosorganizzazioni', 'Fax'),
             'email' => Module::t('amosorganizzazioni', 'Email'),
             'pec' => Module::t('amosorganizzazioni', 'PEC'),
+            'address_text' => Module::t('amosorganizzazioni', 'Address'),
+            'cap_text' => Module::t('amosorganizzazioni', 'CAP'),
             'profilo_id' => Module::t('amosorganizzazioni', 'Profilo ID'),
-            'profilo_sedi_type_id' => Module::t('amosorganizzazioni', 'Profilo Sedi Type ID'),
+            'profilo_sedi_type_id' => Module::t('amosorganizzazioni', 'Headquarter type'),
+            'country_id' => Module::t('amosorganizzazioni', 'Country'),
+            'province_id' => Module::t('amosorganizzazioni', 'Province'),
+            'city_id' => Module::t('amosorganizzazioni', 'City'),
             'created_at' => Module::t('amosorganizzazioni', 'Created at'),
             'updated_at' => Module::t('amosorganizzazioni', 'Updated at'),
             'deleted_at' => Module::t('amosorganizzazioni', 'Deleted at'),
@@ -125,7 +165,7 @@ abstract class ProfiloSedi extends Record
      */
     public function getProfilo()
     {
-        return $this->hasOne(\lispa\amos\organizzazioni\models\Profilo::className(), ['id' => 'profilo_id']);
+        return $this->hasOne($this->organizzazioniModule->createModel('Profilo')->className(), ['id' => 'profilo_id']);
     }
 
     /**
@@ -133,6 +173,46 @@ abstract class ProfiloSedi extends Record
      */
     public function getProfiloSediType()
     {
-        return $this->hasOne(\lispa\amos\organizzazioni\models\ProfiloSediTypes::className(), ['id' => 'profilo_sedi_type_id']);
+        return $this->hasOne($this->organizzazioniModule->createModel('ProfiloSediTypes')->className(), ['id' => 'profilo_sedi_type_id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProfiloSediUserMms()
+    {
+        return $this->hasMany($this->organizzazioniModule->createModel('ProfiloSediUserMm')->className(), ['profilo_sedi_id' => 'id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProfiloSediUsers()
+    {
+        return $this->hasMany(\lispa\amos\core\user\User::className(), ['id' => 'user_id'])->via('profiloSediUserMms');
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getCountry()
+    {
+        return $this->hasOne(\lispa\amos\comuni\models\IstatNazioni::className(), ['id' => 'country_id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProvince()
+    {
+        return $this->hasOne(\lispa\amos\comuni\models\IstatProvince::className(), ['id' => 'province_id']);
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getCity()
+    {
+        return $this->hasOne(\lispa\amos\comuni\models\IstatComuni::className(), ['id' => 'city_id']);
     }
 }

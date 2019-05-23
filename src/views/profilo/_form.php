@@ -9,6 +9,7 @@
  * @category   CategoryName
  */
 
+use lispa\amos\admin\AmosAdmin;
 use lispa\amos\admin\models\UserProfile;
 use lispa\amos\attachments\components\AttachmentsInput;
 use lispa\amos\attachments\components\AttachmentsList;
@@ -29,7 +30,6 @@ use lispa\amos\organizzazioni\models\ProfiloTypesPmi;
 use lispa\amos\organizzazioni\Module;
 use lispa\amos\organizzazioni\utility\OrganizzazioniUtility;
 use lispa\amos\organizzazioni\widgets\maps\PlaceWidget;
-use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\web\JsExpression;
@@ -38,8 +38,8 @@ use yii\web\JsExpression;
  * @var yii\web\View $this
  * @var lispa\amos\organizzazioni\models\Profilo $model
  * @var yii\widgets\ActiveForm $form
- * @var lispa\amos\organizzazioni\models\ProfiloSediLegal $mainSedeLegale
- * @var lispa\amos\organizzazioni\models\ProfiloSediOperative $mainSedeOperativa
+ * @var lispa\amos\organizzazioni\models\ProfiloSediLegal $mainLegalHeadquarter
+ * @var lispa\amos\organizzazioni\models\ProfiloSediOperative $mainOperativeHeadquarter
  */
 
 $this->registerJs("    
@@ -69,11 +69,14 @@ $profiloEntiTypeElementId = Html::getInputId($model, 'profilo_enti_type_id');
 $istatCodeElementId = Html::getInputId($model, 'istat_code');
 $tipologiaDiOrganizzazione = Html::getInputId($model, 'tipologia_di_organizzazione');
 $typeMunicipality = ProfiloEntiType::TYPE_MUNICIPALITY;
+$sameHeadquarterElementId = Html::getInputId($model, 'la_sede_legale_e_la_stessa_del');
+$legalHeadquarterAddressElementId = Html::getInputId($model, 'mainLegalHeadquarterAddress');
 
 $js = <<<JS
 var profiloEntiTypeElement = $('#$profiloEntiTypeElementId');
 var istatCodeElement = $('#$istatCodeElementId');
 var tipologiaDiOrganizzazione = $('#$tipologiaDiOrganizzazione');
+var sameHeadquarterElementId = $('#$sameHeadquarterElementId');
 
 function addRequiredAsterisk(fieldName) {
     $('.field-' + fieldName).addClass('required');
@@ -100,6 +103,20 @@ manageEnabledFields();
 profiloEntiTypeElement.change(function() {
     manageEnabledFields();
 });
+
+function manageLegalHeadquarterRequiredAddress() {
+    if (sameHeadquarterElementId.val() == 1) {
+        removeRequiredAsterisk('$legalHeadquarterAddressElementId');
+    } else {
+        addRequiredAsterisk('$legalHeadquarterAddressElementId');
+    }
+}
+
+manageLegalHeadquarterRequiredAddress();
+
+sameHeadquarterElementId.change(function() {
+    manageLegalHeadquarterRequiredAddress();
+});
 JS;
 $this->registerJs($js);
 
@@ -115,16 +132,29 @@ $this->registerJs($js);
         'enctype' => 'multipart/form-data'// important
     ]
 ]);
+
+/** @var ProfiloEntiType $modelProfiloEntiType */
+$modelProfiloEntiType = Module::instance()->createModel('ProfiloEntiType');
+
+/** @var ProfiloTypesPmi $modelProfiloTypesPmi */
+$modelProfiloTypesPmi = Module::instance()->createModel('ProfiloTypesPmi');
+
+/** @var ProfiloLegalForm $modelProfiloLegalForm */
+$modelProfiloLegalForm = Module::instance()->createModel('ProfiloLegalForm');
+
+/** @var UserProfile $modelUserProfile */
+$modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
+
 ?>
 
 <div class="area-profilo-form col-xs-12 nop">
     <div class="row">
         <div class="col-xs-12"><?= Html::tag('h2', Module::t('amosorganizzazioni', '#settings_general_title'), ['class' => 'subtitle-form']) ?></div>
         <div class="col-md-8 col-xs-12">
-            <?php echo $form->field($model, 'name')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#name_field_placeholder')])->hint(Module::t('amosorganizzazioni', '#name_field_hint')) ?>
+            <?= $form->field($model, 'name')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#name_field_placeholder')])->hint(Module::t('amosorganizzazioni', '#name_field_hint')) ?>
             <div class="col-md-6 col-xs-12">
                 <?= $form->field($model, 'profilo_enti_type_id')->widget(Select::classname(), [
-                    'data' => ArrayHelper::map(ProfiloEntiType::find()->all(), 'id', 'name'),
+                    'data' => ArrayHelper::map($modelProfiloEntiType::find()->all(), 'id', 'name'),
                     'language' => substr(Yii::$app->language, 0, 2),
                     'options' => [
                         'multiple' => false,
@@ -140,8 +170,8 @@ $this->registerJs($js);
                 <?= $form->field($model, 'istat_code')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#istat_code_field_placeholder')]) ?>
             </div>
             <div class="col-md-6 col-xs-12">
-                <?= $form->field($model, 'tipologia_di_organizzazione')->widget(Select2::classname(), [
-                    'data' => ArrayHelper::map(ProfiloTypesPmi::find()->asArray()->all(), 'id', 'name'),
+                <?= $form->field($model, 'tipologia_di_organizzazione')->widget(Select::classname(), [
+                    'data' => ArrayHelper::map($modelProfiloTypesPmi::find()->asArray()->all(), 'id', 'name'),
                     'language' => substr(Yii::$app->language, 0, 2),
                     'options' => [
                         'multiple' => false,
@@ -153,8 +183,8 @@ $this->registerJs($js);
                 ]) ?>
             </div>
             <div class="col-md-6 col-xs-12">
-                <?= $form->field($model, 'forma_legale')->widget(Select2::classname(), [
-                    'data' => ArrayHelper::map(ProfiloLegalForm::find()->all(), 'id', 'name'),
+                <?= $form->field($model, 'forma_legale')->widget(Select::classname(), [
+                    'data' => ArrayHelper::map($modelProfiloLegalForm::find()->all(), 'id', 'name'),
                     'language' => substr(Yii::$app->language, 0, 2),
                     'options' => [
                         'multiple' => false,
@@ -197,41 +227,45 @@ $this->registerJs($js);
                 ]) ?>
             <?php endif; ?>
 
-            <?= $form->field($model, 'mainOperativeHeadquarterAddress')->widget(
-                PlaceWidget::className(), [
-                    'placeAlias' => 'sedeIndirizzo'
-                ]
-            ); ?>
+            <?php if (!$organizzazioniModule->oldStyleAddressEnabled): ?>
+                <?= $form->field($model, 'mainOperativeHeadquarterAddress')->widget(
+                    PlaceWidget::className(), [
+                        'placeAlias' => 'sedeIndirizzo'
+                    ]
+                ); ?>
+            <?php else: ?>
+                <?= $this->render('@vendor/lispa/amos-organizzazioni/src/views/profilo-sedi/_old_style_address_fields', ['form' => $form, 'modelSedi' => $mainOperativeHeadquarter]); ?>
+            <?php endif; ?>
 
-            <div class="col-md-6 col-xs-12">
-                <?= $form->field($mainSedeOperativa, 'website')->textInput([
+            <div class="col-xs-12">
+                <?= $form->field($model, 'sito_web')->textInput([
                     'maxlength' => true,
                     'placeholder' => Module::t('amosorganizzazioni', '#sito_field_placeholder')
                 ]) ?>
             </div>
 
             <div class="col-md-6 col-xs-12">
-                <?= $form->field($mainSedeOperativa, 'email')->textInput([
+                <?= $form->field($mainOperativeHeadquarter, 'email')->textInput([
                     'maxlength' => true,
                     'placeholder' => Module::t('amosorganizzazioni', '#email_field_placeholder')
                 ]) ?>
             </div>
 
             <div class="col-md-6 col-xs-12">
-                <?= $form->field($mainSedeOperativa, 'pec')->textInput([
+                <?= $form->field($mainOperativeHeadquarter, 'pec')->textInput([
                     'maxlength' => true,
                     'placeholder' => Module::t('amosorganizzazioni', '#pec_field_placeholder')
                 ]) ?>
             </div>
             <div class="col-md-6 col-xs-12">
-                <?= $form->field($mainSedeOperativa, 'phone')->textInput([
+                <?= $form->field($mainOperativeHeadquarter, 'phone')->textInput([
                     'maxlength' => true,
                     'placeholder' => Module::t('amosorganizzazioni', '#telefono_field_placeholder')
                 ]) ?>
             </div>
 
             <div class="col-md-6 col-xs-12">
-                <?= $form->field($mainSedeOperativa, 'fax')->textInput([
+                <?= $form->field($mainOperativeHeadquarter, 'fax')->textInput([
                     'maxlength' => true,
                     'placeholder' => Module::t('amosorganizzazioni', '#fax_field_placeholder')
                 ]) ?>
@@ -240,27 +274,34 @@ $this->registerJs($js);
             <?php echo $form->field($model, 'responsabile')->textInput(['maxlength' => true,
                 'placeholder' => Module::t('amosorganizzazioni', '#responsabile_field_placeholder')
             ]) ?>
-            <div class="col-md-6 col-xs-12"><!-- rappresentante_legale string -->
-                <?= $form->field($model, 'rappresentante_legale')->widget(Select2::className(), [
-                    'initValueText' => empty($model->rappresentante_legale) ? '' : UserProfile::findOne($model->rappresentante_legale)->nomeCognome,
-                    'language' => substr(Yii::$app->language, 0, 2),
-                    'options' => [
-                        'placeholder' => Module::t('amosorganizzazioni', 'Seleziona') . '...',
-                    ],
-                    'pluginOptions' => [
-                        'allowClear' => true,
-                        'minimumInputLength' => 3,
-                        'ajax' => [
-                            'url' => Url::to(['/admin/user-profile-ajax/ajax-user-list']),
-                            'dataType' => 'json',
-                            'data' => new JsExpression('function(params) { return {q:params.term}; }')
+
+            <?php if ($organizzazioniModule->enableRappresentanteLegaleText): ?>
+                <div class="col-md-6 col-xs-12">
+                    <?= $form->field($model, 'rappresentante_legale_text') ?>
+                </div>
+            <?php else: ?>
+                <div class="col-md-6 col-xs-12"><!-- rappresentante_legale string -->
+                    <?= $form->field($model, 'rappresentante_legale')->widget(Select::className(), [
+                        'initValueText' => empty($model->rappresentante_legale) ? '' : $modelUserProfile::findOne(['user_id' => $model->rappresentante_legale])->nomeCognome,
+                        'language' => substr(Yii::$app->language, 0, 2),
+                        'options' => [
+                            'placeholder' => Module::t('amosorganizzazioni', 'Seleziona') . '...',
                         ],
-                    ],
-                ]); ?>
-            </div>
+                        'pluginOptions' => [
+                            'allowClear' => true,
+                            'minimumInputLength' => 3,
+                            'ajax' => [
+                                'url' => Url::to(['/admin/user-profile-ajax/ajax-user-list']),
+                                'dataType' => 'json',
+                                'data' => new JsExpression('function(params) { return {q:params.term}; }')
+                            ],
+                        ],
+                    ]); ?>
+                </div>
+            <?php endif; ?>
             <div class="col-md-6 col-xs-12"><!-- referente_operativo string -->
-                <?= $form->field($model, 'referente_operativo')->widget(Select2::className(), [
-                    'initValueText' => empty($model->referente_operativo) ? '' : UserProfile::findOne($model->referente_operativo)->nomeCognome,
+                <?= $form->field($model, 'referente_operativo')->widget(Select::className(), [
+                    'initValueText' => empty($model->referente_operativo) ? '' : $modelUserProfile::findOne(['user_id' => $model->referente_operativo])->nomeCognome,
                     'language' => substr(Yii::$app->language, 0, 2),
                     'options' => [
                         'placeholder' => Module::t('amosorganizzazioni', 'Seleziona') . '...',
@@ -276,7 +317,7 @@ $this->registerJs($js);
                     ],
                 ]); ?>
             </div>
-            <div class="col-xs-12">
+            <div class="col-xs-12<?= ($organizzazioniModule->forceSameSede ? ' hidden' : '') ?>">
                 <?= $form->field($model, 'la_sede_legale_e_la_stessa_del', [
                     'options' => [
                         'class' => 'checkLocationsForCopy',
@@ -292,34 +333,40 @@ $this->registerJs($js);
                         <?= Html::tag('h2', Module::t('amosorganizzazioni', '#same_sede_title'), ['class' => 'subtitle-form']) ?>
                     </div>
 
-                    <div class="col-xs-12">
-                        <?= $form->field($model, 'mainLegalHeadquarterAddress')->widget(
-                            PlaceWidget::className(), [
-                                'placeAlias' => 'sedeLegaleIndirizzo'
-                            ]
-                        ); ?>
-                    </div>
+                    <?php if (!$organizzazioniModule->forceSameSede): ?>
+                        <?php if (!$organizzazioniModule->oldStyleAddressEnabled): ?>
+                            <div class="col-xs-12">
+                                <?= $form->field($model, 'mainLegalHeadquarterAddress')->widget(
+                                    PlaceWidget::className(), [
+                                        'placeAlias' => 'sedeLegaleIndirizzo'
+                                    ]
+                                ); ?>
+                            </div>
+                        <?php else: ?>
+                            <?= $this->render('@vendor/lispa/amos-organizzazioni/src/views/profilo-sedi/_old_style_address_fields', ['form' => $form, 'modelSedi' => $mainLegalHeadquarter]); ?>
+                        <?php endif; ?>
+                    <?php endif; ?>
 
                     <div class="col-md-6 col-xs-12">
-                        <?php echo $form->field($mainSedeLegale, 'email')->textInput([
+                        <?= $form->field($mainLegalHeadquarter, 'email')->textInput([
                             'maxlength' => true,
                             'placeholder' => Module::t('amosorganizzazioni', '#email_field_placeholder')
                         ]) ?>
                     </div>
                     <div class="col-md-6 col-xs-12">
-                        <?php echo $form->field($mainSedeLegale, 'pec')->textInput([
+                        <?= $form->field($mainLegalHeadquarter, 'pec')->textInput([
                             'maxlength' => true,
                             'placeholder' => Module::t('amosorganizzazioni', '#pec_field_placeholder')
                         ]) ?>
                     </div>
                     <div class="col-md-6 col-xs-12">
-                        <?php echo $form->field($mainSedeLegale, 'phone')->textInput([
+                        <?= $form->field($mainLegalHeadquarter, 'phone')->textInput([
                             'maxlength' => true,
                             'placeholder' => Module::t('amosorganizzazioni', '#telefono_field_placeholder')
                         ]) ?>
                     </div>
                     <div class="col-md-6 col-xs-12">
-                        <?php echo $form->field($mainSedeLegale, 'fax')->textInput([
+                        <?= $form->field($mainLegalHeadquarter, 'fax')->textInput([
                             'maxlength' => true,
                             'placeholder' => Module::t('amosorganizzazioni', '#fax_field_placeholder')
                         ]) ?>
@@ -363,35 +410,37 @@ $this->registerJs($js);
                 </div>
             </div>
 
-            <div class="col-xs-12 social-section nop">
-                <div class="col-xs-12">
-                    <?= Html::tag('h2', Module::t('amosorganizzazioni', '#social_title')) ?>
-                    <div class="col-xs-2 nop">
-                        <?= AmosIcons::show('facebook-box'); ?>
-                    </div>
-                    <div class="col-xs-10 nop">
-                        <?php echo $form->field($model, 'facebook')->textInput(['maxlength' => true])->label(false) ?>
-                    </div>
-                    <div class="col-xs-2 nop">
-                        <?= AmosIcons::show('twitter-box'); ?>
-                    </div>
-                    <div class="col-xs-10 nop">
-                        <?php echo $form->field($model, 'twitter')->textInput(['maxlength' => true])->label(false) ?>
-                    </div>
-                    <div class="col-xs-2 nop">
-                        <?= AmosIcons::show('linkedin-box'); ?>
-                    </div>
-                    <div class="col-xs-10 nop">
-                        <?php echo $form->field($model, 'linkedin')->textInput(['maxlength' => true])->label(false) ?>
-                    </div>
-                    <div class="col-xs-2 nop">
-                        <?= AmosIcons::show('google-plus-box'); ?>
-                    </div>
-                    <div class="col-xs-10 nop">
-                        <?php echo $form->field($model, 'google')->textInput(['maxlength' => true])->label(false) ?>
+            <?php if ($organizzazioniModule->enableSocial): ?>
+                <div class="col-xs-12 social-section nop">
+                    <div class="col-xs-12">
+                        <?= Html::tag('h2', Module::t('amosorganizzazioni', '#social_title')) ?>
+                        <div class="col-xs-2 nop">
+                            <?= AmosIcons::show('facebook-box'); ?>
+                        </div>
+                        <div class="col-xs-10 nop">
+                            <?= $form->field($model, 'facebook')->textInput(['maxlength' => true])->label(false) ?>
+                        </div>
+                        <div class="col-xs-2 nop">
+                            <?= AmosIcons::show('twitter-box'); ?>
+                        </div>
+                        <div class="col-xs-10 nop">
+                            <?= $form->field($model, 'twitter')->textInput(['maxlength' => true])->label(false) ?>
+                        </div>
+                        <div class="col-xs-2 nop">
+                            <?= AmosIcons::show('linkedin-box'); ?>
+                        </div>
+                        <div class="col-xs-10 nop">
+                            <?= $form->field($model, 'linkedin')->textInput(['maxlength' => true])->label(false) ?>
+                        </div>
+                        <div class="col-xs-2 nop">
+                            <?= AmosIcons::show('google-plus-box'); ?>
+                        </div>
+                        <div class="col-xs-10 nop">
+                            <?= $form->field($model, 'google')->textInput(['maxlength' => true])->label(false) ?>
+                        </div>
                     </div>
                 </div>
-            </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -406,8 +455,8 @@ $this->registerJs($js);
                 ],
                 'headerOptions' => ['tag' => 'h2'],
                 'clientOptions' => [
-                    'collapsible' => true,
-                    'active' => 1,
+                    'collapsible' => false,
+                    'active' => false,
                     'icons' => [
                         'header' => 'ui-icon-amos am am-plus-square',
                         'activeHeader' => 'ui-icon-amos am am-minus-square',

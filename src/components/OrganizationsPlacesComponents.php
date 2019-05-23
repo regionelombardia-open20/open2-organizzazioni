@@ -5,21 +5,34 @@
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    lispa\amos\organizzazioni\components
  * @category   CategoryName
  */
 
 namespace lispa\amos\organizzazioni\components;
 
-
 use lispa\amos\organizzazioni\models\OrganizationsPlaces;
+use lispa\amos\organizzazioni\Module;
+use yii\base\InvalidConfigException;
 use yii\helpers\Json;
 
+/**
+ * Class OrganizationsPlacesComponents
+ * @package lispa\amos\organizzazioni\components
+ */
 class OrganizationsPlacesComponents
 {
-    public static function getPlace($place_id){
-        if(!empty($place_id)){
-            $placeObj = OrganizationsPlaces::find()
+    /**
+     * @param string $place_id
+     * @return bool|OrganizationsPlaces
+     * @throws \yii\base\InvalidConfigException
+     */
+    public static function getPlace($place_id)
+    {
+        if (!empty($place_id)) {
+            /** @var OrganizationsPlaces $model */
+            $model = Module::instance()->createModel('OrganizationsPlaces')->className();
+            $placeObj = $model::find()
                 ->where(["place_id" => $place_id])
                 ->one();
 
@@ -28,33 +41,44 @@ class OrganizationsPlacesComponents
         return false;
     }
 
-    public static function checkPlace($place_id){
+    /**
+     * @param string $place_id
+     */
+    public static function checkPlace($place_id)
+    {
         /*$placeObj = OrganizationsPlaces::find()
             ->where(["place_id" => $place_id])
             ->one();*/
         $placeObj = self::getPlace($place_id);
-        if(!$placeObj){
+        if (!$placeObj) {
             self::getGoogleResponseByPlaceId($place_id, true);
         }
     }
 
-    public static function getGoogleResponseByPlaceId($place_id, $trySave = false){
+    /**
+     * @param string $place_id
+     * @param bool $trySave
+     * @return bool
+     * @throws \yii\base\InvalidConfigException
+     */
+    public static function getGoogleResponseByPlaceId($place_id, $trySave = false)
+    {
         //get the google place key
         $googleMapsApiKey = null;
-        if(isset(\Yii::$app->params['google_places_api_key'])){
+        if (isset(\Yii::$app->params['google_places_api_key'])) {
             $googleMapsApiKey = \Yii::$app->params['google_places_api_key'];
-        }
-        else{
-            throw new \yii\base\InvalidConfigException("Missing Google PLACE API key");
+        } else {
+            throw new InvalidConfigException("Missing Google PLACE API key");
         }
 
+        $place_id = urlencode($place_id);
         $UrlGeocoder = "https://maps.googleapis.com/maps/api/place/details/json?placeid=$place_id&key=$googleMapsApiKey";
         $ResultGeocodingJson = file_get_contents($UrlGeocoder);
         $ResultGeocoding = Json::decode($ResultGeocodingJson);
 
         if ($ResultGeocoding && isset($ResultGeocoding['status'])) {
             if ($ResultGeocoding['status'] == 'OK') {
-                if($trySave){
+                if ($trySave) {
                     self::saveOrganizationPlace($place_id, $ResultGeocoding, 'place');
                 }
 
@@ -65,13 +89,19 @@ class OrganizationsPlacesComponents
         return false;
     }
 
-    public static function getGoogleResponseByGeocodeString($geocodeString, $trySave = false){
+    /**
+     * @param string $geocodeString
+     * @param bool $trySave
+     * @return bool
+     * @throws \yii\base\InvalidConfigException
+     */
+    public static function getGoogleResponseByGeocodeString($geocodeString, $trySave = false)
+    {
         //get the google place key
         $googleMapsApiKey = null;
-        if(isset(\Yii::$app->params['google_places_api_key'])){
+        if (isset(\Yii::$app->params['google_places_api_key'])) {
             $googleMapsApiKey = \Yii::$app->params['google_places_api_key'];
-        }
-        else{
+        } else {
             throw new \yii\base\InvalidConfigException("Missing Google PLACE API key");
         }
 
@@ -83,7 +113,7 @@ class OrganizationsPlacesComponents
             if ($ResultGeocoding['status'] == 'OK') {
                 $place_id = $ResultGeocoding['results'][0]['place_id'];
 
-                if($trySave){
+                if ($trySave) {
                     self::saveOrganizationPlace($place_id, $ResultGeocoding, 'geocode');
                 }
 
@@ -94,58 +124,73 @@ class OrganizationsPlacesComponents
         return false;
     }
 
-    public static function getGeocodeString($placeDataObj){
+    /**
+     * @param OrganizationsPlaces $placeDataObj
+     * @return string
+     */
+    public static function getGeocodeString($placeDataObj)
+    {
         //identifica i parametri per costruire la stringa
         $GeoCoderParams = [];
-        if($placeDataObj->address || $placeDataObj->street_number){
+        if ($placeDataObj->address || $placeDataObj->street_number) {
             $tmp_params = [];
 
-            if($placeDataObj->address){
+            if ($placeDataObj->address) {
                 $tmp_params[] = $placeDataObj->address;
             }
 
-            if($placeDataObj->address && $placeDataObj->street_number){
+            if ($placeDataObj->address && $placeDataObj->street_number) {
                 $tmp_params[] = $placeDataObj->street_number;
             }
 
             $GeoCoderParams[] = implode(" ", $tmp_params);
         }
 
-        if($placeDataObj->postal_code || $placeDataObj->city || $placeDataObj->province){
+        if ($placeDataObj->postal_code || $placeDataObj->city || $placeDataObj->province) {
             $tmp_params = [];
-            if($placeDataObj->postal_code){
+            if ($placeDataObj->postal_code) {
                 $tmp_params[] = $placeDataObj->postal_code;
             }
 
-            if($placeDataObj->city){
+            if ($placeDataObj->city) {
                 $tmp_params[] = $placeDataObj->city;
             }
 
-            if($placeDataObj->province){
+            if ($placeDataObj->province) {
                 $tmp_params[] = $placeDataObj->province;
             }
 
             $GeoCoderParams[] = implode(" ", $tmp_params);
         }
 
-        if($placeDataObj->region){
+        if ($placeDataObj->region) {
             $GeoCoderParams[] = $placeDataObj->region;
         }
 
-        if($placeDataObj->country){
+        if ($placeDataObj->country) {
             $GeoCoderParams[] = $placeDataObj->country;
         }
 
         return (count($GeoCoderParams) ? implode(", ", $GeoCoderParams) : "");
     }
 
-    public static function saveOrganizationPlace($place_id, $ResultGeocoding, $from = 'geocode'){
-        $placeObj = OrganizationsPlaces::find()
+    /**
+     * @param string $place_id
+     * @param array $ResultGeocoding
+     * @param string $from
+     * @throws \yii\base\InvalidConfigException
+     */
+    public static function saveOrganizationPlace($place_id, $ResultGeocoding, $from = 'geocode')
+    {
+        /** @var OrganizationsPlaces $model */
+        $model = Module::instance()->createModel('OrganizationsPlaces');
+        /** @var OrganizationsPlaces $placeObj */
+        $placeObj = $model::find()
             ->where(["place_id" => $place_id])
             ->one();
 
-        if(!$placeObj) {
-            $placeObj = new OrganizationsPlaces();
+        if (!$placeObj) {
+            $placeObj = Module::instance()->createModel('OrganizationsPlaces');
             $placeObj->place_id = $place_id;
             $placeObj->place_response = Json::encode($ResultGeocoding);
             $placeObj->place_type = "google";
@@ -168,7 +213,7 @@ class OrganizationsPlacesComponents
             }
 
             $address_components = $googleResult['address_components'];
-            if($address_components){
+            if ($address_components) {
                 foreach ($address_components as $address_component) {
                     if (in_array('country', $address_component['types'])) {
                         $placeObj->country = (String)$address_component['long_name'];
@@ -197,11 +242,10 @@ class OrganizationsPlacesComponents
                 }
             }
 
-            if($placeObj->validate()){
+            if ($placeObj->validate()) {
                 $placeObj->detachBehaviors();
                 $placeObj->save();
-            }
-            else{
+            } else {
                 print_r($placeObj->getErrors());
                 die();
             }

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Lombardia Informatica S.p.A.
  * OPEN 2.0
@@ -11,9 +10,16 @@
 
 namespace lispa\amos\organizzazioni\models;
 
+use lispa\amos\core\interfaces\BaseContentModelInterface;
+use lispa\amos\core\interfaces\CrudModelInterface;
+use lispa\amos\core\interfaces\ModelLabelsInterface;
+use lispa\amos\core\interfaces\OrganizationsModelInterface;
 use lispa\amos\organizzazioni\components\OrganizationsPlacesComponents;
+use lispa\amos\organizzazioni\i18n\grammar\ProfiloSediGrammar;
 use lispa\amos\organizzazioni\Module;
+use yii\db\ActiveQuery;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Url;
 
 /**
  * Class ProfiloSedi
@@ -24,7 +30,8 @@ use yii\helpers\ArrayHelper;
  *
  * @package lispa\amos\organizzazioni\models
  */
-class ProfiloSedi extends \lispa\amos\organizzazioni\models\base\ProfiloSedi
+class ProfiloSedi extends \lispa\amos\organizzazioni\models\base\ProfiloSedi implements BaseContentModelInterface,
+    ModelLabelsInterface, CrudModelInterface, OrganizationsModelInterface
 {
     const SCENARIO_CREATE = 'scenario_create';
 
@@ -43,12 +50,17 @@ class ProfiloSedi extends \lispa\amos\organizzazioni\models\base\ProfiloSedi
      */
     public function init()
     {
-        $this->on(self::EVENT_BEFORE_VALIDATE, [$this, 'organizationsBeforeValidate']);
-
         parent::init();
+
+        if (!$this->organizzazioniModule->oldStyleAddressEnabled) {
+            $this->on(self::EVENT_BEFORE_VALIDATE, [$this, 'organizationsBeforeValidate']);
+        }
 
         if ($this->isNewRecord) {
             $this->active = 1;
+            if (!(empty($this->country_id))) {
+                $this->country_id = 1; // TODO COUNTRIES DISABLED inizializzato con id dell'Italia. Rimuovere la riga se viene abilitata la tendina nella form.
+            }
         }
     }
 
@@ -57,26 +69,29 @@ class ProfiloSedi extends \lispa\amos\organizzazioni\models\base\ProfiloSedi
      */
     public function scenarios()
     {
-        $skipColumns = [
+        $skipColumns          = [
             'name',
             'profilo_id',
         ];
-        $modelColumns = $this->attributes();
+        $modelColumns         = $this->attributes();
         $scenarioCreateFields = [];
         foreach ($modelColumns as $modelColumn) {
             if (!in_array($modelColumn, $skipColumns)) {
                 $scenarioCreateFields[] = $modelColumn;
             }
         }
-        return ArrayHelper::merge(parent::scenarios(), [
-            self::SCENARIO_CREATE => $scenarioCreateFields
+        return ArrayHelper::merge(parent::scenarios(),
+                [
+                self::SCENARIO_CREATE => $scenarioCreateFields
         ]);
     }
 
     public function organizationsBeforeValidate()
     {
-        $place_id = $this->address;
-        OrganizationsPlacesComponents::checkPlace($place_id);
+        if (!$this->organizzazioniModule->oldStyleAddressEnabled) {
+            $place_id = $this->address;
+            OrganizationsPlacesComponents::checkPlace($place_id);
+        }
     }
 
     /**
@@ -84,8 +99,10 @@ class ProfiloSedi extends \lispa\amos\organizzazioni\models\base\ProfiloSedi
      */
     public function afterSave($insert, $changedAttributes)
     {
-        $place_id = $this->address;
-        OrganizationsPlacesComponents::checkPlace($place_id);
+        if (!$this->organizzazioniModule->oldStyleAddressEnabled) {
+            $place_id = $this->address;
+            OrganizationsPlacesComponents::checkPlace($place_id);
+        }
 
         parent::afterSave($insert, $changedAttributes);
     }
@@ -95,9 +112,30 @@ class ProfiloSedi extends \lispa\amos\organizzazioni\models\base\ProfiloSedi
      */
     public function attributeLabels()
     {
-        return ArrayHelper::merge(parent::attributeLabels(), [
-            'addressField' => Module::t('amosorganizzazioni', 'Address'),
+        return ArrayHelper::merge(parent::attributeLabels(),
+                [
+                'addressField' => Module::t('amosorganizzazioni', 'Address'),
         ]);
+    }
+
+    /**
+     * Return the columns to show as default in GridViewWidget
+     * @param bool $showActionColumns
+     * @return array
+     */
+    public function getBaseGridViewColumns()
+    {
+        return [
+            'name',
+            [
+                'attribute' => 'profiloSediType.name',
+                'label' => $this->getAttributeLabel('profiloSediType')
+            ],
+            'addressField:raw',
+            'phone',
+            'fax',
+            'email:email'
+        ];
     }
 
     /**
@@ -107,21 +145,7 @@ class ProfiloSedi extends \lispa\amos\organizzazioni\models\base\ProfiloSedi
      */
     public function getGridViewColumns($showActionColumns = true)
     {
-        $columns = [
-            'name',
-            [
-                'attribute' => 'profiloSediType.name',
-                'label' => $this->getAttributeLabel('profiloSediType')
-            ],
-            'addressField',
-            'phone',
-            'fax',
-            'email:email',
-            [
-                'attribute' => 'profilo.name',
-                'label' => $this->getAttributeLabel('profilo')
-            ]
-        ];
+        $columns = $this->getBaseGridViewColumns();
 
         if ($showActionColumns) {
             $columns [] = [
@@ -148,11 +172,49 @@ class ProfiloSedi extends \lispa\amos\organizzazioni\models\base\ProfiloSedi
     }
 
     /**
+     * @return array
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function getUserNetworkWidgetColumns()
+    {
+        /** @var ProfiloSedi $profiloSedi */
+        $profiloSedi = $this->organizzazioniModule->createModel('ProfiloSedi');
+        return [
+            'profiloSedi.profilo_sedi_type_id' => [
+                'attribute' => 'profiloSedi.profilo_sedi_type_id',
+                'value' => 'profiloSedi.profiloSediType.name'
+            ],
+            'profiloSedi.name',
+            [
+                'attribute' => 'profiloSedi.addressField',
+                'format' => 'raw',
+                'label' => $profiloSedi->getAttributeLabel('addressField')
+            ],
+            [
+                'label' => $profiloSedi->getAttributeLabel('profilo'),
+                'value' => 'profiloSedi.profilo.name'
+            ]
+        ];
+    }
+
+    /**
      * @return \yii\db\ActiveQuery
      */
     public function getSedeIndirizzo()
     {
-        return $this->hasOne(OrganizationsPlaces::className(), ['place_id' => 'address']);
+        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+            return null;
+        }
+        return $this->hasOne($this->organizzazioniModule->createModel('OrganizationsPlaces')->className(),
+                ['place_id' => 'address']);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getNameField()
+    {
+        return $this->name;
     }
 
     /**
@@ -160,15 +222,48 @@ class ProfiloSedi extends \lispa\amos\organizzazioni\models\base\ProfiloSedi
      */
     public function getAddressField()
     {
-        if (is_null($this->sedeIndirizzo)) {
-            return '-';
+        if (!$this->organizzazioniModule->oldStyleAddressEnabled) {
+            if (is_null($this->sedeIndirizzo)) {
+                return '-';
+            }
+            return ($this->sedeIndirizzo->postal_code ? '('.$this->sedeIndirizzo->postal_code.')' : '').
+                ($this->sedeIndirizzo->region ? ' '.$this->sedeIndirizzo->region : '').
+                ($this->sedeIndirizzo->city ? ' '.$this->sedeIndirizzo->city : '').
+                ($this->sedeIndirizzo->address ? ' '.$this->sedeIndirizzo->address : '').
+                ($this->sedeIndirizzo->street_number ? ' '.$this->sedeIndirizzo->street_number : '');
+        } else {
+            return $this->getOldStyleAddress();
         }
+    }
 
-        return ($this->sedeIndirizzo->postal_code ? '(' . $this->sedeIndirizzo->postal_code . ')' : '') .
-            ($this->sedeIndirizzo->region ? ' ' . $this->sedeIndirizzo->region : '') .
-            ($this->sedeIndirizzo->city ? ' ' . $this->sedeIndirizzo->city : '') .
-            ($this->sedeIndirizzo->address ? ' ' . $this->sedeIndirizzo->address : '') .
-            ($this->sedeIndirizzo->street_number ? ' ' . $this->sedeIndirizzo->street_number : '');
+    /**
+     * This method returns the "old style" address only in case there is the parameter configured in the module.
+     * @return string
+     */
+    public function getOldStyleAddress()
+    {
+        $address = '';
+        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+            if ($this->address_text) {
+                $address .= $this->address_text.'<br />';
+            }
+            if ($this->cap_text) {
+                $address .= $this->cap_text;
+            }
+            if (!is_null($this->city)) {
+                if ($this->cap_text) {
+                    $address .= ' ';
+                }
+                $address .= $this->city->nome.'<br />';
+            }
+            if (!is_null($this->province)) {
+                $address .= $this->province->nome.'<br />';
+            }
+            if (!strlen($address)) {
+                $address = '-';
+            }
+        }
+        return $address;
     }
 
     /**
@@ -176,7 +271,16 @@ class ProfiloSedi extends \lispa\amos\organizzazioni\models\base\ProfiloSedi
      */
     public function getAddressFieldAsArray()
     {
-        if (!empty($this->sedeIndirizzo)) {
+        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+            return [
+                'postal_code' => ($this->cap_text ? $this->cap_text : ''),
+                'region' => (!is_null($this->province) && !is_null($this->province->istatRegioni) ? $this->province->istatRegioni->nome
+                    : ''),
+                'city' => (!is_null($this->city) ? $this->city->nome : ''),
+                'address' => ($this->address_text ? $this->address_text : ''),
+                'street_number' => '',
+            ];
+        } elseif (!empty($this->sedeIndirizzo)) {
             return [
                 'postal_code' => $this->sedeIndirizzo->postal_code,
                 'region' => $this->sedeIndirizzo->region,
@@ -187,5 +291,164 @@ class ProfiloSedi extends \lispa\amos\organizzazioni\models\base\ProfiloSedi
         } else {
             return null;
         }
+    }
+
+    /**
+     * @param int $userId
+     * @return ActiveQuery
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function getAssociateHeadquarterQuery($userId)
+    {
+        /** @var ProfiloSediUserMm $profiloSediUserMm */
+        $profiloSediUserMm  = $this->organizzazioniModule->createModel('ProfiloSediUserMm');
+        /** @var ActiveQuery $queryUserMm */
+        $queryUserMm        = $profiloSediUserMm::find();
+        $queryUserMm->select(['profilo_sedi_id'])->distinct();
+        $queryUserMm->andWhere(['user_id' => $userId]);
+        $userHeadquarterIds = $queryUserMm->column();
+        /** @var ActiveQuery $query */
+        $query              = static::find();
+        $query->andWhere([static::tableName().'.active' => 1]);
+        $query->andWhere([static::tableName().'.is_main' => 0]);
+        $query->andWhere(['not in', static::tableName().'.id', $userHeadquarterIds]);
+        return $query;
+    }
+
+    /**
+     * @return ProfiloSediGrammar
+     */
+    public function getGrammar()
+    {
+        return new ProfiloSediGrammar();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getTitle()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getShortDescription()
+    {
+        return $this->__shortText($this->description, 100);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getDescription($truncate)
+    {
+        $ret = $this->description;
+        if ($truncate) {
+            $ret = $this->__shortText($this->description, 200);
+        }
+        return $ret;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getModelModuleName()
+    {
+        return Module::getModuleName();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getModelControllerName()
+    {
+        return 'profilo-sedi';
+    }
+
+    /**
+     * Returns the full url to the action with the model id.
+     * @param $url
+     * @return null|string
+     */
+    private function getFullUrl($url)
+    {
+        if (!empty($url)) {
+            return Url::toRoute(["/".$url, "id" => $this->id]);
+        }
+        return null;
+    }
+
+    /**
+     * @return string
+     */
+    private function getBaseUrl()
+    {
+        return $this->getModelModuleName().'/'.$this->getModelControllerName().'/';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getCreateUrl()
+    {
+        return $this->getBaseUrl().'create';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getFullCreateUrl()
+    {
+        return $this->getCreateUrl();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getViewUrl()
+    {
+        return $this->getBaseUrl().'view';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getFullViewUrl()
+    {
+        return $this->getFullUrl($this->getViewUrl());
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getUpdateUrl()
+    {
+        return $this->getBaseUrl().'update';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getFullUpdateUrl()
+    {
+        return $this->getFullUrl($this->getUpdateUrl());
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getDeleteUrl()
+    {
+        return $this->getBaseUrl().'delete';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getFullDeleteUrl()
+    {
+        return $this->getFullUrl($this->getDeleteUrl());
     }
 }

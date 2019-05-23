@@ -6,7 +6,7 @@
     "type": "plugin",
     "proscription": "GPL-3.0",
     "require": {
-        "php": ">=5.4.0",
+        "php": ">=5.6.0",
         "lispa/amos-admin" : "*",
         "lispa/amos-attachments" : "*",
         "lispa/amos-comuni" : "*",

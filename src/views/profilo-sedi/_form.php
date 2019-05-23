@@ -31,6 +31,9 @@ if ($model->isNewRecord && (count($types) == 1)) {
     $profiloSediTypeId = reset($typeIds);
 }
 
+/** @var Module $organizzazioniModule */
+$organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
+
 ?>
 
 <div class="profilo-sedi-form col-xs-12 nop">
@@ -63,33 +66,30 @@ if ($model->isNewRecord && (count($types) == 1)) {
         </div>
     </div>
     <div class="row">
+        <?php if (!$organizzazioniModule->oldStyleAddressEnabled): ?>
+            <div class="col-md-6 col-xs-12">
+                <?= $form->field($model, 'address')->widget(
+                    PlaceWidget::className(), [
+                        'placeAlias' => 'sedeIndirizzo'
+                    ]
+                ); ?>
+            </div>
+        <?php else: ?>
+            <?= $this->render('@vendor/lispa/amos-organizzazioni/src/views/profilo-sedi/_old_style_address_fields', ['form' => $form, 'modelSedi' => $model]); ?>
+        <?php endif; ?>
         <div class="col-md-6 col-xs-12">
-            <?=
-            $form->field($model, 'address')->widget(
-                PlaceWidget::className(), [
-                    'placeAlias' => 'sedeIndirizzo'
-                ]
-            );
-            ?>
+            <?= $form->field($model, 'email')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#email_field_placeholder')]) ?>
         </div>
         <div class="col-md-6 col-xs-12">
-            <?php echo $form->field($model, 'website')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#sito_field_placeholder')]) ?>
+            <?= $form->field($model, 'pec')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#pec_field_placeholder')]) ?>
         </div>
         <div class="col-md-6 col-xs-12">
-            <?php echo $form->field($model, 'email')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#email_field_placeholder')]) ?>
+            <?= $form->field($model, 'phone')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#telefono_field_placeholder')]) ?>
         </div>
         <div class="col-md-6 col-xs-12">
-            <?php echo $form->field($model, 'pec')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#pec_field_placeholder')]) ?>
-        </div>
-        <div class="col-md-6 col-xs-12">
-            <?php echo $form->field($model, 'phone')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#telefono_field_placeholder')]) ?>
-        </div>
-        <div class="col-md-6 col-xs-12">
-            <?php echo $form->field($model, 'fax')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#fax_field_placeholder')]) ?>
+            <?= $form->field($model, 'fax')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#fax_field_placeholder')]) ?>
         </div>
     </div>
-
-
     <div class="clearfix"></div>
     <?php $this->endBlock(); ?>
 

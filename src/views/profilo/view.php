@@ -5,18 +5,20 @@
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    lispa\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
 use lispa\amos\attachments\components\AttachmentsList;
 use lispa\amos\core\forms\AccordionWidget;
 use lispa\amos\core\forms\ContextMenuWidget;
+use lispa\amos\core\forms\ListTagsWidget;
 use lispa\amos\core\forms\MapWidget;
+use lispa\amos\core\helpers\Html;
 use lispa\amos\core\icons\AmosIcons;
 use lispa\amos\organizzazioni\assets\OrganizzazioniAsset;
+use lispa\amos\organizzazioni\models\ProfiloSedi;
 use lispa\amos\organizzazioni\Module;
-use yii\helpers\Html;
 
 /**
  * @var yii\web\View $this
@@ -29,12 +31,19 @@ if (!empty($moduleL)) {
 }
 
 $this->title = strip_tags($model);
-$this->params['breadcrumbs'][] = ['label' => Module::t('amosorganizzazioni', 'Organizzazioni'), 'url' => ['/organizzazioni']];
-$this->params['breadcrumbs'][] = ['label' => Module::t('amosorganizzazioni', 'Organizzazioni'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
 /** @var Module $organizzazioniModule */
 $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
+
+/** @var ProfiloSedi $emptyProfiloSedi */
+$emptyProfiloSedi = Module::instance()->createModel('ProfiloSedi');
+
+$operativeHeadquarter = $model->operativeHeadquarter;
+$hasOperativeHeadquarter = !empty($operativeHeadquarter);
+
+$legalHeadquarter = $model->legalHeadquarter;
+$hasLegalHeadquarter = !is_null($legalHeadquarter);
 
 ?>
 
@@ -54,7 +63,16 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
             <img class="img-responsive" src="<?= $url ?>" alt="<?= $model->name ?>">
             <div class="col-xs-12 subsection-info-view-header nop">
                 <p class="organization-title"><?= $model->name ?></p>
-                <span class="organization-site"><?= $model->sito_web ?></span>
+                <span class="organization-site">
+                <?php if (!empty($model->sito_web)): ?>
+                    <?php $btnTitle = Module::t('amosorganizzazioni', '#visit_website_btn_title'); ?>
+                    <?= Html::a($btnTitle, $model->sito_web, [
+                        'title' => $btnTitle,
+                        'class' => 'btn btn-navigation-secondary',
+                        'target' => 'blank'
+                    ]); ?>
+                <?php endif; ?>
+                </span>
             </div>
         </div>
 
@@ -81,45 +99,45 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
                 <?php elseif ($model->isOtherEntity()): ?>
                     <div class="col-md-12 col-xs-12 nop">
                         <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('tipologia_di_organizzazione') ?></div>
-                        <div class="col-xs-8 nop info-value"><?= !empty($model->tipologiaDiOrganizzazione) ? $model->tipologiaDiOrganizzazione->name : '' ?></div>
+                        <div class="col-xs-8 nop info-value"><?= !empty($model->tipologiaDiOrganizzazione) ? $model->tipologiaDiOrganizzazione->name : '-' ?></div>
                     </div>
                 <?php endif; ?>
             <?php endif; ?>
             <div class="col-md-12 col-xs-12 nop">
                 <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('forma_legale') ?></div>
-                <div class="col-xs-8 nop info-value"><?= !empty($model->formaLegale) ? $model->formaLegale->name : "" ?></div>
+                <div class="col-xs-8 nop info-value"><?= !empty($model->formaLegale) ? $model->formaLegale->name : '-' ?></div>
             </div>
             <div class="col-md-12 col-xs-12 nop">
                 <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('partita_iva') ?></div>
-                <div class="col-xs-8 nop info-value"><?= $model->partita_iva ?></div>
+                <div class="col-xs-8 nop info-value"><?= ($model->partita_iva ? $model->partita_iva : '-') ?></div>
             </div>
             <div class="col-md-12 col-xs-12 nop">
                 <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('codice_fiscale') ?></div>
-                <div class="col-xs-8 nop info-value"><?= $model->codice_fiscale ?></div>
+                <div class="col-xs-8 nop info-value"><?= ($model->codice_fiscale ? $model->codice_fiscale : '-') ?></div>
             </div>
             <div class="col-md-12 col-xs-12 m-t-15 nop">
-                <div class="col-xs-4 nop info-label"><?= $model->operativeHeadquarter->getAttributeLabel('email') ?></div>
-                <div class="col-xs-8 nop info-value"><?= $model->operativeHeadquarter->email ?></div>
+                <div class="col-xs-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('email') ?></div>
+                <div class="col-xs-8 nop info-value"><?= $hasOperativeHeadquarter ? $operativeHeadquarter->email : '-' ?></div>
             </div>
             <div class="col-md-12 col-xs-12 nop">
-                <div class="col-xs-4 nop info-label"><?= $model->operativeHeadquarter->getAttributeLabel('pec') ?></div>
-                <div class="col-xs-8 nop info-value"><?= $model->operativeHeadquarter->pec ?></div>
+                <div class="col-xs-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('pec') ?></div>
+                <div class="col-xs-8 nop info-value"><?= $hasOperativeHeadquarter ? $operativeHeadquarter->pec : '-' ?></div>
             </div>
             <div class="col-md-12 col-xs-12 nop">
-                <div class="col-xs-4 nop info-label"><?= $model->operativeHeadquarter->getAttributeLabel('phone') ?></div>
-                <div class="col-xs-8 nop info-value"><?= $model->operativeHeadquarter->phone ?></div>
+                <div class="col-xs-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('phone') ?></div>
+                <div class="col-xs-8 nop info-value"><?= $hasOperativeHeadquarter ? $operativeHeadquarter->phone : '-' ?></div>
             </div>
             <div class="col-md-12 col-xs-12 nop">
-                <div class="col-xs-4 nop info-label"><?= $model->operativeHeadquarter->getAttributeLabel('fax') ?></div>
-                <div class="col-xs-8 nop info-value"><?= $model->operativeHeadquarter->fax ?></div>
+                <div class="col-xs-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('fax') ?></div>
+                <div class="col-xs-8 nop info-value"><?= $hasOperativeHeadquarter ? $operativeHeadquarter->fax : '-' ?></div>
             </div>
             <!--            <div class="col-lg-12 col-xs-12 nop">-->
             <!--                <div class="col-xs-4 nop info-label">-->
-            <?php //echo $model->operativeHeadquarter->getAttributeLabel('website') ?><!--</div>-->
-            <!--                <div class="col-xs-8 nop info-value">--><?php //echo $model->operativeHeadquarter->website ?><!--</div>-->
+            <?php //echo $model->getAttributeLabel('sito_web') ?><!--</div>-->
+            <!--                <div class="col-xs-8 nop info-value">--><?php //echo $model->sito_web ?><!--</div>-->
             <!--            </div>-->
             <div class="col-md-12 col-xs-12 m-t-15 nop">
-                <div class="col-xs-4 nop info-label"><?= $model->operativeHeadquarter->getAttributeLabel('address') ?></div>
+                <div class="col-xs-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('address') ?></div>
                 <div class="col-xs-8 nop info-value"><?= $model->getAddressFieldForView() ?></div>
             </div>
         </div>
@@ -128,21 +146,25 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
             <?= ContextMenuWidget::widget([
                 'model' => $model,
                 'actionModify' => $model->getFullUpdateUrl(),
-                'disableDelete' => true
+                'actionDelete' => $model->getFullDeleteUrl()
             ]) ?>
             <?php
-            $sedeIndirizzo = $model->sedeIndirizzo;
-            if ($sedeIndirizzo) {
-                echo Html::tag('div',
-                    MapWidget::widget([
-                        'coordinates' => [
-                            'lat' => $sedeIndirizzo->latitude,
-                            'lng' => $sedeIndirizzo->longitude,
-                        ],
-                        'zoom' => 17
-                    ]),
-                    ['class' => 'organization-header-map']);
-            } ?>
+            if (!$organizzazioniModule->oldStyleAddressEnabled) {
+                $sedeIndirizzo = $model->sedeIndirizzo;
+                if ($sedeIndirizzo) {
+                    echo Html::tag('div',
+                        MapWidget::widget([
+                            'coordinates' => [
+                                'lat' => $sedeIndirizzo->latitude,
+                                'lng' => $sedeIndirizzo->longitude,
+                            ],
+                            'zoom' => 17
+                        ]),
+                        ['class' => 'organization-header-map']
+                    );
+                }
+            }
+            ?>
         </div>
 
         <?php if ($organizzazioniModule->enableMembershipOrganizations && !is_null($model->parent)): ?>
@@ -187,7 +209,11 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
         </div>
         <div class="col-md-4 col-xs-12 nop">
             <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('rappresentante_legale') ?></div>
-            <div class="col-xs-8 nop info-value"><?= !empty($model->rappresentanteLegale) ? $model->rappresentanteLegale->nomeCognome : "" ?></div>
+            <?php if ($organizzazioniModule->enableRappresentanteLegaleText): ?>
+                <div class="col-xs-8 nop info-value"><?= !empty($model->rappresentante_legale_text) ? $model->rappresentante_legale_text : "" ?></div>
+            <?php else: ?>
+                <div class="col-xs-8 nop info-value"><?= !empty($model->rappresentanteLegale) ? $model->rappresentanteLegale->nomeCognome : "" ?></div>
+            <?php endif; ?>
         </div>
         <div class="col-md-4 col-xs-12 nop">
             <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('referente_operativo') ?></div>
@@ -205,15 +231,17 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
         $sedeLegaleIndirizzo = '';
         $mapSedeLegale = '';
 
-        $sedeLegaleIndirizzo = $model->sedeLegaleIndirizzo;
-        if ($sedeLegaleIndirizzo) {
-            $mapSedeLegale = MapWidget::widget([
-                'coordinates' => [
-                    'lat' => $sedeLegaleIndirizzo->latitude,
-                    'lng' => $sedeLegaleIndirizzo->longitude,
-                ],
-                'zoom' => 17
-            ]);
+        if (!$organizzazioniModule->oldStyleAddressEnabled) {
+            $sedeLegaleIndirizzo = $model->sedeLegaleIndirizzo;
+            if ($sedeLegaleIndirizzo) {
+                $mapSedeLegale = MapWidget::widget([
+                    'coordinates' => [
+                        'lat' => $sedeLegaleIndirizzo->latitude,
+                        'lng' => $sedeLegaleIndirizzo->longitude,
+                    ],
+                    'zoom' => 17
+                ]);
+            }
         }
 
         $accordionSedeLegale .= Html::tag('div',
@@ -221,57 +249,57 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
             ['class' => 'col-md-5 col-xs-6']
         );
 
-        $legalHeadquarter = $model->legalHeadquarter;
+        if ($hasLegalHeadquarter) {
+            $slIndirizzo = Html::tag('div',
+                Html::tag('div',
+                    $legalHeadquarter->getAttributeLabel('address'),
+                    ['class' => 'col-xs-4 nop info-label']) .
+                Html::tag('div',
+                    $model->getAddressFieldSedeLegaleForView(),
+                    ['class' => 'col-xs-8 nop info-value']),
+                ['class' => 'col-xs-12 nop']);
 
-        $slIndirizzo = Html::tag('div',
-            Html::tag('div',
-                $legalHeadquarter->getAttributeLabel('address'),
-                ['class' => 'col-xs-4 nop info-label']) .
-            Html::tag('div',
-                $model->getAddressFieldSedeLegaleForView(),
-                ['class' => 'col-xs-8 nop info-value']),
-            ['class' => 'col-xs-12 nop']);
+            $slEmail = Html::tag('div',
+                Html::tag('div',
+                    $legalHeadquarter->getAttributeLabel('email'),
+                    ['class' => 'col-xs-4 nop info-label']) .
+                Html::tag('div',
+                    $legalHeadquarter->email,
+                    ['class' => 'col-xs-8 nop info-value']),
+                ['class' => 'col-xs-12 nop']);
 
-        $slEmail = Html::tag('div',
-            Html::tag('div',
-                $legalHeadquarter->getAttributeLabel('email'),
-                ['class' => 'col-xs-4 nop info-label']) .
-            Html::tag('div',
-                $legalHeadquarter->email,
-                ['class' => 'col-xs-8 nop info-value']),
-            ['class' => 'col-xs-12 nop']);
+            $slPec = Html::tag('div',
+                Html::tag('div',
+                    $legalHeadquarter->getAttributeLabel('pec'),
+                    ['class' => 'col-xs-4 nop info-label']) .
+                Html::tag('div',
+                    $legalHeadquarter->pec,
+                    ['class' => 'col-xs-8 nop info-value']),
+                ['class' => 'col-xs-12 nop']);
 
-        $slPec = Html::tag('div',
-            Html::tag('div',
-                $legalHeadquarter->getAttributeLabel('pec'),
-                ['class' => 'col-xs-4 nop info-label']) .
-            Html::tag('div',
-                $legalHeadquarter->pec,
-                ['class' => 'col-xs-8 nop info-value']),
-            ['class' => 'col-xs-12 nop']);
+            $slTelefono = Html::tag('div',
+                Html::tag('div',
+                    $legalHeadquarter->getAttributeLabel('phone'),
+                    ['class' => 'col-xs-4 nop info-label']) .
+                Html::tag('div',
+                    $legalHeadquarter->phone,
+                    ['class' => 'col-xs-8 nop info-value']),
+                ['class' => 'col-xs-12 nop']);
 
-        $slTelefono = Html::tag('div',
-            Html::tag('div',
-                $legalHeadquarter->getAttributeLabel('phone'),
-                ['class' => 'col-xs-4 nop info-label']) .
-            Html::tag('div',
-                $legalHeadquarter->phone,
-                ['class' => 'col-xs-8 nop info-value']),
-            ['class' => 'col-xs-12 nop']);
+            $slFax = Html::tag('div',
+                Html::tag('div',
+                    $legalHeadquarter->getAttributeLabel('fax'),
+                    ['class' => 'col-xs-4 nop info-label']) .
+                Html::tag('div',
+                    $legalHeadquarter->fax,
+                    ['class' => 'col-xs-8 nop info-value']),
+                ['class' => 'col-xs-12 nop']);
 
-        $slFax = Html::tag('div',
-            Html::tag('div',
-                $legalHeadquarter->getAttributeLabel('fax'),
-                ['class' => 'col-xs-4 nop info-label']) .
-            Html::tag('div',
-                $legalHeadquarter->fax,
-                ['class' => 'col-xs-8 nop info-value']),
-            ['class' => 'col-xs-12 nop']);
-
-        $accordionSedeLegale .= Html::tag('div',
-            $slIndirizzo . $slEmail . $slPec . $slTelefono . $slFax,
-            ['class' => 'col-md-7 col-xs-6']
-        );
+            $accordionSedeLegale .= Html::tag('div',
+                $slIndirizzo . $slEmail . $slPec . $slTelefono . $slFax,
+                ['class' => 'col-md-7 col-xs-6']
+            );
+        }
 
         ?>
         <?= AccordionWidget::widget([
@@ -296,43 +324,46 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
         ]);
         ?>
 
-        <?php
-        $accordionSocial = '';
+        <?php if ($organizzazioniModule->enableSocial): ?>
+            <?php
+            $accordionSocial = '';
 
-        $accordionSocial .= Html::tag('div',
-            AmosIcons::show('facebook-box') . Html::tag('span', $model->facebook),
-            ['class' => 'col-sm-6 col-xs-12']);
-        $accordionSocial .= Html::tag('div',
-            AmosIcons::show('twitter-box') . Html::tag('span', $model->twitter),
-            ['class' => 'col-sm-6 col-xs-12']);
-        $accordionSocial .= Html::tag('div',
-            AmosIcons::show('google-plus-box') . Html::tag('span', $model->google),
-            ['class' => 'col-sm-6 col-xs-12']);
-        $accordionSocial .= Html::tag('div',
-            AmosIcons::show('linkedin-box') . Html::tag('span', $model->linkedin),
-            ['class' => 'col-sm-6 col-xs-12']);
-        ?>
-        <?= AccordionWidget::widget([
-            'items' => [
-                [
-                    'header' => Module::t('amosorganizzazioni', '#view_accordion_social'),
-                    'content' => $accordionSocial,
+            $accordionSocial .= Html::tag('div',
+                AmosIcons::show('facebook-box') . Html::tag('span', $model->facebook),
+                ['class' => 'col-sm-6 col-xs-12']);
+            $accordionSocial .= Html::tag('div',
+                AmosIcons::show('twitter-box') . Html::tag('span', $model->twitter),
+                ['class' => 'col-sm-6 col-xs-12']);
+            $accordionSocial .= Html::tag('div',
+                AmosIcons::show('google-plus-box') . Html::tag('span', $model->google),
+                ['class' => 'col-sm-6 col-xs-12']);
+            $accordionSocial .= Html::tag('div',
+                AmosIcons::show('linkedin-box') . Html::tag('span', $model->linkedin),
+                ['class' => 'col-sm-6 col-xs-12']);
+            ?>
+            <?= AccordionWidget::widget([
+                'items' => [
+                    [
+                        'header' => Module::t('amosorganizzazioni', '#view_accordion_social'),
+                        'content' => $accordionSocial,
+                    ]
+                ],
+                'headerOptions' => ['tag' => 'h2'],
+                'clientOptions' => [
+                    'collapsible' => true,
+                    'active' => false,
+                    'icons' => [
+                        'header' => 'ui-icon-amos am am-plus-square',
+                        'activeHeader' => 'ui-icon-amos am am-minus-square',
+                    ]
+                ],
+                'options' => [
+                    'class' => 'social-accordion'
                 ]
-            ],
-            'headerOptions' => ['tag' => 'h2'],
-            'clientOptions' => [
-                'collapsible' => true,
-                'active' => false,
-                'icons' => [
-                    'header' => 'ui-icon-amos am am-plus-square',
-                    'activeHeader' => 'ui-icon-amos am am-minus-square',
-                ]
-            ],
-            'options' => [
-                'class' => 'social-accordion'
-            ]
-        ]);
-        ?>
+            ]);
+            ?>
+        <?php endif; ?>
+
         <?= AccordionWidget::widget([
             'items' => [
                 [
@@ -344,6 +375,24 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
             'clientOptions' => [
                 'collapsible' => true,
                 'active' => 1,
+                'icons' => [
+                    'header' => 'ui-icon-amos am am-plus-square',
+                    'activeHeader' => 'ui-icon-amos am am-minus-square',
+                ]
+            ],
+        ]); ?>
+
+        <?= AccordionWidget::widget([
+            'items' => [
+                [
+                    'header' => Module::t('amosorganizzazioni', '#employees'),
+                    'content' => $this->render('_employees', ['model' => $model, 'isView' => true]),
+                ]
+            ],
+            'headerOptions' => ['tag' => 'h2'],
+            'clientOptions' => [
+                'collapsible' => false,
+                'active' => false,
                 'icons' => [
                     'header' => 'ui-icon-amos am am-plus-square',
                     'activeHeader' => 'ui-icon-amos am am-minus-square',
@@ -390,6 +439,19 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
                     </div>
                 </div>
             <?php endif; ?>
+        <?php endif; ?>
+        <?php if (\Yii::$app->getModule('tag')): ?>
+            <div class="col-xs-12 tags-section-sidebar nop" id="section-tags">
+                <?= Html::tag('h2', AmosIcons::show('tag', [], 'dash') . Module::t('amosorganizzazioni', '#tags_title')) ?>
+                <div class="col-xs-12">
+                    <?= ListTagsWidget::widget([
+                        'userProfile' => $model->id,
+                        'className' => $model->className(),
+                        'viewFilesCounter' => true,
+                    ]);
+                    ?>
+                </div>
+            </div>
         <?php endif; ?>
         <div class="col-xs-12 attachment-section-sidebar nop">
             <?= Html::tag('h2', AmosIcons::show('paperclip', [], 'dash') . Module::t('amosorganizzazioni', '#attachments_title')) ?>

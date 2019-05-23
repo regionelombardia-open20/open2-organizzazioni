@@ -12,6 +12,7 @@
 namespace lispa\amos\organizzazioni\models\search;
 
 use lispa\amos\organizzazioni\models\ProfiloSedi;
+use lispa\amos\organizzazioni\Module;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 
@@ -71,7 +72,9 @@ class ProfiloSediSearch extends ProfiloSedi
 
     public function search($params)
     {
-        $query = ProfiloSedi::find();
+        /** @var ProfiloSedi $model */
+        $model = Module::instance()->createModel('ProfiloSedi');
+        $query = $model::find();
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,

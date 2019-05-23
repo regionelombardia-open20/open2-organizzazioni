@@ -12,6 +12,7 @@
 namespace lispa\amos\organizzazioni\models\base;
 
 use lispa\amos\core\record\Record;
+use lispa\amos\organizzazioni\Module;
 use Yii;
 
 /**
@@ -63,6 +64,6 @@ abstract class ProfiloEntiType extends Record
      */
     public function getProfili()
     {
-        return $this->hasMany(\lispa\amos\organizzazioni\models\Profilo::className(), ['profilo_enti_type_id' => 'id']);
+        return $this->hasMany(Module::instance()->createModel('Profilo')->className(), ['profilo_enti_type_id' => 'id']);
     }
 }

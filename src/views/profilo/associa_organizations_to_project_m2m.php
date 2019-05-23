@@ -5,27 +5,29 @@
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    lispa\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
 use lispa\amos\core\forms\editors\m2mWidget\M2MWidget;
-use lispa\amos\projectmanagement\Module;
+use lispa\amos\organizzazioni\models\Profilo;
 use yii\db\ActiveQuery;
 
 /**
+ * @var yii\web\View $this
  * @var \lispa\amos\projectmanagement\models\Projects $model
  */
 
 $this->title = $model;
-$this->params['breadcrumbs'][] = ['label' => Module::t('amosproject_management', 'Projects'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Projects'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = [
     'label' => strip_tags($model),
     'url' => ['update', 'id' => $model->id, '#' => 'tab-organizations']
 ];
-$this->params['breadcrumbs'][] = Module::t('amosproject_management', 'Invite Organizations');
+$this->params['breadcrumbs'][] = \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Invite Organizations');
 
-$organizationModelClass = \lispa\amos\organizzazioni\models\Profilo::className();
+/** @var Profilo $organizationModelClass */
+$organizationModelClass = \lispa\amos\organizzazioni\Module::instance()->createModel('Profilo')->className();
 
 /** @var ActiveQuery $query */
 $query = $organizationModelClass::find()->andFilterWhere([
@@ -59,18 +61,18 @@ if (isset($post['genericSearch'])) {
     ],
     'viewSearch' => (isset($viewM2MWidgetGenericSearch) ? $viewM2MWidgetGenericSearch : false),
     'targetUrlController' => 'projects',
-    'moduleClassName' => Module::className(),
+    'moduleClassName' => \lispa\amos\projectmanagement\Module::className(),
     'postName' => 'Project',
     'postKey' => 'Organization',
     'targetColumnsToView' => [
         'name' => [
             'attribute' => 'name',
-            'label' => Module::t('amosproject_management', 'Name'),
+            'label' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Name'),
             'headerOptions' => [
-                'id' => Module::t('amosproject_management', 'Name'),
+                'id' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Name'),
             ],
             'contentOptions' => [
-                'headers' => Module::t('amosproject_management', 'Name'),
+                'headers' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Name'),
             ]
         ],
         'indirizzo',

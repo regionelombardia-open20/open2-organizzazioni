@@ -10,9 +10,7 @@
  */
 
 use lispa\amos\core\migration\AmosMigrationPermissions;
-use yii\helpers\ArrayHelper;
 use yii\rbac\Permission;
-
 
 /**
  * Class m180829_140839_add_profilo_sedi_permissions
@@ -23,32 +21,6 @@ class m180829_140839_add_profilo_sedi_permissions extends AmosMigrationPermissio
      * @inheritdoc
      */
     protected function setRBACConfigurations()
-    {
-        return ArrayHelper::merge(
-            $this->setPluginRoles(),
-            $this->setModelPermissions()
-        );
-    }
-
-    private function setPluginRoles()
-    {
-        return [
-            [
-                'name' => 'AMMINISTRATORE_ORGANIZZAZIONI',
-                'type' => Permission::TYPE_ROLE,
-                'description' => 'Administrator role for the Organizzazioni plugin',
-                'parent' => ['ADMIN'],
-                'children' => [
-                    'PROFILO_CREATE',
-                    'PROFILO_READ',
-                    'PROFILO_UPDATE',
-                    'PROFILO_DELETE'
-                ]
-            ]
-        ];
-    }
-
-    private function setModelPermissions()
     {
         return [
             [
@@ -75,7 +47,6 @@ class m180829_140839_add_profilo_sedi_permissions extends AmosMigrationPermissio
                 'description' => 'Permesso di DELETE sul model ProfiloSedi',
                 'parent' => ['AMMINISTRATORE_ORGANIZZAZIONI']
             ],
-
         ];
     }
 }

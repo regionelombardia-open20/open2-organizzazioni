@@ -5,28 +5,25 @@
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    lispa\amos\organizzazioni\widgets
  * @category   CategoryName
  */
 
 namespace lispa\amos\organizzazioni\widgets;
 
-use lispa\amos\community\models\CommunityUserMm;
+use lispa\amos\core\forms\editors\m2mWidget\M2MWidget;
 use lispa\amos\core\helpers\Html;
-use lispa\amos\core\module\AmosModule;
 use lispa\amos\projectmanagement\models\Projects;
 use lispa\amos\projectmanagement\Module;
-use Yii;
 use yii\base\InvalidConfigException;
 use yii\base\Widget;
 
 /**
- * Class ProjectOrganizationsWidget
- * @package lispa\amos\community\widgets
+ * Class JoinedOrganizationsWidget
+ * @package lispa\amos\organizzazioni\widgets
  */
 class JoinedOrganizationsWidget extends Widget
 {
-
     /**
      * @var Projects $model
      */
@@ -62,9 +59,8 @@ class JoinedOrganizationsWidget extends Widget
      */
     public function run()
     {
-
         $model = $this->model;
-        $widget = \lispa\amos\core\forms\editors\m2mWidget\M2MWidget::widget([
+        $widget = M2MWidget::widget([
             'model' => $model,
             'modelId' => $model->id,
             'modelData' => $model->getJoinedOrganizations(),

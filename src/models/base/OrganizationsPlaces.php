@@ -95,7 +95,7 @@ abstract class OrganizationsPlaces extends Record
      */
     public function getOrganizations()
     {
-        return $this->hasMany(\lispa\amos\organizzazioni\models\Profilo::className(), ['operational_headquarters_place_id' => 'place_id']);
+        return $this->hasMany(Module::instance()->createModel('Profilo')->className(), ['operational_headquarters_place_id' => 'place_id']);
     }
 
     /**
@@ -103,6 +103,6 @@ abstract class OrganizationsPlaces extends Record
      */
     public function getOrganizations0()
     {
-        return $this->hasMany(\lispa\amos\organizzazioni\models\Profilo::className(), ['registered_office_place_id' => 'place_id']);
+        return $this->hasMany(Module::instance()->createModel('Profilo')->className(), ['registered_office_place_id' => 'place_id']);
     }
 }

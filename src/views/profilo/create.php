@@ -14,22 +14,20 @@ use lispa\amos\organizzazioni\Module;
 /**
  * @var yii\web\View $this
  * @var lispa\amos\organizzazioni\models\Profilo $model
- * @var lispa\amos\organizzazioni\models\ProfiloSediLegal $mainSedeLegale
- * @var lispa\amos\organizzazioni\models\ProfiloSediOperative $mainSedeOperativa
+ * @var lispa\amos\organizzazioni\models\ProfiloSediLegal $mainLegalHeadquarter
+ * @var lispa\amos\organizzazioni\models\ProfiloSediOperative $mainOperativeHeadquarter
  */
 
 $this->title = Module::t('amosorganizzazioni', 'Create organization');
-$this->params['breadcrumbs'][] = ['label' => 'Organizzazioni', 'url' => ['/organizzazioni']];
-$this->params['breadcrumbs'][] = ['label' => 'Organizzazioni', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
 ?>
 
 <div class="are-profilo-create">
-    <?php echo $this->render('_form', [
+    <?= $this->render('_form', [
         'model' => $model,
-        'mainSedeLegale' => $mainSedeLegale,
-        'mainSedeOperativa' => $mainSedeOperativa,
+        'mainLegalHeadquarter' => $mainLegalHeadquarter,
+        'mainOperativeHeadquarter' => $mainOperativeHeadquarter,
         'fid' => NULL,
         'dataField' => NULL,
         'dataEntity' => NULL,

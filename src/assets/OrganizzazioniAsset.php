@@ -12,6 +12,8 @@
 namespace lispa\amos\organizzazioni\assets;
 
 use yii\web\AssetBundle;
+use lispa\amos\core\widget\WidgetAbstract;
+
 
 class OrganizzazioniAsset extends AssetBundle
 {
@@ -27,5 +29,16 @@ class OrganizzazioniAsset extends AssetBundle
         'yii\web\JqueryAsset',
         'yii\jui\JuiAsset'
     ];
+
+    /**
+     * @inheritdoc
+     */
+    public function init()
+    {
+        if(!empty(\Yii::$app->params['dashboardEngine']) && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS){
+            $this->css = ['less/organizzazioniFullsize.less'];
+        }
+        parent::init();
+    }
 
 }

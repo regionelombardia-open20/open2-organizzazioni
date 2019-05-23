@@ -11,7 +11,9 @@
 
 namespace lispa\amos\organizzazioni\models;
 
+use lispa\amos\admin\AmosAdmin;
 use lispa\amos\attachments\behaviors\FileBehavior;
+use lispa\amos\core\helpers\Html;
 use lispa\amos\core\interfaces\OrganizationsModelInterface;
 use lispa\amos\core\validators\CfPivaValidator;
 use lispa\amos\core\validators\PIVAValidator;
@@ -19,19 +21,21 @@ use lispa\amos\cwh\AmosCwh;
 use lispa\amos\cwh\models\CwhAuthAssignment;
 use lispa\amos\cwh\models\CwhConfig;
 use lispa\amos\organizzazioni\components\OrganizationsPlacesComponents;
-use lispa\amos\organizzazioni\i18n\grammar\OrganizationGrammar;
+use lispa\amos\organizzazioni\i18n\grammar\ProfiloGrammar;
 use lispa\amos\organizzazioni\Module;
 use lispa\amos\organizzazioni\widgets\icons\WidgetIconProfilo;
+use lispa\amos\organizzazioni\widgets\ProfiloCardWidget;
 use lispa\amos\organizzazioni\widgets\UserNetworkWidget;
 use Yii;
+use yii\db\Query;
 use yii\helpers\ArrayHelper;
 
 /**
  * Class Profilo
  * This is the model class for table "profilo".
  *
- * @property \lispa\amos\organizzazioni\models\ProfiloSedi $operativeHeadquarter
- * @property \lispa\amos\organizzazioni\models\ProfiloSedi $legalHeadquarter
+ * @property \lispa\amos\organizzazioni\models\ProfiloSediOperative $operativeHeadquarter
+ * @property \lispa\amos\organizzazioni\models\ProfiloSediLegal $legalHeadquarter
  * @property \lispa\amos\organizzazioni\models\OrganizationsPlaces $sedeIndirizzo
  * @property \lispa\amos\organizzazioni\models\OrganizationsPlaces $sedeLegaleIndirizzo
  *
@@ -40,6 +44,10 @@ use yii\helpers\ArrayHelper;
 class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements OrganizationsModelInterface
 {
     private $allegati;
+
+    /**
+     * @var array $places_fields
+     */
     protected $places_fields = [
         'mainLegalHeadquarterAddress',
         'mainOperativeHeadquarterAddress'
@@ -126,11 +134,13 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function init()
     {
-        $this->on(self::EVENT_BEFORE_VALIDATE, [$this, 'organizationsBeforeValidate']);
-
         parent::init();
 
-        if (!$this->isNewRecord) {
+        if (!$this->organizzazioniModule->oldStyleAddressEnabled) {
+            $this->on(self::EVENT_BEFORE_VALIDATE, [$this, 'organizationsBeforeValidate']);
+        }
+
+        if (!$this->isNewRecord && !$this->organizzazioniModule->oldStyleAddressEnabled) {
             $mainOperativeHeadquarter = $this->operativeHeadquarter;
             if (!is_null($mainOperativeHeadquarter)) {
                 $this->mainOperativeHeadquarterAddress = $mainOperativeHeadquarter->address;
@@ -140,6 +150,12 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
                 $this->mainLegalHeadquarterAddress = $mainLegalHeadquarter->address;
             }
         }
+
+        /** @var Module $organizzazioniModule */
+        if ($this->organizzazioniModule->forceSameSede) {
+            // Not check if is new record because it must be always the same.
+            $this->la_sede_legale_e_la_stessa_del = 1;
+        }
     }
 
     /**
@@ -147,7 +163,7 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function rules()
     {
-        return ArrayHelper::merge(parent::rules(),
+        $rules = ArrayHelper::merge(parent::rules(),
             [
                 [['partita_iva'], PIVAValidator::className()],
 //                [['partita_iva'], 'string', 'length' => 11],
@@ -161,15 +177,30 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
                     'mainLegalHeadquarterAddress',
                     'mainOperativeHeadquarterAddress'
                 ], 'string'],
-                [['mainOperativeHeadquarterAddress'], 'required'],
+
             ]);
+
+        if ($this->organizzazioniModule->enableSediRequired && !$this->organizzazioniModule->oldStyleAddressEnabled) {
+            $rules = ArrayHelper::merge($rules, [
+                [['mainOperativeHeadquarterAddress', 'la_sede_legale_e_la_stessa_del'], 'required'],
+                [['mainLegalHeadquarterAddress'], 'required', 'when' => function ($model) {
+                    /** @var Profilo $model */
+                    return ($model->la_sede_legale_e_la_stessa_del == 0);
+                }, 'whenClient' => "function (attribute, value) {
+                    return $('#" . Html::getInputId($this, 'la_sede_legale_e_la_stessa_del') . "').val() == 0;
+                }"],
+            ]);
+        }
+        return $rules;
     }
 
     public function organizationsBeforeValidate()
     {
-        foreach ($this->places_fields as $place_field) {
-            $place_id = $this->{$place_field};
-            OrganizationsPlacesComponents::checkPlace($place_id);
+        if (!$this->organizzazioniModule->oldStyleAddressEnabled) {
+            foreach ($this->places_fields as $place_field) {
+                $place_id = $this->{$place_field};
+                OrganizationsPlacesComponents::checkPlace($place_id);
+            }
         }
     }
 
@@ -178,9 +209,11 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function afterSave($insert, $changedAttributes)
     {
-        foreach ($this->places_fields as $place_field) {
-            $place_id = $this->{$place_field};
-            OrganizationsPlacesComponents::checkPlace($place_id);
+        if (!$this->organizzazioniModule->oldStyleAddressEnabled) {
+            foreach ($this->places_fields as $place_field) {
+                $place_id = $this->{$place_field};
+                OrganizationsPlacesComponents::checkPlace($place_id);
+            }
         }
 
         parent::afterSave($insert, $changedAttributes);
@@ -192,6 +225,10 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getAddressString($field_name)
     {
+        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+            return false;
+        }
+
         //check if the input $field_name is in the class array containg the address's fields
         if (!isset($this->{$field_name}) && !in_array($field_name, $this->places_fields)) {
             return false;
@@ -459,7 +496,51 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getGridViewColumns()
     {
-        return [];
+        return [
+            'profilo_enti_type_id' => [
+                'attribute' => 'profilo_enti_type_id',
+                'value' => 'profiloEntiType.name'
+            ],
+            'name',
+            'formaLegale.name',
+            'addressField:raw',
+            'operativeHeadquarter.email',
+            [
+                'class' => 'lispa\amos\core\views\grid\ActionColumn',
+            ]
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function getUserNetworkWidgetColumns()
+    {
+        return [
+            'profilo.profilo_enti_type_id' => [
+                'attribute' => 'profilo.profilo_enti_type_id',
+                'value' => 'profilo.profiloEntiType.name'
+            ],
+            'logo_id' => [
+                'headerOptions' => [
+                    'id' => Module::t('amosorganizzazioni', '#logo'),
+                ],
+                'contentOptions' => [
+                    'headers' => Module::t('amosorganizzazioni', '#logo'),
+                ],
+                'label' => Module::t('amosorganizzazioni', '#logo'),
+                'format' => 'raw',
+                'value' => function ($model) {
+                    /** @var ProfiloUserMm $model */
+                    return ProfiloCardWidget::widget(['model' => $model->profilo]);
+                }
+            ],
+            'profilo.name',
+            [
+                'attribute' => 'profilo.createdUserProfile.created_by',
+                'value' => 'profilo.createdUserProfile.nomeCognome'
+            ],
+        ];
     }
 
     /**
@@ -479,11 +560,11 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
     }
 
     /**
-     * @return mixed
+     * @return ProfiloGrammar
      */
     public function getGrammar()
     {
-        return new OrganizationGrammar();
+        return new ProfiloGrammar();
     }
 
     /**
@@ -556,7 +637,7 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
 
     /**
      * Return true if the user with id $userId belong to the network with id $networkId; if $userId is null the logged User id is considered
-     * @param  int $networkId
+     * @param int $networkId
      * @param int $userId
      * @return bool
      */
@@ -602,6 +683,12 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getUserNetworkWidget($userId = null, $isUpdate = false)
     {
+        /** @var AmosAdmin $adminModule */
+        $adminModule = AmosAdmin::instance();
+        $organizationsModuleName = $adminModule->getOrganizationModuleName();
+        if (is_null(Yii::$app->getModule($organizationsModuleName))) {
+            return '';
+        }
         return UserNetworkWidget::widget(['userId' => $userId, 'isUpdate' => $isUpdate]);
     }
 
@@ -650,6 +737,94 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
         return $cwhConfigId;
     }
 
+    /**
+     * Add CWH permissions based on the role for which a permissions array has been specified,
+     * Remove CWH permissions on profilo domain in case of role degradation
+     * or delete all permission in case of user-profilo association deletion
+     *
+     * @param ProfiloUserMm $profiloUserMmRow
+     * @param bool|false $delete - if true remove all permission (case deletion user-community association)
+     */
+    public function setCwhAuthAssignments($profiloUserMmRow, $delete = false)
+    {
+        /** @var AmosCwh $cwhModule */
+        $cwhModule = Yii::$app->getModule("cwh");
+        $cwhNodeId = self::tableName() . '-' . $this->id;
+        $userId = $profiloUserMmRow->user_id;
+        $cwhConfigId = self::getCwhConfigId();
+
+        $cwhPermissions = CwhAuthAssignment::find()->andWhere([
+            'user_id' => $userId,
+            'cwh_config_id' => $cwhConfigId,
+            'cwh_network_id' => $this->id
+        ])->all();
+
+        if ($delete) {
+            if (!empty($cwhPermissions)) {
+                /** @var CwhAuthAssignment $cwhPermission */
+                foreach ($cwhPermissions as $cwhPermission) {
+                    $cwhPermission->delete();
+                }
+            } else {
+                $existingPermissions = [];
+                foreach ($cwhPermissions as $item) {
+                    $existingPermissions[$item->item_name] = $item;
+                }
+
+                /** @var Profilo $callingModel */
+                $callingModel = $this->organizzazioniModule->createModel('Profilo');
+                /** @var array $rolePermissions */
+                $rolePermissions = $callingModel->getRolePermissions($profiloUserMmRow->role);
+                $permissionsToAdd = [];
+                if (!is_null($rolePermissions) && count($rolePermissions)) {
+                    // For each enabled Content model in CWH...
+                    foreach ($cwhModule->modelsEnabled as $modelClassname) {
+                        // ...and each role permission...
+                        foreach ($rolePermissions as $permission) {
+                            // ...
+                            $cwhAuthAssignment = new CwhAuthAssignment();
+                            $cwhAuthAssignment->user_id = $userId;
+                            $cwhAuthAssignment->item_name = $permission . '_' . $modelClassname;
+                            $cwhAuthAssignment->cwh_nodi_id = $cwhNodeId;
+                            $cwhAuthAssignment->cwh_config_id = $cwhConfigId;
+                            $cwhAuthAssignment->cwh_network_id = $this->id;
+                            $permissionsToAdd[$cwhAuthAssignment->item_name] = $cwhAuthAssignment;
+                        }
+                    }
+                }
+                if (!empty($permissionsToAdd)) {
+                    /** @var CwhAuthAssignment $permissionToAdd */
+                    foreach ($permissionsToAdd as $key => $permissionToAdd) {
+                        //if user has not already the permission for the community , add it to cwh auth assignment
+                        if (!array_key_exists($key, $existingPermissions)) {
+                            $permissionToAdd->save(false);
+                        }
+                    }
+                }
+                // check if there are permissions to remove
+                if (!empty($existingPermissions)) {
+                    /** @var CwhAuthAssignment $cwhPermission */
+                    foreach ($existingPermissions as $key => $cwhPermission) {
+                        if (!array_key_exists($key, $permissionsToAdd)) {
+                            $cwhPermission->delete();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Array containing user permission for a given role
+     * @param string $role
+     * @return array
+     */
+    public function getRolePermissions($role)
+    {
+        return ['CWH_PERMISSION_CREATE', 'CWH_PERMISSION_VALIDATE'];
+    }
+
+
     public function getNameField()
     {
         return $this->name;
@@ -660,7 +835,7 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getOperativeHeadquarter()
     {
-        return $this->hasOne(\lispa\amos\organizzazioni\models\ProfiloSediOperative::className(), ['profilo_id' => 'id'])
+        return $this->hasOne($this->organizzazioniModule->createModel('ProfiloSediOperative')->className(), ['profilo_id' => 'id'])
             ->andWhere(['profilo_sedi_type_id' => ProfiloSediTypes::TYPE_OPERATIVE_HEADQUARTER])
             ->andWhere(['active' => 1])
             ->andWhere(['is_main' => 1]);
@@ -671,7 +846,10 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getSedeIndirizzo()
     {
-        return $this->hasOne(OrganizationsPlaces::className(), ['place_id' => 'address'])->via('operativeHeadquarter');
+        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+            return null;
+        }
+        return $this->hasOne($this->organizzazioniModule->createModel('OrganizationsPlaces')->className(), ['place_id' => 'address'])->via('operativeHeadquarter');
     }
 
     /**
@@ -679,15 +857,20 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getAddressField()
     {
-        if (is_null($this->sedeIndirizzo)) {
-            return '-';
-        }
+        if (!$this->organizzazioniModule->oldStyleAddressEnabled) {
+            if (is_null($this->sedeIndirizzo)) {
+                return '-';
+            }
 
-        return ($this->sedeIndirizzo->postal_code ? '(' . $this->sedeIndirizzo->postal_code . ')' : '') .
-            ($this->sedeIndirizzo->region ? ' ' . $this->sedeIndirizzo->region : '') .
-            ($this->sedeIndirizzo->city ? ' ' . $this->sedeIndirizzo->city : '') .
-            ($this->sedeIndirizzo->address ? ' ' . $this->sedeIndirizzo->address : '') .
-            ($this->sedeIndirizzo->street_number ? ' ' . $this->sedeIndirizzo->street_number : '');
+            return ($this->sedeIndirizzo->postal_code ? '(' . $this->sedeIndirizzo->postal_code . ')' : '') .
+                ($this->sedeIndirizzo->region ? ' ' . $this->sedeIndirizzo->region : '') .
+                ($this->sedeIndirizzo->city ? ' ' . $this->sedeIndirizzo->city : '') .
+                ($this->sedeIndirizzo->address ? ' ' . $this->sedeIndirizzo->address : '') .
+                ($this->sedeIndirizzo->street_number ? ' ' . $this->sedeIndirizzo->street_number : '');
+        } else {
+            $operativeHeadquarter = $this->operativeHeadquarter;
+            return (!is_null($operativeHeadquarter) ? $operativeHeadquarter->getOldStyleAddress() : '-');
+        }
     }
 
     /**
@@ -695,7 +878,20 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getAddressFieldAsArray()
     {
-        if (!empty($this->sedeIndirizzo)) {
+        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+            $operativeHeadquarter = $this->operativeHeadquarter;
+            if (!is_null($operativeHeadquarter)) {
+                return [
+                    'postal_code' => ($operativeHeadquarter->cap_text ? $operativeHeadquarter->cap_text : ''),
+                    'region' => (!is_null($operativeHeadquarter->province) && !is_null($operativeHeadquarter->province->istatRegioni) ? $operativeHeadquarter->province->istatRegioni->nome : ''),
+                    'city' => (!is_null($operativeHeadquarter->city) ? $operativeHeadquarter->city->nome : ''),
+                    'address' => ($operativeHeadquarter->address_text ? $operativeHeadquarter->address_text : ''),
+                    'street_number' => '',
+                ];
+            } else {
+                return null;
+            }
+        } elseif (!empty($this->sedeIndirizzo)) {
             return [
                 'postal_code' => $this->sedeIndirizzo->postal_code,
                 'region' => $this->sedeIndirizzo->region,
@@ -714,7 +910,7 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     private function getAddressForView($addressArray)
     {
-        $headquarterAddress = "";
+        $headquarterAddress = "-";
         $addressFieldAsArray = $addressArray;
         if (!empty($addressFieldAsArray) && is_array($addressFieldAsArray)) {
             $headquarterAddress = $addressFieldAsArray['address'] . ', ' . $addressFieldAsArray['street_number'] . '<br />' .
@@ -729,6 +925,9 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getAddressFieldForView()
     {
+        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+            return (!is_null($this->operativeHeadquarter) ? $this->operativeHeadquarter->getOldStyleAddress() : '-');
+        }
         return $this->getAddressForView($this->getAddressFieldAsArray());
     }
 
@@ -737,7 +936,7 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getLegalHeadquarter()
     {
-        return $this->hasOne(\lispa\amos\organizzazioni\models\ProfiloSediLegal::className(), ['profilo_id' => 'id'])
+        return $this->hasOne($this->organizzazioniModule->createModel('ProfiloSediLegal')->className(), ['profilo_id' => 'id'])
             ->andWhere(['profilo_sedi_type_id' => ProfiloSediTypes::TYPE_LEGAL_HEADQUARTER])
             ->andWhere(['active' => 1])
             ->andWhere(['is_main' => 1]);
@@ -748,7 +947,10 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getSedeLegaleIndirizzo()
     {
-        return $this->hasOne(OrganizationsPlaces::className(), ['place_id' => 'address'])->via('legalHeadquarter');
+        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+            return null;
+        }
+        return $this->hasOne($this->organizzazioniModule->createModel('OrganizationsPlaces')->className(), ['place_id' => 'address'])->via('legalHeadquarter');
     }
 
     /**
@@ -756,15 +958,19 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getAddressFieldSedeLegale()
     {
-        if (is_null($this->sedeLegaleIndirizzo)) {
-            return '-';
-        }
+        if (!$this->organizzazioniModule->oldStyleAddressEnabled) {
+            if (is_null($this->sedeLegaleIndirizzo)) {
+                return '-';
+            }
 
-        return ($this->sedeLegaleIndirizzo->postal_code ? '(' . $this->sedeLegaleIndirizzo->postal_code . ')' : '') .
-            ($this->sedeLegaleIndirizzo->region ? ' ' . $this->sedeLegaleIndirizzo->region : '') .
-            ($this->sedeLegaleIndirizzo->city ? ' ' . $this->sedeLegaleIndirizzo->city : '') .
-            ($this->sedeLegaleIndirizzo->address ? ' ' . $this->sedeLegaleIndirizzo->address : '') .
-            ($this->sedeLegaleIndirizzo->street_number ? ' ' . $this->sedeLegaleIndirizzo->street_number : '');
+            return ($this->sedeLegaleIndirizzo->postal_code ? '(' . $this->sedeLegaleIndirizzo->postal_code . ')' : '') .
+                ($this->sedeLegaleIndirizzo->region ? ' ' . $this->sedeLegaleIndirizzo->region : '') .
+                ($this->sedeLegaleIndirizzo->city ? ' ' . $this->sedeLegaleIndirizzo->city : '') .
+                ($this->sedeLegaleIndirizzo->address ? ' ' . $this->sedeLegaleIndirizzo->address : '') .
+                ($this->sedeLegaleIndirizzo->street_number ? ' ' . $this->sedeLegaleIndirizzo->street_number : '');
+        } else {
+            return (!is_null($this->legalHeadquarter) ? $this->legalHeadquarter->getOldStyleAddress() : '-');
+        }
     }
 
     /**
@@ -772,7 +978,20 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getAddressFieldSedeLegaleAsArray()
     {
-        if (!empty($this->sedeLegaleIndirizzo)) {
+        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+            $legalHeadquarter = $this->legalHeadquarter;
+            if (!is_null($legalHeadquarter)) {
+                return [
+                    'postal_code' => ($legalHeadquarter->cap_text ? $legalHeadquarter->cap_text : ''),
+                    'region' => (!is_null($legalHeadquarter->province) && !is_null($legalHeadquarter->province->istatRegioni) ? $legalHeadquarter->province->istatRegioni->nome : ''),
+                    'city' => (!is_null($legalHeadquarter->city) ? $legalHeadquarter->city->nome : ''),
+                    'address' => ($legalHeadquarter->address_text ? $legalHeadquarter->address_text : ''),
+                    'street_number' => '',
+                ];
+            } else {
+                return null;
+            }
+        } elseif (!empty($this->sedeLegaleIndirizzo)) {
             return [
                 'postal_code' => $this->sedeLegaleIndirizzo->postal_code,
                 'region' => $this->sedeLegaleIndirizzo->region,
@@ -790,6 +1009,9 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getAddressFieldSedeLegaleForView()
     {
+        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+            return (!is_null($this->legalHeadquarter) ? $this->legalHeadquarter->getOldStyleAddress() : '-');
+        }
         return $this->getAddressForView($this->getAddressFieldSedeLegaleAsArray());
     }
 
@@ -807,5 +1029,38 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
     public function isOtherEntity()
     {
         return ($this->profilo_enti_type_id == ProfiloEntiType::TYPE_OTHER_ENTITY);
+    }
+
+    /**
+     * Return the recordset of all recipients relative to the networks
+     * associated to the relative user (they may be different? check it!)
+     * @param array $networkIds
+     * @param array $usersId
+     * @return array
+     */
+    public function getListOfRecipients($networkIds = [], $usersId = [])
+    {
+        $query = new Query();
+        /** @var Profilo $modelProfilo */
+        $modelProfilo = $this->organizzazioniModule->createModel('Profilo');
+        /** @var ProfiloUserMm $modelProfiloUserMm */
+        $modelProfiloUserMm = $this->organizzazioniModule->createModel('ProfiloUserMm');
+        $profiloTable = $modelProfilo::tableName();
+        $profiloUserMmTable = $modelProfiloUserMm::tableName();
+        $query->select([
+            "CONCAT('" . $profiloTable . "', '-', " . $profiloUserMmTable . ".profilo_id) AS objID",
+            $profiloTable . '.id', $profiloTable . '.name', $profiloTable . '.deleted_at',
+            $profiloUserMmTable . '.profilo_id', $profiloUserMmTable . '.profilo_id AS reference',
+            $profiloUserMmTable . '.deleted_at'
+        ])
+            ->from(static::tableName())
+            ->leftJoin($profiloUserMmTable, $profiloUserMmTable . '.profilo_id = ' . $profiloTable . '.id
+        AND ' . $profiloUserMmTable . '.deleted_at IS NULL')
+            ->where([$profiloTable . '.id' => $networkIds])
+            ->andWhere([
+                $profiloUserMmTable . '.user_id' => $usersId,
+                $profiloTable . '.deleted_at' => null,
+            ]);
+        return $query->all();
     }
 }

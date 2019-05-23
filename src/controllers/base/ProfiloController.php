@@ -18,8 +18,8 @@ use lispa\amos\core\record\Record;
 use lispa\amos\organizzazioni\models\ProfiloSedi;
 use lispa\amos\organizzazioni\models\ProfiloSediLegal;
 use lispa\amos\organizzazioni\models\ProfiloSediOperative;
-use lispa\amos\organizzazioni\models\search\ProfiloSearch;
 use lispa\amos\organizzazioni\Module;
+use lispa\amos\organizzazioni\utility\OrganizzazioniUtility;
 use Yii;
 use yii\helpers\Url;
 
@@ -44,12 +44,13 @@ class ProfiloController extends CrudController
      */
     public function init()
     {
-        $model = Module::instance()->createModel('Profilo');
+        $this->organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
+
+        $model = $this->organizzazioniModule->createModel('Profilo');
+        $modelSearch = $this->organizzazioniModule->createModel('ProfiloSearch');
 
         $this->setModelObj($model);
-        $this->setModelSearch(new ProfiloSearch());
-
-        $this->organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
+        $this->setModelSearch($modelSearch);
 
         $this->viewGrid = [
             'name' => 'grid',
@@ -103,12 +104,7 @@ class ProfiloController extends CrudController
     public function actionView($id)
     {
         $this->model = $this->findModel($id);
-
-        if ($this->model->load(Yii::$app->request->post()) && $this->model->save()) {
-            return $this->redirect(['view', 'id' => $this->model->id]);
-        } else {
-            return $this->render('view', ['model' => $this->model]);
-        }
+        return $this->render('view', ['model' => $this->model]);
     }
 
     /**
@@ -121,69 +117,75 @@ class ProfiloController extends CrudController
     public function actionCreate()
     {
         $this->setUpLayout('form');
-        $this->model = Module::instance()->createModel('Profilo');
+        $this->model = $this->organizzazioniModule->createModel('Profilo');
 
         // Model for operative headquarter
-        $mainSedeOperativa = new ProfiloSediOperative();
-        $mainSedeOperativa->setScenario(ProfiloSedi::SCENARIO_CREATE);
-        $mainSedeOperativa->is_main = 1;
+        /** @var ProfiloSediOperative $mainOperativeHeadquarter */
+        $mainOperativeHeadquarter = $this->organizzazioniModule->createModel('ProfiloSediOperative');
+        $mainOperativeHeadquarter->setScenario(ProfiloSedi::SCENARIO_CREATE);
+        $mainOperativeHeadquarter->is_main = 1;
 
         // Model for legal headquarter
-        $mainSedeLegale = new ProfiloSediLegal();
-        $mainSedeLegale->setScenario(ProfiloSedi::SCENARIO_CREATE);
-        $mainSedeLegale->is_main = 1;
+        /** @var ProfiloSediLegal $mainLegalHeadquarter */
+        $mainLegalHeadquarter = $this->organizzazioniModule->createModel('ProfiloSediLegal');
+        $mainLegalHeadquarter->setScenario(ProfiloSedi::SCENARIO_CREATE);
+        $mainLegalHeadquarter->is_main = 1;
 
         // Load and validate all form models
         $post = Yii::$app->request->post();
         $modelLoadValidate = $this->model->load($post) && $this->model->validate();
-        if ($post) {
-            $mainSedeOperativa->address = $this->model->mainOperativeHeadquarterAddress;
-            $mainSedeLegale->address = $this->model->mainLegalHeadquarterAddress;
+        if ($post && !$this->organizzazioniModule->oldStyleAddressEnabled) {
+            // Copy Profilo model address values into respective operative and legal headquarter address fields.
+            $mainOperativeHeadquarter->address = $this->model->mainOperativeHeadquarterAddress;
+            $mainLegalHeadquarter->address = $this->model->mainLegalHeadquarterAddress;
         }
-        $mainSedeOperativaLoadValidate = $mainSedeOperativa->load($post) && $mainSedeOperativa->validate();
+        $mainOperativeHeadquarterLoadValidate = $mainOperativeHeadquarter->load($post) && $mainOperativeHeadquarter->validate();
         if ($this->model->la_sede_legale_e_la_stessa_del) {
-            $skipColumns = ['profilo_sedi_type_id', 'id'];
-            $sedeColumns = $mainSedeOperativa->attributes();
-            foreach ($sedeColumns as $sedeColumn) {
-                if (!in_array($sedeColumn, $skipColumns)) {
-                    $mainSedeLegale->{$sedeColumn} = $mainSedeOperativa->{$sedeColumn};
-                }
-            }
-            $mainSedeLegaleLoadValidate = $mainSedeLegale->validate();
+            $mainLegalHeadquarter = OrganizzazioniUtility::copyOperativeToLegalHeadquarterValues($mainOperativeHeadquarter, $mainLegalHeadquarter);
+            $mainLegalHeadquarterLoadValidate = $mainLegalHeadquarter->validate();
         } else {
-            $mainSedeLegaleLoadValidate = $mainSedeLegale->load($post) && $mainSedeLegale->validate();
+            $mainLegalHeadquarterLoadValidate = $mainLegalHeadquarter->load($post) && $mainLegalHeadquarter->validate();
         }
 
         if (
             $modelLoadValidate &&
-            $mainSedeLegaleLoadValidate &&
-            $mainSedeOperativaLoadValidate
+            $mainLegalHeadquarterLoadValidate &&
+            $mainOperativeHeadquarterLoadValidate
         ) {
-            $ok = $this->model->save();
-            if ($ok) {
+            $transaction = Yii::$app->db->beginTransaction();
+            try {
+                $ok = $this->model->save();
+                if ($ok) {
 
-                // Save operative headquarter
-                $okMainSedeOperativa = $this->saveMainSede($mainSedeOperativa, 'Error while saving operative headquarter');
+                    // Save operative headquarter
+                    $okMainSedeOperativa = $this->saveMainSede($mainOperativeHeadquarter, Module::t('amosorganizzazioni', 'Error while saving operative headquarter'));
 
-                // Save legal headquarter
-                $okMainSedeLegale = $this->saveMainSede($mainSedeLegale, 'Error while saving legal headquarter');
+                    // Save legal headquarter
+                    $okMainSedeLegale = $this->saveMainSede($mainLegalHeadquarter, Module::t('amosorganizzazioni', 'Error while saving legal headquarter'));
 
-                if (
-                    $okMainSedeOperativa &&
-                    $okMainSedeLegale
-                ) {
-                    Yii::$app->getSession()->addFlash('success', Module::t('amoscore', 'Item created'));
-                    return $this->redirect(['index']);
+                    if (
+                        $okMainSedeOperativa &&
+                        $okMainSedeLegale
+                    ) {
+                        $transaction->commit();
+                        Yii::$app->getSession()->addFlash('success', Module::t('amoscore', 'Item created'));
+                        return $this->redirect(['index']);
+                    } else {
+                        $transaction->rollBack();
+                    }
+                } else {
+                    $transaction->rollBack();
+                    Yii::$app->getSession()->addFlash('danger', Module::t('amoscore', 'Item not created, check data'));
                 }
-            } else {
-                Yii::$app->getSession()->addFlash('danger', Module::t('amoscore', 'Item not created, check data'));
+            } catch (\Exception $exception) {
+                $transaction->rollBack();
             }
         }
 
         return $this->render('create', [
             'model' => $this->model,
-            'mainSedeLegale' => $mainSedeLegale,
-            'mainSedeOperativa' => $mainSedeOperativa,
+            'mainLegalHeadquarter' => $mainLegalHeadquarter,
+            'mainOperativeHeadquarter' => $mainOperativeHeadquarter,
             'fid' => null,
             'dataField' => null,
             'dataEntity' => null,
@@ -203,7 +205,7 @@ class ProfiloController extends CrudController
     {
         $this->setUpLayout('form');
 
-        $this->model = Module::instance()->createModel('Profilo');
+        $this->model = $this->organizzazioniModule->createModel('Profilo');
 
         if (\Yii::$app->request->isAjax && $this->model->load(Yii::$app->request->post()) && $this->model->validate()) {
             if ($this->model->save()) {
@@ -239,82 +241,85 @@ class ProfiloController extends CrudController
         $this->model = $this->findModel($id);
 
         // Model for operative headquarter
-        $mainSedeOperativa = $this->model->operativeHeadquarter;
-        if (!is_null($mainSedeOperativa)) {
-            $this->model->mainOperativeHeadquarterAddress = $mainSedeOperativa->address;
-        } else {
-            $mainSedeOperativa = new ProfiloSediOperative();
-            $mainSedeOperativa->setScenario(ProfiloSedi::SCENARIO_CREATE);
-            $mainSedeOperativa->profilo_id = $this->model->id;
-            $mainSedeOperativa->is_main = 1;
+        $mainOperativeHeadquarter = $this->model->operativeHeadquarter;
+        if (is_null($mainOperativeHeadquarter)) {
+            /** @var ProfiloSediOperative $mainOperativeHeadquarter */
+            $mainOperativeHeadquarter = $this->organizzazioniModule->createModel('ProfiloSediOperative');
+            $mainOperativeHeadquarter->setScenario(ProfiloSedi::SCENARIO_CREATE);
+            $mainOperativeHeadquarter->profilo_id = $this->model->id;
+            $mainOperativeHeadquarter->is_main = 1;
+        } elseif (!$this->organizzazioniModule->oldStyleAddressEnabled) {
+            $this->model->mainOperativeHeadquarterAddress = $mainOperativeHeadquarter->address;
         }
 
         // Model for legal headquarter
-        $mainSedeLegale = $this->model->legalHeadquarter;
-        if (!is_null($mainSedeLegale)) {
-            $this->model->mainLegalHeadquarterAddress = $mainSedeLegale->address;
-        } else {
-            $mainSedeLegale = new ProfiloSediLegal();
-            $mainSedeLegale->setScenario(ProfiloSedi::SCENARIO_CREATE);
-            $mainSedeLegale->profilo_id = $this->model->id;
-            $mainSedeLegale->is_main = 1;
+        $mainLegalHeadquarter = $this->model->legalHeadquarter;
+        if (is_null($mainLegalHeadquarter)) {
+            /** @var ProfiloSediLegal $mainLegalHeadquarter */
+            $mainLegalHeadquarter = $this->organizzazioniModule->createModel('ProfiloSediLegal');
+            $mainLegalHeadquarter->setScenario(ProfiloSedi::SCENARIO_CREATE);
+            $mainLegalHeadquarter->profilo_id = $this->model->id;
+            $mainLegalHeadquarter->is_main = 1;
+        } elseif (!$this->organizzazioniModule->oldStyleAddressEnabled) {
+            $this->model->mainLegalHeadquarterAddress = $mainLegalHeadquarter->address;
         }
 
         // Load and validate all form models
         $post = Yii::$app->request->post();
         $modelLoadValidate = $this->model->load($post) && $this->model->validate();
-        if ($post) {
-            $mainSedeOperativa->address = $this->model->mainOperativeHeadquarterAddress;
-            $mainSedeLegale->address = $this->model->mainLegalHeadquarterAddress;
+        if ($post && !$this->organizzazioniModule->oldStyleAddressEnabled) {
+            $mainOperativeHeadquarter->address = $this->model->mainOperativeHeadquarterAddress;
+            $mainLegalHeadquarter->address = $this->model->mainLegalHeadquarterAddress;
         }
-        $mainSedeOperativaLoadValidate = $mainSedeOperativa->load($post) && $mainSedeOperativa->validate();
+        $mainOperativeHeadquarterLoadValidate = $mainOperativeHeadquarter->load($post) && $mainOperativeHeadquarter->validate();
         if ($this->model->la_sede_legale_e_la_stessa_del) {
-            $skipColumns = [
-                'profilo_sedi_type_id',
-                'profilo_id',
-                'id'
-            ];
-            $sedeColumns = $mainSedeOperativa->attributes();
-            foreach ($sedeColumns as $sedeColumn) {
-                if (!in_array($sedeColumn, $skipColumns)) {
-                    $mainSedeLegale->{$sedeColumn} = $mainSedeOperativa->{$sedeColumn};
-                }
-            }
-            $mainSedeLegaleLoadValidate = $mainSedeLegale->validate();
+            $skipColumns = ['profilo_sedi_type_id', 'profilo_id', 'id'];
+            $mainLegalHeadquarter = OrganizzazioniUtility::copyOperativeToLegalHeadquarterValues($mainOperativeHeadquarter, $mainLegalHeadquarter, $skipColumns);
+            $mainLegalHeadquarterLoadValidate = $mainLegalHeadquarter->validate();
         } else {
-            $mainSedeLegaleLoadValidate = $mainSedeLegale->load($post) && $mainSedeLegale->validate();
+            $mainLegalHeadquarterLoadValidate = $mainLegalHeadquarter->load($post) && $mainLegalHeadquarter->validate();
         }
 
         if (
             $modelLoadValidate &&
-            $mainSedeLegaleLoadValidate &&
-            $mainSedeOperativaLoadValidate
+            $mainLegalHeadquarterLoadValidate &&
+            $mainOperativeHeadquarterLoadValidate
         ) {
-            $ok = $this->model->save();
-            if ($ok) {
+            $transaction = Yii::$app->db->beginTransaction();
+            try {
+                $ok = $this->model->save();
+                if ($ok) {
 
-                // Save operative headquarter
-                $okMainSedeOperativa = $this->saveMainSede($mainSedeOperativa, 'Error while saving operative headquarter');
+                    // Save operative headquarter
+                    $okMainSedeOperativa = $this->saveMainSede($mainOperativeHeadquarter, Module::t('amosorganizzazioni', 'Error while saving operative headquarter'));
 
-                // Save legal headquarter
-                $okMainSedeLegale = $this->saveMainSede($mainSedeLegale, 'Error while saving legal headquarter');
+                    // Save legal headquarter
+                    $okMainSedeLegale = $this->saveMainSede($mainLegalHeadquarter, Module::t('amosorganizzazioni', 'Error while saving legal headquarter'));
 
-                if (
-                    $okMainSedeOperativa &&
-                    $okMainSedeLegale
-                ) {
-                    Yii::$app->getSession()->addFlash('success', Module::t('amoscore', 'Item updated'));
-                    return $this->redirect(['update', 'id' => $this->model->id]);
+                    if (
+                        $okMainSedeOperativa &&
+                        $okMainSedeLegale
+                    ) {
+                        $transaction->commit();
+                        Yii::$app->getSession()->addFlash('success', Module::t('amoscore', 'Item updated'));
+                        return $this->redirect(['update', 'id' => $this->model->id]);
+                    } else {
+                        $transaction->rollBack();
+                    }
+                } else {
+                    $transaction->rollBack();
+                    Yii::$app->getSession()->addFlash('danger', Module::t('amoscore', 'Item not updated, check data'));
                 }
-            } else {
-                Yii::$app->getSession()->addFlash('danger', Module::t('amoscore', 'Item not updated, check data'));
+            } catch (\Exception $exception) {
+                $transaction->rollBack();
+                Yii::$app->getSession()->addFlash('danger', Module::t('amosorganizzazioni', '#error_while_saving'));
             }
         }
 
         return $this->render('update', [
             'model' => $this->model,
-            'mainSedeLegale' => $mainSedeLegale,
-            'mainSedeOperativa' => $mainSedeOperativa,
+            'mainLegalHeadquarter' => $mainLegalHeadquarter,
+            'mainOperativeHeadquarter' => $mainOperativeHeadquarter,
             'fid' => null,
             'dataField' => null,
             'dataEntity' => null,
@@ -323,6 +328,7 @@ class ProfiloController extends CrudController
 
     /**
      * @param ProfiloSedi $mainSede
+     * @param string $errorMsg
      * @return bool
      */
     protected function saveMainSede($mainSede, $errorMsg)
@@ -345,6 +351,8 @@ class ProfiloController extends CrudController
      *
      * @param int $id
      * @return \yii\web\Response
+     * @throws \Throwable
+     * @throws \yii\db\Exception
      * @throws \yii\db\StaleObjectException
      * @throws \yii\web\NotFoundHttpException
      */
@@ -354,20 +362,24 @@ class ProfiloController extends CrudController
         if ($this->model) {
             $headquarters = $this->model->profiloSedi;
             $headquartersDeleteOk = true;
+            $transaction = Yii::$app->db->beginTransaction();
             foreach ($headquarters as $headquarter) {
                 $headquarter->delete();
                 if ($headquarter->hasErrors()) {
                     $headquartersDeleteOk = false;
                     Yii::$app->getSession()->addFlash('danger', Module::t('amoscore', 'Error while deleting organization headquarter.'));
+                    $transaction->rollBack();
                     break;
                 }
             }
             if ($headquartersDeleteOk) {
                 $this->model->delete();
                 if (!$this->model->hasErrors()) {
+                    $transaction->commit();
                     Yii::$app->getSession()->addFlash('success', Module::t('amoscore', 'Item deleted'));
                 } else {
                     Yii::$app->getSession()->addFlash('danger', Module::t('amoscore', 'You are not authorized to delete this element.'));
+                    $transaction->rollBack();
                 }
             }
         } else {

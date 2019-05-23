@@ -83,6 +83,6 @@ abstract class ProfiloSediTypes extends Record
      */
     public function getProfiloSedi()
     {
-        return $this->hasMany(\lispa\amos\organizzazioni\models\ProfiloSedi::className(), ['profilo_sedi_type_id' => 'id']);
+        return $this->hasMany(Module::instance()->createModel('ProfiloSedi')->className(), ['profilo_sedi_type_id' => 'id']);
     }
 }

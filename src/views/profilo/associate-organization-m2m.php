@@ -5,34 +5,36 @@
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    lispa\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
-use lispa\amos\organizzazioni\Module;
 use lispa\amos\core\forms\editors\m2mWidget\M2MWidget;
 use lispa\amos\core\helpers\Html;
-use lispa\amos\core\user\User;
+use lispa\amos\organizzazioni\models\Profilo;
+use lispa\amos\organizzazioni\Module;
 use lispa\amos\organizzazioni\widgets\JoinProfiloWidget;
 use lispa\amos\organizzazioni\widgets\ProfiloCardWidget;
-use lispa\amos\organizzazioni\models\Profilo;
-use yii\bootstrap\Modal;
 
 /**
- * @var Profilo $model
+ * @var yii\web\View $this
+ * @var \lispa\amos\organizzazioni\models\Profilo $model
  */
 
 $this->title = Module::t('amosorganizzazioni', '#add_organization');
-$this->params['breadcrumbs'][] = Module::t('amosorganizzazioni', '#add_organization');
+$this->params['breadcrumbs'][] = $this->title;
 
 $userId = Yii::$app->request->get("id");
 
-$organization = new Profilo();
+/** @var Profilo $organization */
+$organization = Module::instance()->createModel('Profilo');
 $query = $organization->getUserNetworkAssociationQuery($userId);
 
 $post = Yii::$app->request->post();
 if (isset($post['genericSearch'])) {
-    $query->andFilterWhere(['like', Profilo::tableName().'.name', $post['genericSearch']]);
+    /** @var Profilo $modelProfilo */
+    $modelProfilo = Module::instance()->createModel('Profilo');
+    $query->andFilterWhere(['like', $modelProfilo::tableName() . '.name', $post['genericSearch']]);
 }
 
 ?>
@@ -45,7 +47,7 @@ if (isset($post['genericSearch'])) {
         'to' => 'id'
     ],
     'modelTargetSearch' => [
-        'class' => Profilo::className(),
+        'class' => Module::instance()->createModel('Profilo')->className(),
         'query' => $query,
     ],
     'targetFooterButtons' => Html::a(Module::t('amosorganizzazioni', '#close'), Yii::$app->urlManager->createUrl([
@@ -71,21 +73,18 @@ if (isset($post['genericSearch'])) {
             'label' => Module::t('amosorganizzazioni', '#logo'),
             'format' => 'raw',//'html',
             'value' => function ($model) {
-               return ProfiloCardWidget::widget(['model' => $model]);
+                return ProfiloCardWidget::widget(['model' => $model]);
             }
         ],
         'name',
         'created_by' => [
             'attribute' => 'created_by',
             'format' => 'html',
-            'value' => function($model){
+            'value' => function ($model) {
                 /** @var Profilo $model */
                 $name = '-';
-                if(!is_null($model->created_by)) {
-                    $creator = User::findOne($model->created_by);
-                    if(!empty($creator)) {
-                        return $creator->getProfile()->getNomeCognome();
-                    }
+                if (!is_null($model->createdUserProfile)) {
+                    return $model->createdUserProfile->getNomeCognome();
                 }
                 return $name;
             }
@@ -97,9 +96,9 @@ if (isset($post['genericSearch'])) {
                 'joinOrganization' => function ($url, $model) {
                     $btn = JoinProfiloWidget::widget(['model' => $model, 'isGridView' => true]);
                     return $btn;
-                },
+                }
             ]
         ]
-    ],
+    ]
 ]);
 ?>

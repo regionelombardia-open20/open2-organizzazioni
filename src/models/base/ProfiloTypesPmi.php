@@ -49,7 +49,7 @@ abstract class ProfiloTypesPmi extends Record
         return [
             [['name'], 'required'],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
-            [['created_by', 'updated_by', 'deleted_by'], 'integer'],
+            [['type_cat','created_by', 'updated_by', 'deleted_by'], 'integer'],
             [['name'], 'string', 'max' => 255],
         ];
     }
@@ -62,6 +62,7 @@ abstract class ProfiloTypesPmi extends Record
         return ArrayHelper::merge(parent::attributeLabels(), [
             'id' => Module::t('amosorganizzazioni', 'ID'),
             'name' => Module::t('amosorganizzazioni', 'Tipo PMI'),
+            'type_cat' => AmosAdmin::t('amosorganizzazioni', 'Type Cat'),
             'created_at' => Module::t('amosorganizzazioni', 'Creato il'),
             'updated_at' => Module::t('amosorganizzazioni', 'Aggiornato il'),
             'deleted_at' => Module::t('amosorganizzazioni', 'Cancellato il'),

@@ -11,8 +11,6 @@
 
 namespace lispa\amos\organizzazioni\models;
 
-use yii\helpers\ArrayHelper;
-
 /**
  * Class ProfiloSediOperative
  * @package lispa\amos\organizzazioni\models
@@ -29,20 +27,5 @@ class ProfiloSediOperative extends ProfiloSedi
         if ($this->isNewRecord) {
             $this->profilo_sedi_type_id = ProfiloSediTypes::TYPE_OPERATIVE_HEADQUARTER;
         }
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function rules()
-    {
-        return ArrayHelper::merge(parent::rules(),
-            [
-                [[
-                    'address',
-                    'phone',
-                    'email',
-                ], 'required'],
-            ]);
     }
 }

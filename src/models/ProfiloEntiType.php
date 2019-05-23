@@ -11,6 +11,8 @@
 
 namespace lispa\amos\organizzazioni\models;
 
+use lispa\amos\organizzazioni\Module;
+
 /**
  * Class ProfiloEntiType
  * This is the model class for table "profilo_enti_type".
@@ -39,7 +41,8 @@ class ProfiloEntiType extends \lispa\amos\organizzazioni\models\base\ProfiloEnti
      */
     public function getMunicipalities()
     {
-        return $this->getProfili()->andWhere([ProfiloEntiType::tableName() . '.id' => ProfiloEntiType::TYPE_MUNICIPALITY]);
+        $model = Module::instance()->createModel('ProfiloEntiType');
+        return $this->getProfili()->andWhere([$model::tableName() . '.id' => ProfiloEntiType::TYPE_MUNICIPALITY]);
     }
 
     /**
@@ -47,6 +50,7 @@ class ProfiloEntiType extends \lispa\amos\organizzazioni\models\base\ProfiloEnti
      */
     public function getOtherEntities()
     {
-        return $this->getProfili()->andWhere([ProfiloEntiType::tableName() . '.id' => ProfiloEntiType::TYPE_OTHER_ENTITY]);
+        $model = Module::instance()->createModel('ProfiloEntiType');
+        return $this->getProfili()->andWhere([$model::tableName() . '.id' => ProfiloEntiType::TYPE_OTHER_ENTITY]);
     }
 }

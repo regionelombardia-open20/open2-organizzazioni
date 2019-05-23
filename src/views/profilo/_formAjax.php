@@ -5,21 +5,9 @@
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    lispa\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
-
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\forms\ActiveForm;
-use kartik\builder\Form;
-use kartik\datecontrol\DateControl;
-use lispa\amos\core\forms\Tabs;
-use lispa\amos\core\forms\CloseSaveButtonWidget;
-use yii\helpers\Url;
-use kartik\select2\Select2;
-use yii\helpers\ArrayHelper;
-use lispa\amos\core\icons\AmosIcons;
-use yii\bootstrap\Modal;
 
 /**
  *
@@ -27,11 +15,13 @@ use yii\bootstrap\Modal;
  * @var lispa\amos\organizzazioni\models\Profilo $model
  * @var yii\widgets\ActiveForm $form
  */
+
 ?>
-<?php echo $this->render('_form', [
-		'model' => $model,
-		'fid' => (NULL !== (filter_input(INPUT_GET, 'fid')))? filter_input(INPUT_GET, 'fid') : '',
-		'dataField' => (NULL !== (filter_input(INPUT_GET, 'dataField')))? filter_input(INPUT_GET, 'dataField') : '',
-		'dataEntity' => (NULL !== (filter_input(INPUT_GET, 'dataEntity')))? filter_input(INPUT_GET, 'dataEntity') : '',
-		'class' => 'dynamicCreation'
-	]) ?>
+
+<?= $this->render('_form', [
+    'model' => $model,
+    'fid' => (NULL !== (filter_input(INPUT_GET, 'fid'))) ? filter_input(INPUT_GET, 'fid') : '',
+    'dataField' => (NULL !== (filter_input(INPUT_GET, 'dataField'))) ? filter_input(INPUT_GET, 'dataField') : '',
+    'dataEntity' => (NULL !== (filter_input(INPUT_GET, 'dataEntity'))) ? filter_input(INPUT_GET, 'dataEntity') : '',
+    'class' => 'dynamicCreation'
+]); ?>

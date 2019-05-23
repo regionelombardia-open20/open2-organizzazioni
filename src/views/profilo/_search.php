@@ -5,12 +5,11 @@
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    lispa\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
 use lispa\amos\core\helpers\Html;
-use lispa\amos\organizzazioni\models\Profilo;
 use lispa\amos\organizzazioni\Module;
 use lispa\amos\tag\AmosTag;
 use lispa\amos\tag\widgets\TagWidget;
@@ -25,6 +24,8 @@ use yii\widgets\ActiveForm;
 /** @var AmosTag $moduleTag */
 $moduleTag = Yii::$app->getModule('tag');
 
+
+$enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPanel']) || \Yii::$app->params['enableAutoOpenSearchPanel'] === true;
 ?>
 <div class="<?= Yii::$app->controller->id ?>-search element-to-toggle" data-toggle-element="form-search">
 
@@ -36,7 +37,7 @@ $moduleTag = Yii::$app->getModule('tag');
         ]
     ]);
     ?>
-    <?= Html::hiddenInput("enableSearch", "1"); ?>
+    <?= Html::hiddenInput("enableSearch", $enableAutoOpenSearchPanel); ?>
     <?= Html::hiddenInput("currentView", Yii::$app->request->getQueryParam('currentView')); ?>
 
     <div class="col-xs-12">
@@ -57,7 +58,7 @@ $moduleTag = Yii::$app->getModule('tag');
         <?= $form->field($model, 'istat_code')->textInput(['placeholder' => Module::t('amosorganizzazioni', '#search_placeholder_istat_code')]) ?>
     </div>
 
-    <?php if (isset($moduleTag) && in_array(Profilo::className(), $moduleTag->modelsEnabled) && $moduleTag->behaviors): ?>
+    <?php if (isset($moduleTag) && in_array(Module::instance()->createModel('Profilo')->className(), $moduleTag->modelsEnabled) && $moduleTag->behaviors): ?>
         <div class="col-xs-12">
             <?php
             $params = \Yii::$app->request->getQueryParams();

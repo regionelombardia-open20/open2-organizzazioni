@@ -5,36 +5,36 @@
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    lispa\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
 use lispa\amos\core\forms\editors\m2mWidget\M2MWidget;
-use lispa\amos\core\user\User;
-use lispa\amos\projectmanagement\Module;
 
 /**
+ * @var yii\web\View $this
  * @var \lispa\amos\projectmanagement\models\Projects $model
  */
+
 $activity = $model->projectsActivities;
 
 $this->title = $model;
 $this->params['breadcrumbs'][] = [
-    'label' => Module::t('amosproject_management', 'Projects'),
+    'label' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Projects'),
     'url' => ['/project_management']
 ];
 $this->params['breadcrumbs'][] = ['label' => strip_tags($activity->projects)];
 $this->params['breadcrumbs'][] = [
-    'label' => Module::t('amosproject_management', 'Project Activities'),
+    'label' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Project Activities'),
     'url' => ['/project_management/projects-activities/by-project', 'pid' => $activity->projects->id]
 ];
 $this->params['breadcrumbs'][] = [
     'label' => strip_tags($model),
     'url' => ['update', 'id' => $model->id, '#' => 'tab-organizations']
 ];
-$this->params['breadcrumbs'][] = Module::t('amosproject_management', 'Invite Organizations');
+$this->params['breadcrumbs'][] = \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Invite Organizations');
 
-$organizationModelClass = \lispa\amos\organizzazioni\models\Profilo::className();
+$organizationModelClass = \lispa\amos\organizzazioni\Module::instance()->createModel('Profilo')->className();
 
 ?>
 <?= M2MWidget::widget([
@@ -56,21 +56,21 @@ $organizationModelClass = \lispa\amos\organizzazioni\models\Profilo::className()
     ],
 
     'targetUrlController' => 'projects-tasks',
-    'moduleClassName' => Module::className(),
+    'moduleClassName' => \lispa\amos\projectmanagement\Module::className(),
     'postName' => 'Project Task',
     'postKey' => 'projects-tasks',
     'targetColumnsToView' => [
         'name' => [
             'attribute' => 'name',
-            'label' => Module::t('amosproject_management', 'Name'),
+            'label' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Name'),
             'headerOptions' => [
-                'id' => Module::t('amosproject_management', 'Name'),
+                'id' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Name'),
             ],
             'contentOptions' => [
-                'headers' => Module::t('amosproject_management', 'Name'),
+                'headers' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Name'),
             ]
         ],
-        'addressField',
+        'addressField:raw',
 //        'numero_civico',
 //        'cap'
     ],
