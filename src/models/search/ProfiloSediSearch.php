@@ -1,25 +1,25 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\models\search
+ * @package    open20\amos\organizzazioni\models\search
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\models\search;
+namespace open20\amos\organizzazioni\models\search;
 
-use lispa\amos\organizzazioni\models\ProfiloSedi;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\models\ProfiloSedi;
+use open20\amos\organizzazioni\Module;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 
 /**
  * Class ProfiloSediSearch
- * ProfiloSediSearch represents the model behind the search form about `lispa\amos\organizzazioni\models\ProfiloSedi`.
- * @package lispa\amos\organizzazioni\models\search
+ * ProfiloSediSearch represents the model behind the search form about `open20\amos\organizzazioni\models\ProfiloSedi`.
+ * @package open20\amos\organizzazioni\models\search
  */
 class ProfiloSediSearch extends ProfiloSedi
 {

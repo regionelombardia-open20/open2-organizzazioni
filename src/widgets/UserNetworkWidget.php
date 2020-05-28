@@ -1,22 +1,22 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\widgets
+ * @package    open20\amos\organizzazioni\widgets
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\widgets;
+namespace open20\amos\organizzazioni\widgets;
 
-use lispa\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\Module;
 use yii\base\Widget;
 use Yii;
 /**
  * Class UserNetworkWidget
- * @package lispa\amos\organizzazioni\widgets
+ * @package open20\amos\organizzazioni\widgets
  */
 class UserNetworkWidget extends Widget
 {
@@ -70,8 +70,10 @@ class UserNetworkWidget extends Widget
                 'gridId' => $this->gridId,
             ]);
         }
-        if (isset(Yii::$app->getModule('organizzazioni')->enabled_widget_sedi)) {
-            $sedi_enabled = Yii::$app->getModule('organizzazioni')->enabled_widget_sedi;
+        /** @var Module $organizationsModule */
+        $organizationsModule = Module::instance();
+        if (!is_null($organizationsModule->enabled_widget_sedi)) {
+            $sedi_enabled = $organizationsModule->enabled_widget_sedi;
         }
 
         if ($sedi_enabled && (!$post || ($post && isset($post[$sediPostName])))) {

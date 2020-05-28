@@ -1,35 +1,44 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\utility
+ * @package    open20\amos\organizzazioni\utility
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\utility;
+namespace open20\amos\organizzazioni\utility;
 
-use lispa\amos\admin\models\UserProfile;
-use lispa\amos\admin\models\UserProfileArea;
-use lispa\amos\admin\models\UserProfileRole;
-use lispa\amos\core\exceptions\AmosException;
-use lispa\amos\core\interfaces\OrganizationsModelInterface;
-use lispa\amos\core\record\Record;
-use lispa\amos\organizzazioni\models\Profilo;
-use lispa\amos\organizzazioni\models\ProfiloSedi;
-use lispa\amos\organizzazioni\models\ProfiloSediTypes;
-use lispa\amos\organizzazioni\models\ProfiloSediUserMm;
-use lispa\amos\organizzazioni\models\ProfiloUserMm;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\admin\models\UserProfile;
+use open20\amos\admin\models\UserProfileArea;
+use open20\amos\admin\models\UserProfileRole;
+use open20\amos\admin\utility\UserProfileUtility;
+use open20\amos\community\AmosCommunity;
+use open20\amos\community\exceptions\CommunityException;
+use open20\amos\community\models\CommunityType;
+use open20\amos\community\models\CommunityUserMm;
+use open20\amos\core\exceptions\AmosException;
+use open20\amos\core\interfaces\OrganizationsModelInterface;
+use open20\amos\core\record\Record;
+use open20\amos\core\user\User;
+use open20\amos\organizzazioni\models\Profilo;
+use open20\amos\organizzazioni\models\ProfiloEntiType;
+use open20\amos\organizzazioni\models\ProfiloSedi;
+use open20\amos\organizzazioni\models\ProfiloSediTypes;
+use open20\amos\organizzazioni\models\ProfiloSediUserMm;
+use open20\amos\organizzazioni\models\ProfiloUserMm;
+use open20\amos\organizzazioni\Module;
+use Yii;
 use yii\base\BaseObject;
 use yii\db\ActiveQuery;
 use yii\helpers\ArrayHelper;
+use yii\log\Logger;
 
 /**
  * Class OrganizzazioniUtility
- * @package lispa\amos\organizzazioni\utility
+ * @package open20\amos\organizzazioni\utility
  */
 class OrganizzazioniUtility extends BaseObject
 {
@@ -177,14 +186,14 @@ class OrganizzazioniUtility extends BaseObject
      */
     public static function getOrganizationReferees($organizationId, $onlyIds = false)
     {
+        /** @var Module $organizationsModule */
+        $organizationsModule = Module::instance();
         /** @var Profilo $profiloModel */
-        $profiloModel = Module::instance()->createModel('Profilo');
+        $profiloModel = $organizationsModule->createModel('Profilo');
         $organization = $profiloModel::findOne($organizationId);
         if (is_null($organization)) {
             return false;
         }
-        /** @var Module $organizationsModule */
-        $organizationsModule = Module::instance();
         $organizationReferees = [];
         if (!$organizationsModule->enableRappresentanteLegaleText && !is_null($organization->rappresentanteLegale)) {
             if ($onlyIds) {
@@ -213,10 +222,12 @@ class OrganizzazioniUtility extends BaseObject
      */
     private static function getUserMainModels($userId, $modelName, $mmModelName, $relationName, $mmModelStatus)
     {
+        /** @var Module $organizzazioniModule */
+        $organizzazioniModule = Module::instance();
         /** @var Record $model */
-        $model = Module::instance()->createModel($modelName);
+        $model = $organizzazioniModule->createModel($modelName);
         /** @var Record $mmModel */
-        $mmModel = Module::instance()->createModel($mmModelName);
+        $mmModel = $organizzazioniModule->createModel($mmModelName);
         /** @var ActiveQuery $query */
         $query = $model::find();
         $query->innerJoinWith($relationName);
@@ -246,5 +257,190 @@ class OrganizzazioniUtility extends BaseObject
     public static function getUserHeadquarters($userId)
     {
         return static::getUserMainModels($userId, 'ProfiloSedi', 'ProfiloSediUserMm', 'profiloSediUserMms', ProfiloSediUserMm::STATUS_ACTIVE);
+    }
+
+    /**
+     * @return mixed|null
+     */
+    public static function getProfiloEntiTypeListReadyForSelect()
+    {
+        /** @var ProfiloEntiType $profiloEntiTypeModel */
+        $profiloEntiTypeModel = Module::instance()->createModel('ProfiloEntiType');
+        return ArrayHelper::map($profiloEntiTypeModel::find()->orderBy(['priority' => SORT_ASC])->all(), 'id', 'name');
+    }
+
+    /**
+     * Create a community for the organization.
+     * @param Profilo $model
+     * @param string $managerStatus
+     * @return bool
+     */
+    public static function createCommunity($model, $managerStatus = '')
+    {
+        /** @var Module $organizationsModule */
+        $organizationsModule = Module::instance();
+
+        /** @var AmosCommunity $communityModule */
+        $communityModule = Yii::$app->getModule('community');
+
+        $title = ($model->title ? $model->title : '');
+        $description = ($model->description ? $model->description : '');
+
+        $type = CommunityType::COMMUNITY_TYPE_CLOSED; // DEFAULT TYPE
+        $context = $organizationsModule->model('Profilo');
+        $managerRole = $model->getManagerRole();
+
+        try {
+            $model->community_id = $communityModule->createCommunity(
+                $title,
+                $type,
+                $context,
+                $managerRole,
+                $description,
+                $model,
+                $managerStatus
+            );
+
+            $ok = $model->save(false);
+
+            if ($ok) {
+                // Add Rappresentante Legale e Referente Operativo come utenti di default
+                if ($model->rappresentante_legale) {
+                    $communityModule->createCommunityUser(
+                        $model->community_id,
+                        $managerStatus,
+                        $managerRole,
+                        $model->rappresentante_legale
+                    );
+                }
+
+                if ($model->referente_operativo) {
+                    $communityModule->createCommunityUser(
+                        $model->community_id,
+                        $managerStatus,
+                        $managerRole,
+                        $model->referente_operativo
+                    );
+                }
+            }
+
+        } catch (CommunityException $exception) {
+            Yii::getLogger()->log($exception->getMessage(), Logger::LEVEL_ERROR);
+            $ok = false;
+        }
+
+        return $ok;
+    }
+
+    /**
+     * @param Profilo $model
+     * @param AmosCommunity $communityModule
+     */
+    public static function updateCommunity($model, $communityModule)
+    {
+        $model->community->name = ($model->title ? $model->title : '');
+        $model->community->description = ($model->description ? $model->description : '');
+        $managerStatus = CommunityUserMm::STATUS_ACTIVE;
+        $managerRole = $model->getManagerRole();
+
+        try {
+            // Used by OrganizzazioniUtility::updateCommunity()
+            $oldAttrs = $model->community->getOldAttributes();
+            $ok = $model->community->save(false);
+            $communityId = $model->getCommunityId();
+
+            if ($ok) {
+                // Update Rappresentante legale as community member and manager
+                if ($oldAttrs['rappresentante_legale'] != $model->rappresentante_legale) {
+                    $communityModule->deleteCommunityUser($communityId, $oldAttrs['rappresentante_legale']);
+                    $communityModule->createCommunityUser(
+                        $communityId,
+                        $managerStatus,
+                        $managerRole,
+                        $model->rappresentante_legale
+                    );
+                }
+
+                // Update Referente Operativo as community memember and manager
+                if ($oldAttrs['referente_operativo'] != $model->referente_operativo) {
+                    $communityModule->deleteCommunityUser($communityId, $model->referente_operativo);
+                    $communityModule->createCommunityUser(
+                        $communityId,
+                        $managerStatus,
+                        $managerRole,
+                        $model->referente_operativo
+                    );
+                }
+            }
+        } catch (\Exception $exception) {
+            \Yii::getLogger()->log($exception->getMessage(), Logger::LEVEL_ERROR);
+        }
+    }
+
+    /**
+     * Check if there is at least one confirmed event manager only if there is a community. If not it return true.
+     * @param Profilo $model
+     * @param string $status
+     * @return array
+     * @throws \yii\base\InvalidConfigException
+     */
+    public static function findOrganizzazioneManagers($model, $status = '')
+    {
+        if (!$model->community_id) {
+            return [];
+        }
+
+        $where = [
+            'community_id' => $model->getCommunityId(),
+            'role' => $model->getManagerRole()
+        ];
+
+        if ($status) {
+            $where['status'] = $status;
+        }
+
+        $managers = CommunityUserMm::find()->andWhere($where)->all();
+
+        return $managers;
+    }
+
+    /**
+     * This method returns the query used in the organization-employees view
+     * or OrganizationsMembersWidget to view organization employees.
+     * @param Profilo $model
+     * @param bool $isUpdate
+     * @param array $showRoles
+     * @param Module|null $organizzazioniModule
+     * @return ActiveQuery
+     * @throws \yii\base\InvalidConfigException
+     */
+    public static function getOrganizationEmployeesQuery($model, $isUpdate, $showRoles = [], $organizzazioniModule = null)
+    {
+        if (is_null($organizzazioniModule)) {
+            $organizzazioniModule = Module::instance();
+        }
+
+        /** @var ProfiloUserMm $profiloUserMmModel */
+        $profiloUserMmModel = $organizzazioniModule->createModel('ProfiloUserMm');
+        $profiloUserMmTable = $profiloUserMmModel::tableName();
+        $userProfileTable = UserProfile::tableName();
+        $userTable = User::tableName();
+
+        if (!$isUpdate) {
+            $query = $model->getProfiloUserMms();
+        } else {
+            $query = !empty($showRoles)
+                ? $model->getProfiloUserMms()->andWhere([$profiloUserMmTable . '.role' => $showRoles])
+                : $model->getProfiloUserMms();
+        }
+
+        $query->innerJoin($userTable, $profiloUserMmTable . '.user_id = ' . $userTable . '.id AND ' . $userTable . '.deleted_at IS NULL');
+        $query->innerJoin($userProfileTable, $userProfileTable . '.user_id = ' . $userTable . '.id AND ' . $userProfileTable . '.deleted_at IS NULL');
+
+        $query->andWhere([$userProfileTable . '.attivo' => UserProfile::STATUS_ACTIVE]);
+        $query->andWhere([$userTable . '.status' => User::STATUS_ACTIVE]);
+        $query->andWhere(['<>', $userProfileTable . '.nome', UserProfileUtility::DELETED_ACCOUNT_NAME]);
+
+        return $query;
     }
 }

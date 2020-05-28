@@ -1,25 +1,25 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\controllers
+ * @package    open20\amos\organizzazioni\controllers
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\controllers;
+namespace open20\amos\organizzazioni\controllers;
 
-use lispa\amos\admin\AmosAdmin;
-use lispa\amos\core\forms\editors\m2mWidget\controllers\M2MWidgetControllerTrait;
-use lispa\amos\core\forms\editors\m2mWidget\M2MEventsEnum;
-use lispa\amos\core\user\User;
-use lispa\amos\organizzazioni\models\ProfiloSedi;
-use lispa\amos\organizzazioni\models\ProfiloSediUserMm;
-use lispa\amos\organizzazioni\Module;
-use lispa\amos\organizzazioni\utility\EmailUtility;
-use lispa\amos\organizzazioni\utility\OrganizzazioniUtility;
+use open20\amos\admin\AmosAdmin;
+use open20\amos\core\forms\editors\m2mWidget\controllers\M2MWidgetControllerTrait;
+use open20\amos\core\forms\editors\m2mWidget\M2MEventsEnum;
+use open20\amos\core\user\User;
+use open20\amos\organizzazioni\models\ProfiloSedi;
+use open20\amos\organizzazioni\models\ProfiloSediUserMm;
+use open20\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\utility\EmailUtility;
+use open20\amos\organizzazioni\utility\OrganizzazioniUtility;
 use Yii;
 use yii\base\Event;
 use yii\filters\AccessControl;
@@ -30,9 +30,9 @@ use yii\helpers\Url;
 /**
  * Class ProfiloSediController
  * This is the class for controller "ProfiloSediController".
- * @package lispa\amos\organizzazioni\controllers
+ * @package open20\amos\organizzazioni\controllers
  */
-class ProfiloSediController extends \lispa\amos\organizzazioni\controllers\base\ProfiloSediController
+class ProfiloSediController extends \open20\amos\organizzazioni\controllers\base\ProfiloSediController
 {
     /**
      * M2MWidgetControllerTrait

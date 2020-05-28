@@ -1,21 +1,21 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo\email
+ * @package    open20\amos\organizzazioni\views\profilo\email
  * @category   CategoryName
  */
 
-use lispa\amos\core\helpers\Html;
-use lispa\amos\organizzazioni\Module;
-use lispa\amos\organizzazioni\widgets\ProfiloCardWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\widgets\ProfiloCardWidget;
 
 /**
  * @var \yii\web\View $this
- * @var \lispa\amos\organizzazioni\utility\EmailUtility $util
+ * @var \open20\amos\organizzazioni\utility\EmailUtility $util
  */
 
 if (!empty($profile)) {

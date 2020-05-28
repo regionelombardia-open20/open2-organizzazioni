@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\migrations
+ * @package    open20\amos\organizzazioni\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\libs\common\MigrationCommon;
+use open20\amos\core\migration\libs\common\MigrationCommon;
 use yii\db\Migration;
 
 /**
@@ -32,9 +32,9 @@ class m171214_100337_add_cwh_organizzazioni extends Migration
                 $this->insert($this->tablename,
                     [
                         'id' => 7,
-                        'classname' => lispa\amos\organizzazioni\models\Profilo::className(),
+                        'classname' => open20\amos\organizzazioni\models\Profilo::className(),
                         'tablename' => 'profilo',
-                        'raw_sql' => "select concat('profilo-',`profilo`.`id`) AS `id`, 7 AS `cwh_config_id`, `profilo`.`id` AS `record_id`, 'lispa\\amos\organizzazioni\\models\\Profilo' AS `classname`, 1 AS `visibility`, `profilo`.`created_at` AS `created_at`, `profilo`.`updated_at` AS `updated_at`, `profilo`.`deleted_at` AS `deleted_at`, `profilo`.`created_by` AS `created_by`, `profilo`.`updated_by` AS `updated_by`, `profilo`.`deleted_by` AS `deleted_by` from `profilo`"
+                        'raw_sql' => "select concat('profilo-',`profilo`.`id`) AS `id`, 7 AS `cwh_config_id`, `profilo`.`id` AS `record_id`, 'open20\\amos\organizzazioni\\models\\Profilo' AS `classname`, 1 AS `visibility`, `profilo`.`created_at` AS `created_at`, `profilo`.`updated_at` AS `updated_at`, `profilo`.`deleted_at` AS `deleted_at`, `profilo`.`created_by` AS `created_by`, `profilo`.`updated_by` AS `updated_by`, `profilo`.`deleted_by` AS `deleted_by` from `profilo`"
                     ]);
             } catch (\Exception $e) {
                 MigrationCommon::printConsoleMessage("Errore durante l'aggiunta della configurazione CWH per amos-organizzazioni");

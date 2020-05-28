@@ -1,18 +1,18 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    open20\amos\organizzazioni
  * @category   CategoryName
  */
 
 use yii\db\Migration;
-use lispa\amos\dashboard\models\AmosWidgets;
+use open20\amos\dashboard\models\AmosWidgets;
 
-class m171208_123616_create_widgets extends \lispa\amos\core\migration\AmosMigrationWidgets
+class m171208_123616_create_widgets extends \open20\amos\core\migration\AmosMigrationWidgets
 {
     const MODULE_NAME = 'organizzazioni';
 
@@ -23,7 +23,7 @@ class m171208_123616_create_widgets extends \lispa\amos\core\migration\AmosMigra
     {
         $this->widgets = [
             [
-                'classname' => \lispa\amos\organizzazioni\widgets\icons\WidgetIconProfilo::className(),
+                'classname' => \open20\amos\organizzazioni\widgets\icons\WidgetIconProfilo::className(),
                 'type' => AmosWidgets::TYPE_ICON,
                 'module' => self::MODULE_NAME,
                 'status' => AmosWidgets::STATUS_ENABLED

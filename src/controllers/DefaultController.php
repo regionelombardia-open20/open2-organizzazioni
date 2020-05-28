@@ -1,21 +1,21 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\controllers
+ * @package    open20\amos\organizzazioni\controllers
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\controllers;
+namespace open20\amos\organizzazioni\controllers;
 
-use lispa\amos\dashboard\controllers\base\DashboardController;
+use open20\amos\dashboard\controllers\base\DashboardController;
 
 /**
  * Class DefaultController
- * @package lispa\amos\organizzazioni\controllers
+ * @package open20\amos\organizzazioni\controllers
  */
 class DefaultController extends DashboardController
 {

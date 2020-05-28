@@ -1,27 +1,27 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\widgets
+ * @package    open20\amos\organizzazioni\widgets
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\widgets;
+namespace open20\amos\organizzazioni\widgets;
 
-use lispa\amos\admin\AmosAdmin;
-use lispa\amos\admin\models\UserProfile;
-use lispa\amos\core\forms\editors\m2mWidget\M2MWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\core\user\User;
-use lispa\amos\core\utilities\JsUtility;
-use lispa\amos\organizzazioni\models\ProfiloSedi;
-use lispa\amos\organizzazioni\models\ProfiloSediUserMm;
-use lispa\amos\organizzazioni\models\ProfiloUserMm;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\admin\AmosAdmin;
+use open20\amos\admin\models\UserProfile;
+use open20\amos\core\forms\editors\m2mWidget\M2MWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\core\user\User;
+use open20\amos\core\utilities\JsUtility;
+use open20\amos\organizzazioni\models\ProfiloSedi;
+use open20\amos\organizzazioni\models\ProfiloSediUserMm;
+use open20\amos\organizzazioni\models\ProfiloUserMm;
+use open20\amos\organizzazioni\Module;
 use Yii;
 use yii\base\Widget;
 use yii\db\ActiveQuery;
@@ -30,7 +30,7 @@ use yii\widgets\PjaxAsset;
 
 /**
  * Class UserNetworkWidgetSedi
- * @package lispa\amos\organizzazioni\widgets
+ * @package open20\amos\organizzazioni\widgets
  */
 class UserNetworkWidgetSedi extends Widget
 {

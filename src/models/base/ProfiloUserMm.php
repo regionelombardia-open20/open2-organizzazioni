@@ -1,18 +1,18 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\models\base
+ * @package    open20\amos\organizzazioni\models\base
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\models\base;
+namespace open20\amos\organizzazioni\models\base;
 
-use lispa\amos\core\record\Record;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\core\record\Record;
+use open20\amos\organizzazioni\Module;
 use yii\helpers\ArrayHelper;
 
 /**
@@ -34,12 +34,12 @@ use yii\helpers\ArrayHelper;
  * @property integer $updated_by
  * @property integer $deleted_by
  *
- * @property \lispa\amos\organizzazioni\models\Profilo $profilo
- * @property \lispa\amos\core\user\User $user
- * @property \lispa\amos\admin\models\UserProfileArea $userProfileArea
- * @property \lispa\amos\admin\models\UserProfileRole $userProfileRole
+ * @property \open20\amos\organizzazioni\models\Profilo $profilo
+ * @property \open20\amos\core\user\User $user
+ * @property \open20\amos\admin\models\UserProfileArea $userProfileArea
+ * @property \open20\amos\admin\models\UserProfileRole $userProfileRole
  *
- * @package lispa\amos\organizzazioni\models\base
+ * @package open20\amos\organizzazioni\models\base
  */
 abstract class ProfiloUserMm extends Record
 {
@@ -60,8 +60,8 @@ abstract class ProfiloUserMm extends Record
             [['profilo_id', 'user_id', 'user_profile_area_id', 'user_profile_role_id', 'created_by', 'updated_by', 'deleted_by'], 'integer'],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
             [['status', 'role'], 'string', 'max' => 255],
-            [['profilo_id'], 'exist', 'skipOnError' => true, 'targetClass' => Module::instance()->createModel('Profilo')->className(), 'targetAttribute' => ['profilo_id' => 'id']],
-            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => \lispa\amos\core\user\User::className(), 'targetAttribute' => ['user_id' => 'id']],
+            [['profilo_id'], 'exist', 'skipOnError' => true, 'targetClass' => Module::instance()->model('Profilo'), 'targetAttribute' => ['profilo_id' => 'id']],
+            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => \open20\amos\core\user\User::className(), 'targetAttribute' => ['user_id' => 'id']],
         ];
     }
 
@@ -92,7 +92,7 @@ abstract class ProfiloUserMm extends Record
      */
     public function getProfilo()
     {
-        return $this->hasOne(Module::instance()->createModel('Profilo')->className(), ['id' => 'profilo_id']);
+        return $this->hasOne(Module::instance()->model('Profilo'), ['id' => 'profilo_id']);
     }
 
     /**
@@ -100,7 +100,7 @@ abstract class ProfiloUserMm extends Record
      */
     public function getUser()
     {
-        return $this->hasOne(\lispa\amos\core\user\User::className(), ['id' => 'user_id']);
+        return $this->hasOne(\open20\amos\core\user\User::className(), ['id' => 'user_id']);
     }
 
     /**
@@ -108,7 +108,7 @@ abstract class ProfiloUserMm extends Record
      */
     public function getUserProfileArea()
     {
-        return $this->hasOne(\lispa\amos\admin\models\UserProfileArea::className(), ['id' => 'user_profile_area_id']);
+        return $this->hasOne(\open20\amos\admin\models\UserProfileArea::className(), ['id' => 'user_profile_area_id']);
     }
 
     /**
@@ -116,6 +116,6 @@ abstract class ProfiloUserMm extends Record
      */
     public function getUserProfileRole()
     {
-        return $this->hasOne(\lispa\amos\admin\models\UserProfileRole::className(), ['id' => 'user_profile_role_id']);
+        return $this->hasOne(\open20\amos\admin\models\UserProfileRole::className(), ['id' => 'user_profile_role_id']);
     }
 }

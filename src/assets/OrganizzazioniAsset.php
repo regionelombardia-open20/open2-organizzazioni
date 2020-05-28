@@ -1,23 +1,23 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    open20\amos\organizzazioni
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\assets;
+namespace open20\amos\organizzazioni\assets;
 
 use yii\web\AssetBundle;
-use lispa\amos\core\widget\WidgetAbstract;
+use open20\amos\core\widget\WidgetAbstract;
 
 
 class OrganizzazioniAsset extends AssetBundle
 {
-    public $sourcePath = '@vendor/lispa/amos-organizzazioni/src/assets/web';
+    public $sourcePath = '@vendor/open20/amos-organizzazioni/src/assets/web';
 
     public $js = [
     ];

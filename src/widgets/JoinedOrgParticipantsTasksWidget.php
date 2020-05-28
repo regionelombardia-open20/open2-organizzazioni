@@ -1,26 +1,26 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\widgets
+ * @package    open20\amos\organizzazioni\widgets
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\widgets;
+namespace open20\amos\organizzazioni\widgets;
 
-use lispa\amos\core\forms\editors\m2mWidget\M2MWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\projectmanagement\models\Projects;
-use lispa\amos\projectmanagement\Module;
+use open20\amos\core\forms\editors\m2mWidget\M2MWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\projectmanagement\models\Projects;
+use open20\amos\projectmanagement\Module;
 use yii\base\InvalidConfigException;
 use yii\base\Widget;
 
 /**
  * Class JoinedOrgParticipantsTasksWidget
- * @package lispa\amos\organizzazioni\widgets
+ * @package open20\amos\organizzazioni\widgets
  */
 class JoinedOrgParticipantsTasksWidget extends Widget
 {

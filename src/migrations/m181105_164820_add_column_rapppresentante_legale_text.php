@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\migrations
+ * @package    open20\amos\organizzazioni\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\organizzazioni\models\Profilo;
+use open20\amos\organizzazioni\models\Profilo;
 use yii\db\Migration;
 
 /**
@@ -34,7 +34,12 @@ class m181105_164820_add_column_rapppresentante_legale_text extends Migration
      */
     public function safeUp()
     {
-        $this->addColumn($this->tableName, 'rappresentante_legale_text', $this->string()->after('rappresentante_legale')->comment('Rappresentante legale text'));
+        $table = \Yii::$app->db->schema->getTableSchema($this->tableName);
+        if (!isset($table->columns['rappresentante_legale_text'])) {
+            $this->addColumn($this->tableName, 'rappresentante_legale_text', $this->string()->after('rappresentante_legale')->comment('Rappresentante legale text'));
+        }
+        
+        $this->alterColumn($this->tableName, 'rappresentante_legale', $this->string()->defaultValue(null));
         $this->update($this->tableName, ['rappresentante_legale' => null], ['rappresentante_legale' => '']);
         $this->alterColumn($this->tableName, 'rappresentante_legale', $this->integer()->defaultValue(null)->comment('Rappresentante legale'));
         return true;

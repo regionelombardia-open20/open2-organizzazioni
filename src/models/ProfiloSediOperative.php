@@ -1,19 +1,19 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\models
+ * @package    open20\amos\organizzazioni\models
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\models;
+namespace open20\amos\organizzazioni\models;
 
 /**
  * Class ProfiloSediOperative
- * @package lispa\amos\organizzazioni\models
+ * @package open20\amos\organizzazioni\models
  */
 class ProfiloSediOperative extends ProfiloSedi
 {

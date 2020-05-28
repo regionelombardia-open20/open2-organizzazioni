@@ -1,28 +1,32 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo
+ * @package    open20\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
-use lispa\amos\attachments\components\AttachmentsList;
-use lispa\amos\core\forms\AccordionWidget;
-use lispa\amos\core\forms\ContextMenuWidget;
-use lispa\amos\core\forms\ListTagsWidget;
-use lispa\amos\core\forms\MapWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\organizzazioni\assets\OrganizzazioniAsset;
-use lispa\amos\organizzazioni\models\ProfiloSedi;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\attachments\components\AttachmentsList;
+use open20\amos\community\models\CommunityUserMm;
+use open20\amos\community\widgets\JoinCommunityWidget;
+use open20\amos\core\forms\AccordionWidget;
+use open20\amos\core\forms\ContextMenuWidget;
+use open20\amos\core\forms\ListTagsWidget;
+use open20\amos\core\forms\MapWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\core\user\User;
+use open20\amos\organizzazioni\assets\OrganizzazioniAsset;
+use open20\amos\organizzazioni\models\ProfiloSedi;
+use open20\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\widgets\JoinProfiloWidget;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\organizzazioni\models\Profilo $model
+ * @var open20\amos\organizzazioni\models\Profilo $model
  */
 
 $moduleL = \Yii::$app->getModule('layout');
@@ -42,15 +46,79 @@ $emptyProfiloSedi = Module::instance()->createModel('ProfiloSedi');
 $operativeHeadquarter = $model->operativeHeadquarter;
 $hasOperativeHeadquarter = !empty($operativeHeadquarter);
 
+$loggedUserId = Yii::$app->user->id;
+/** @var User $loggedUser */
+$loggedUser = Yii::$app->user->identity;
+$loggedUserProfile = $loggedUser->userProfile;
+
 $legalHeadquarter = $model->legalHeadquarter;
 $hasLegalHeadquarter = !is_null($legalHeadquarter);
 
+$communityPresent = (!is_null($model->community) && is_null($model->community->deleted_at));
+
+$showButton = false;
+$waitingOkUser = false;
+$button = [
+    'title' => '',
+    'url' => '#',
+    'options' => [
+        'class' => 'btn btn-navigtion-secondary',
+    ]
+];
+
+if (!$communityPresent) {
+    if (in_array($loggedUserId, [$model->rappresentante_legale, $model->referente_operativo])) {
+        $button['title'] = Module::t('amosorganizzazioni', '#create_community_for_organization');
+        $button['url'] = ['/' . Module::getModuleName() . '/profilo/create-community/', 'id' => $model->id];
+        $button['options'] = [
+            'class' => 'btn btn-navigation-secondary',
+            'title' => Module::t('amosorganizzazioni', '#create_community_for_organization_title'),
+            'data-confirm' => Module::t('amosorganizzazioni', '#create_community_for_organization_question')
+        ];
+        $showButton = true;
+    }
+} else {
+    $userInList = false;
+    foreach ($model->communityUserMm as $userCommunity) { // User not yet subscribed to the event
+        if ($userCommunity->user_id == $loggedUserId) {
+            $userInList = true;
+            $userStatus = $userCommunity->status;
+            break;
+        }
+    }
+
+    if ($userInList === true) {
+        $showButton = true;
+        switch ($userStatus) {
+            case CommunityUserMm::STATUS_WAITING_OK_COMMUNITY_MANAGER:
+                $button['title'] = Module::t('amosorganizzazioni', '#request_sent');
+                $button['options']['class'] .= ' disabled';
+                break;
+            case CommunityUserMm::STATUS_WAITING_OK_USER:
+                $waitingOkUser = true;
+                $button['title'] = Module::t('amosorganizzazioni', '#accept_invitation');
+                $button['url'] = [
+                    '/community/community/accept-user',
+                    'communityId' => $model->community_id,
+                    'userId' => $loggedUserId
+                ];
+                $button['options']['data']['confirm'] = Module::t('amosorganizzazioni', '#accept_invitation_question');
+                break;
+            case CommunityUserMm::STATUS_ACTIVE:
+                $createUrlParams = [
+                    '/community/join',
+                    'id' => $model->community_id
+                ];
+                $button['title'] = Module::t('amosorganizzazioni', '#visit_community_btn_title');
+                $button['url'] = \Yii::$app->urlManager->createUrl($createUrlParams);
+                break;
+        }
+    }
+}
 ?>
 
 <div class="organizzazioni-view col-xs-12 nop">
-
     <div class="col-xs-12 info-view-header">
-
         <div class="col-md-3 col-xs-12 nop">
             <?php
             $url = '/img/img_default.jpg';
@@ -73,6 +141,26 @@ $hasLegalHeadquarter = !is_null($legalHeadquarter);
                     ]); ?>
                 <?php endif; ?>
                 </span>
+
+                <?php if ($showButton): ?>
+                    <span class="organization-community">
+                        <?php if ($waitingOkUser): ?>
+                            <?= JoinCommunityWidget::widget(['model' => $model->community]); ?>
+                        <?php else: ?>
+                            <?= Html::a($button['title'], $button['url'], $button['options']); ?>
+                        <?php endif; ?>
+                    </span>
+                <?php endif; ?>
+                <?php if (!$model->userIsEmployee($loggedUserId) && Yii::$app->user->can('ASSOCIATE_ORGANIZZAZIONI_TO_USER', ['model' => $loggedUserProfile])): ?>
+                    <span class="organization-community">
+                        <?= JoinProfiloWidget::widget([
+                            'model' => $model,
+                            'userId' => $loggedUserId,
+                            'btnClass' => 'btn btn-navigation-secondary',
+                            'customBtnLabel' => Module::t('amosorganizzazioni', '#ask_to_be_employee'),
+                        ]) ?>
+                    </span>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -84,13 +172,22 @@ $hasLegalHeadquarter = !is_null($legalHeadquarter);
             <!--            </div>-->
             <?php
             $profiloEntiTypeNotNull = (!is_null($model->profiloEntiType));
+            $profiloTipoStrutturaNotNull = (!is_null($model->tipologia_struttura_id));
             ?>
-            <div class="col-md-12 col-xs-12 nop">
-                <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('profilo_enti_type_id') ?></div>
-                <div class="col-xs-8 nop info-value"><?= $profiloEntiTypeNotNull ? $model->profiloEntiType->name : '' ?></div>
-            </div>
+            <?php if ($organizzazioniModule->enableProfiloEntiType === true): ?>
+                <div class="col-md-12 col-xs-12 nop">
+                    <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('profilo_enti_type_id') ?></div>
+                    <div class="col-xs-8 nop info-value"><?= $profiloEntiTypeNotNull ? $model->profiloEntiType->name : '' ?></div>
+                </div>
+            <?php endif; ?>
+            <?php if ($organizzazioniModule->enableProfiloTipologiaStruttura === true): ?>
+                <div class="col-md-12 col-xs-12 nop">
+                    <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('tipologia_struttura_id') ?></div>
+                    <div class="col-xs-8 nop info-value"><?= $profiloTipoStrutturaNotNull ? $model->tipologiaStruttura->name : '' ?></div>
+                </div>
+            <?php endif; ?>
             <!-- if without else because the entity type must be present -->
-            <?php if ($profiloEntiTypeNotNull): ?>
+            <?php if ($profiloEntiTypeNotNull && ($organizzazioniModule->enableProfiloEntiType === true)): ?>
                 <?php if ($model->isMunicipality()): ?>
                     <div class="col-md-12 col-xs-12 nop">
                         <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('istat_code') ?></div>
@@ -386,7 +483,7 @@ $hasLegalHeadquarter = !is_null($legalHeadquarter);
             'items' => [
                 [
                     'header' => Module::t('amosorganizzazioni', '#employees'),
-                    'content' => $this->render('_employees', ['model' => $model, 'isView' => true]),
+                    'content' => $this->render('organization-employees', ['model' => $model, 'isView' => true]),
                 ]
             ],
             'headerOptions' => ['tag' => 'h2'],

@@ -1,6 +1,15 @@
 <?php
 
-namespace lispa\amos\organizzazioni\controllers\api;
+/**
+ * Aria S.p.A.
+ * OPEN 2.0
+ *
+ *
+ * @package    Open20Package
+ * @category   CategoryName
+ */
+
+namespace open20\amos\organizzazioni\controllers\api;
 
 /**
  * This is the class for REST controller "ProfiloSediController".
@@ -8,5 +17,5 @@ namespace lispa\amos\organizzazioni\controllers\api;
 
 class ProfiloSediController extends \yii\rest\ActiveController
 {
-    public $modelClass = 'lispa\amos\organizzazioni\models\ProfiloSedi';
+    public $modelClass = 'open20\amos\organizzazioni\models\ProfiloSedi';
 }

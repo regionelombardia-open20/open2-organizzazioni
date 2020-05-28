@@ -1,41 +1,52 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo
+ * @package    open20\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
-use lispa\amos\core\forms\editors\m2mWidget\M2MWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\organizzazioni\models\Profilo;
-use lispa\amos\organizzazioni\Module;
-use lispa\amos\organizzazioni\widgets\JoinProfiloWidget;
-use lispa\amos\organizzazioni\widgets\ProfiloCardWidget;
+use open20\amos\admin\AmosAdmin;
+use open20\amos\admin\models\UserProfile;
+use open20\amos\core\forms\editors\m2mWidget\M2MWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\organizzazioni\controllers\ProfiloController;
+use open20\amos\organizzazioni\models\Profilo;
+use open20\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\widgets\JoinProfiloWidget;
+use open20\amos\organizzazioni\widgets\ProfiloCardWidget;
 
 /**
  * @var yii\web\View $this
- * @var \lispa\amos\organizzazioni\models\Profilo $model
+ * @var \open20\amos\organizzazioni\models\Profilo $model
  */
 
 $this->title = Module::t('amosorganizzazioni', '#add_organization');
 $this->params['breadcrumbs'][] = $this->title;
 
-$userId = Yii::$app->request->get("id");
+/** @var AmosAdmin $adminModule */
+$adminModule = AmosAdmin::instance();
 
-/** @var Profilo $organization */
-$organization = Module::instance()->createModel('Profilo');
-$query = $organization->getUserNetworkAssociationQuery($userId);
+/** @var Module $organizzazioniModule */
+$organizzazioniModule = Module::instance();
 
-$post = Yii::$app->request->post();
-if (isset($post['genericSearch'])) {
-    /** @var Profilo $modelProfilo */
-    $modelProfilo = Module::instance()->createModel('Profilo');
-    $query->andFilterWhere(['like', $modelProfilo::tableName() . '.name', $post['genericSearch']]);
-}
+/** @var ProfiloController $appController */
+$appController = Yii::$app->controller;
+
+$userProfileId = Yii::$app->request->get("id");
+
+/** @var UserProfile $userProfileModel */
+$userProfileModel = $adminModule->createModel('UserProfile');
+$userProfile = $userProfileModel::findOne(['id' => $userProfileId]);
+$userId = $userProfile->user_id;
+
+$query = $appController->getAssociateOrganizationM2mQuery($userId);
+
+/** @var Profilo $modelProfilo */
+$modelProfilo = $organizzazioniModule->createModel('Profilo');
 
 ?>
 <?= M2MWidget::widget([
@@ -47,12 +58,12 @@ if (isset($post['genericSearch'])) {
         'to' => 'id'
     ],
     'modelTargetSearch' => [
-        'class' => Module::instance()->createModel('Profilo')->className(),
+        'class' => $modelProfilo->className(),
         'query' => $query,
     ],
     'targetFooterButtons' => Html::a(Module::t('amosorganizzazioni', '#close'), Yii::$app->urlManager->createUrl([
         '/organizzazioni/profilo/annulla-m2m',
-        'id' => $userId
+        'id' => $userProfileId
     ]), ['class' => 'btn btn-secondary', 'AmosOrganizzazioni' => Module::t('amosorganizzazioni', '#close')]),
     'renderTargetCheckbox' => false,
     'viewSearch' => (isset($viewM2MWidgetGenericSearch) ? $viewM2MWidgetGenericSearch : false),
@@ -71,8 +82,9 @@ if (isset($post['genericSearch'])) {
                 'headers' => Module::t('amosorganizzazioni', '#logo'),
             ],
             'label' => Module::t('amosorganizzazioni', '#logo'),
-            'format' => 'raw',//'html',
+            'format' => 'raw',
             'value' => function ($model) {
+                /** @var Profilo $model */
                 return ProfiloCardWidget::widget(['model' => $model]);
             }
         ],
@@ -90,11 +102,12 @@ if (isset($post['genericSearch'])) {
             }
         ],
         [
-            'class' => 'lispa\amos\core\views\grid\ActionColumn',
+            'class' => 'open20\amos\core\views\grid\ActionColumn',
             'template' => '{info}{view}{joinOrganization}',
             'buttons' => [
-                'joinOrganization' => function ($url, $model) {
-                    $btn = JoinProfiloWidget::widget(['model' => $model, 'isGridView' => true]);
+                'joinOrganization' => function ($url, $model) use ($userId) {
+                    /** @var Profilo $model */
+                    $btn = JoinProfiloWidget::widget(['model' => $model, 'userId' => $userId, 'isGridView' => true]);
                     return $btn;
                 }
             ]

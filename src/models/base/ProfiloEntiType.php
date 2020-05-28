@@ -1,18 +1,18 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\models\base
+ * @package    open20\amos\organizzazioni\models\base
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\models\base;
+namespace open20\amos\organizzazioni\models\base;
 
-use lispa\amos\core\record\Record;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\core\record\Record;
+use open20\amos\organizzazioni\Module;
 use Yii;
 
 /**
@@ -21,11 +21,12 @@ use Yii;
  * This is the base-model class for table "profilo_enti_type".
  *
  * @property integer $id
+ * @property integer $priority
  * @property string $name
  *
- * @property \lispa\amos\organizzazioni\models\Profilo[] $profili
+ * @property \open20\amos\organizzazioni\models\Profilo[] $profili
  *
- * @package lispa\amos\organizzazioni\models\base
+ * @package open20\amos\organizzazioni\models\base
  */
 abstract class ProfiloEntiType extends Record
 {
@@ -44,7 +45,8 @@ abstract class ProfiloEntiType extends Record
     {
         return [
             [['name'], 'required'],
-            [['name'], 'string', 'max' => 100],
+            [['priority'], 'integer'],
+            [['name'], 'string', 'max' => 100]
         ];
     }
 
@@ -56,6 +58,7 @@ abstract class ProfiloEntiType extends Record
         return [
             'id' => Yii::t('amosorganizzazioni', 'ID'),
             'name' => Yii::t('amosorganizzazioni', 'Name'),
+            'priority' => Yii::t('amosorganizzazioni', 'Priority'),
         ];
     }
 
@@ -64,6 +67,6 @@ abstract class ProfiloEntiType extends Record
      */
     public function getProfili()
     {
-        return $this->hasMany(Module::instance()->createModel('Profilo')->className(), ['profilo_enti_type_id' => 'id']);
+        return $this->hasMany(Module::instance()->model('Profilo'), ['profilo_enti_type_id' => 'id']);
     }
 }

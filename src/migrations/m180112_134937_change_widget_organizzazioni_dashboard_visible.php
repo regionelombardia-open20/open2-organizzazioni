@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\migrations
+ * @package    open20\amos\organizzazioni\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationWidgets;
+use open20\amos\core\migration\AmosMigrationWidgets;
 
 /**
  * Class m180112_134937_change_widget_organizzazioni_dashboard_visible
@@ -25,7 +25,7 @@ class m180112_134937_change_widget_organizzazioni_dashboard_visible extends Amos
     {
         $this->widgets = [
             [
-                'classname' => \lispa\amos\organizzazioni\widgets\icons\WidgetIconProfilo::className(),
+                'classname' => \open20\amos\organizzazioni\widgets\icons\WidgetIconProfilo::className(),
                 'update' => true,
                 'default_order' => 1,
                 'dashboard_visible' => 1

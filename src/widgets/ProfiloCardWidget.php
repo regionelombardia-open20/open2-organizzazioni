@@ -1,27 +1,27 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\widgets
+ * @package    open20\amos\organizzazioni\widgets
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\widgets;
+namespace open20\amos\organizzazioni\widgets;
 
-use lispa\amos\core\forms\ContextMenuWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\module\BaseAmosModule;
-use lispa\amos\organizzazioni\models\Profilo;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\core\forms\ContextMenuWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\module\BaseAmosModule;
+use open20\amos\organizzazioni\models\Profilo;
+use open20\amos\organizzazioni\Module;
 use Yii;
 use yii\base\Widget;
 
 /**
  * Class ProfiloCardWidget
- * @package lispa\amos\organizzazioni\widgets
+ * @package open20\amos\organizzazioni\widgets
  */
 class ProfiloCardWidget extends Widget
 {
@@ -162,7 +162,7 @@ class ProfiloCardWidget extends Widget
                          <div class="container-round-img">' .
             Html::a($logo, $viewUrl, ['title' => $model->name]) . '</div>';
         $tooltip .= '</div><div class="icon-body">';
-        $newsWidget = \lispa\amos\notificationmanager\forms\NewsWidget::widget([
+        $newsWidget = \open20\amos\notificationmanager\forms\NewsWidget::widget([
             'model' => $model,
         ]);
         $tooltip .= $newsWidget . '<h3>' . Html::a($model->name, $viewUrl, ['title' => $model->name]) . '</h3>';

@@ -1,22 +1,22 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\admin\views\default
+ * @package    open20\amos\admin\views\default
  * @category   CategoryName
  */
 
-/** @var \lispa\amos\dashboard\models\AmosUserDashboards $currentDashboard * */
+/** @var \open20\amos\dashboard\models\AmosUserDashboards $currentDashboard * */
 
 /** @var \yii\web\View $this * */
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\layout\assets\BaseAsset;
-use lispa\amos\dashboard\AmosDashboard;
-use lispa\amos\dashboard\assets\ModuleDashboardAsset;
-use lispa\amos\admin\AmosAdmin;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\layout\assets\BaseAsset;
+use open20\amos\dashboard\AmosDashboard;
+use open20\amos\dashboard\assets\ModuleDashboardAsset;
+use open20\amos\admin\AmosAdmin;
 use yii\helpers\Html;
 use yii\web\JsExpression;
 

@@ -1,22 +1,24 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\models
+ * @package    open20\amos\organizzazioni\models
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\models;
+namespace open20\amos\organizzazioni\models;
+
+use open20\amos\organizzazioni\Module;
 
 /**
  * Class ProfiloSediUserMm
  * This is the model class for table "profilo_sedi_user_mm".
- * @package lispa\amos\organizzazioni\models
+ * @package open20\amos\organizzazioni\models
  */
-class ProfiloSediUserMm extends \lispa\amos\organizzazioni\models\base\ProfiloSediUserMm
+class ProfiloSediUserMm extends \open20\amos\organizzazioni\models\base\ProfiloSediUserMm
 {
     const STATUS_ACTIVE = 'ACTIVE';
     const STATUS_REJECTED = 'REJECTED';
@@ -33,5 +35,21 @@ class ProfiloSediUserMm extends \lispa\amos\organizzazioni\models\base\ProfiloSe
             self::STATUS_REJECTED,
             self::STATUS_WAITING_REQUEST_CONFIRM
         ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getModelModuleName()
+    {
+        return Module::getModuleName();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getModelControllerName()
+    {
+        return 'profilo-sedi';
     }
 }

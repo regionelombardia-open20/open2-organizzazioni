@@ -1,27 +1,27 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo
+ * @package    open20\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
-use lispa\amos\attachments\components\AttachmentsList;
-use lispa\amos\core\forms\AccordionWidget;
-use lispa\amos\core\forms\ContextMenuWidget;
-use lispa\amos\core\forms\ListTagsWidget;
-use lispa\amos\core\forms\MapWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\organizzazioni\assets\OrganizzazioniAsset;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\attachments\components\AttachmentsList;
+use open20\amos\core\forms\AccordionWidget;
+use open20\amos\core\forms\ContextMenuWidget;
+use open20\amos\core\forms\ListTagsWidget;
+use open20\amos\core\forms\MapWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\organizzazioni\assets\OrganizzazioniAsset;
+use open20\amos\organizzazioni\Module;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\organizzazioni\models\Profilo $model
+ * @var open20\amos\organizzazioni\models\Profilo $model
  */
 
 $moduleL = \Yii::$app->getModule('layout');

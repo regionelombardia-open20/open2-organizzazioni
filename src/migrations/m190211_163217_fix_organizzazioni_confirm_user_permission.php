@@ -1,16 +1,16 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\migrations
+ * @package    open20\amos\organizzazioni\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
-use lispa\amos\organizzazioni\rules\ConfirmUserRequestRule;
+use open20\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\organizzazioni\rules\ConfirmUserRequestRule;
 use yii\rbac\Permission;
 
 /**

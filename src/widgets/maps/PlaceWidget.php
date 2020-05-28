@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    open20\amos\organizzazioni
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\widgets\maps;
+namespace open20\amos\organizzazioni\widgets\maps;
 
 use Yii;
 use yii\base\Widget;
@@ -18,7 +18,7 @@ use yii\helpers\Html;
 use yii\base\Model;
 use yii\base\InvalidConfigException;
 use yii\web\View;
-use lispa\amos\organizzazioni\components\OrganizationsPlacesComponents;
+use open20\amos\organizzazioni\components\OrganizationsPlacesComponents;
 
 class PlaceWidget extends Widget
 {

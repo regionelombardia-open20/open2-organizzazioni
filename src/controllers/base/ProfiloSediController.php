@@ -1,20 +1,20 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\controllers\base
+ * @package    open20\amos\organizzazioni\controllers\base
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\controllers\base;
+namespace open20\amos\organizzazioni\controllers\base;
 
-use lispa\amos\core\controllers\CrudController;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\core\controllers\CrudController;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\organizzazioni\Module;
 use Yii;
 use yii\helpers\Url;
 
@@ -22,10 +22,10 @@ use yii\helpers\Url;
  * Class ProfiloSediController
  * ProfiloSediController implements the CRUD actions for ProfiloSedi model.
  *
- * @property \lispa\amos\organizzazioni\models\ProfiloSedi $model
- * @property \lispa\amos\organizzazioni\models\search\ProfiloSediSearch $modelSearch
+ * @property \open20\amos\organizzazioni\models\ProfiloSedi $model
+ * @property \open20\amos\organizzazioni\models\search\ProfiloSediSearch $modelSearch
  *
- * @package lispa\amos\organizzazioni\controllers\base
+ * @package open20\amos\organizzazioni\controllers\base
  */
 class ProfiloSediController extends CrudController
 {
@@ -85,7 +85,7 @@ class ProfiloSediController extends CrudController
     }
 
     /**
-     * Set a view param used in \lispa\amos\core\forms\CreateNewButtonWidget
+     * Set a view param used in \open20\amos\core\forms\CreateNewButtonWidget
      */
     private function setCreateNewBtnLabel()
     {

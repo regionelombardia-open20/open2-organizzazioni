@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    open20\amos\organizzazioni
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\widgets\maps;
+namespace open20\amos\organizzazioni\widgets\maps;
 
 
 use yii\web\AssetBundle;

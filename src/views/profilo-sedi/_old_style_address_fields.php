@@ -1,21 +1,21 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo
+ * @package    open20\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
-use lispa\amos\comuni\widgets\helpers\AmosComuniWidget;
+use open20\amos\comuni\widgets\helpers\AmosComuniWidget;
 
 /**
  * @var yii\web\View $this
  * @var yii\data\ActiveDataProvider $dataProvider
- * @var \lispa\amos\core\forms\ActiveForm $form
- * @var lispa\amos\organizzazioni\models\ProfiloSedi $modelSedi
+ * @var \open20\amos\core\forms\ActiveForm $form
+ * @var open20\amos\organizzazioni\models\ProfiloSedi $modelSedi
  * @var bool $isView
  */
 

@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo
+ * @package    open20\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
-use lispa\amos\organizzazioni\widgets\UserNetworkWidget;
+use open20\amos\organizzazioni\widgets\UserNetworkWidget;
 
 /**
  * @var yii\web\View $this

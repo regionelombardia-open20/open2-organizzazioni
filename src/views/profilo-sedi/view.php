@@ -1,21 +1,21 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo-sedi
+ * @package    open20\amos\organizzazioni\views\profilo-sedi
  * @category   CategoryName
  */
 
-use lispa\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\Module;
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\organizzazioni\models\ProfiloSedi $model
+ * @var open20\amos\organizzazioni\models\ProfiloSedi $model
  */
 
 $this->title = $model;
@@ -47,6 +47,6 @@ $this->params['breadcrumbs'][] = $this->title;
     ]) ?>
 
     <div class="btnViewContainer pull-right">
-        <?= Html::a(Module::t('amoscore', 'Chiudi'), ['/organizzazioni/profilo/update', 'id' => $model->profilo_id], ['class' => 'btn btn-secondary']); ?>
+        <?= Html::a(Module::t('amoscore', 'Chiudi'), Yii::$app->getUser()->getReturnUrl(), ['class' => 'btn btn-secondary']); ?>
     </div>
 </div>

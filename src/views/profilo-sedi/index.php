@@ -1,27 +1,27 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo-sedi
+ * @package    open20\amos\organizzazioni\views\profilo-sedi
  * @category   CategoryName
  */
 
-use lispa\amos\core\views\DataProviderView;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\core\views\DataProviderView;
+use open20\amos\organizzazioni\Module;
 
 /**
  * @var yii\web\View $this
  * @var yii\data\ActiveDataProvider $dataProvider
- * @var lispa\amos\organizzazioni\models\search\ProfiloSediSearch $model
+ * @var open20\amos\organizzazioni\models\search\ProfiloSediSearch $model
  */
 
 $this->title = Module::t('amosorganizzazioni', 'Profilo Sedi');
 $this->params['breadcrumbs'][] = $this->title;
 
-/** @var \lispa\amos\organizzazioni\models\ProfiloSedi $profiloSediModel */
+/** @var \open20\amos\organizzazioni\models\ProfiloSedi $profiloSediModel */
 $profiloSediModel = Module::instance()->createModel('ProfiloSedi');
 
 ?>

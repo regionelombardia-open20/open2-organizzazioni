@@ -1,21 +1,21 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\widgets
+ * @package    open20\amos\organizzazioni\widgets
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\widgets;
+namespace open20\amos\organizzazioni\widgets;
 
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\organizzazioni\models\Profilo;
-use lispa\amos\organizzazioni\models\ProfiloUserMm;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\organizzazioni\models\Profilo;
+use open20\amos\organizzazioni\models\ProfiloUserMm;
+use open20\amos\organizzazioni\Module;
 use Yii;
 use yii\base\Widget;
 use yii\bootstrap\Modal;
@@ -23,7 +23,7 @@ use yii\helpers\ArrayHelper;
 
 /**
  * Class JoinProfiloWidget
- * @package lispa\amos\organizzazioni\widgets
+ * @package open20\amos\organizzazioni\widgets
  */
 class JoinProfiloWidget extends Widget
 {
@@ -40,6 +40,11 @@ class JoinProfiloWidget extends Widget
     public $model = null;
 
     /**
+     * @var int $userId
+     */
+    public $userId = 0;
+
+    /**
      * @var bool|false true if we are in edit mode, false if in view mode or otherwise
      */
     public $modalButtonConfirmationStyle = '';
@@ -47,6 +52,7 @@ class JoinProfiloWidget extends Widget
     public $modalButtonCancelStyle = '';
     public $modalButtonCancelOptions = [];
     public $divClassBtnContainer = '';
+    public $customBtnLabel = '';
     public $btnClass = '';
     public $btnStyle = '';
     public $btnOptions = [];
@@ -121,9 +127,10 @@ class JoinProfiloWidget extends Widget
         }
 
         $buttonUrl = null;
+        $title = '';
         $dataTarget = '';
         $dataToggle = '';
-        $loggedUserId = Yii::$app->getUser()->getId();
+        $userId = (($this->userId > 0) ? $this->userId : Yii::$app->getUser()->getId());
 
         if ($isUserOrganizationModel) {
             $userOrganization = $model;
@@ -134,18 +141,18 @@ class JoinProfiloWidget extends Widget
         } else {
             /** @var ProfiloUserMm $modelProfiloUserMm */
             $modelProfiloUserMm = Module::instance()->createModel('ProfiloUserMm');
-            $userOrganization = $modelProfiloUserMm::findOne(['profilo_id' => $model->id, 'user_id' => $loggedUserId]);
+            $userOrganization = $modelProfiloUserMm::findOne(['profilo_id' => $model->id, 'user_id' => $userId]);
         }
 
         if (is_null($userOrganization)) {
             $icon = 'plus';
-            $title = Module::t('amosorganizzazioni', '#join');
+            $title = (!empty($this->customBtnLabel) ? $this->customBtnLabel : Module::t('amosorganizzazioni', '#join'));
             $dataToggle = 'modal';
             $dataTarget = '#joinPopup-' . $model->id;
             $buttonUrl = null;
             Modal::begin([
                 'id' => 'joinPopup-' . $model->id,
-                'header' => Module::t('amosorganizzazioni', "#join")
+                'header' => $title
             ]);
             echo Html::tag('div',
                 Module::t('amosorganizzazioni', "#do_you_wish_add") .
@@ -154,7 +161,7 @@ class JoinProfiloWidget extends Widget
                 Html::a(Module::t('amosorganizzazioni', '#cancel'), null,
                     $this->modalButtonCancelOptions)
                 . Html::a(Module::t('amosorganizzazioni', '#yes'),
-                    ['/organizzazioni/profilo/join-organization', 'organizationId' => $model->id],
+                    ['/organizzazioni/profilo/join-organization', 'organizationId' => $model->id, 'userId' => $userId],
                     $this->modalButtonConfirmationOptions),
                 ['class' => 'pull-right m-15-0']
             );

@@ -1,19 +1,19 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo-sedi\email
+ * @package    open20\amos\organizzazioni\views\profilo-sedi\email
  * @category   CategoryName
  */
 
-use lispa\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\Module;
 
 /**
  * @var \yii\web\View $this
- * @var \lispa\amos\organizzazioni\utility\EmailUtility $util
+ * @var \open20\amos\organizzazioni\utility\EmailUtility $util
  */
 
 ?>

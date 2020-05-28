@@ -1,23 +1,23 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\models\search
+ * @package    open20\amos\organizzazioni\models\search
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\models\search;
+namespace open20\amos\organizzazioni\models\search;
 
-use lispa\amos\core\interfaces\SearchModelInterface;
-use lispa\amos\organizzazioni\models\Profilo;
+use open20\amos\core\interfaces\SearchModelInterface;
+use open20\amos\organizzazioni\models\Profilo;
 
 /**
  * Class ProfiloSearch
- * ProfiloSearch represents the model behind the search form about `lispa\amos\organizzazioni\models\Profilo`.
- * @package lispa\amos\organizzazioni\models\search
+ * ProfiloSearch represents the model behind the search form about `open20\amos\organizzazioni\models\Profilo`.
+ * @package open20\amos\organizzazioni\models\search
  */
 class ProfiloSearch extends Profilo implements SearchModelInterface
 {

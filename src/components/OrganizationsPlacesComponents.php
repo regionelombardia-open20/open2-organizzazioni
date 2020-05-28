@@ -1,24 +1,24 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\components
+ * @package    open20\amos\organizzazioni\components
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\components;
+namespace open20\amos\organizzazioni\components;
 
-use lispa\amos\organizzazioni\models\OrganizationsPlaces;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\models\OrganizationsPlaces;
+use open20\amos\organizzazioni\Module;
 use yii\base\InvalidConfigException;
 use yii\helpers\Json;
 
 /**
  * Class OrganizationsPlacesComponents
- * @package lispa\amos\organizzazioni\components
+ * @package open20\amos\organizzazioni\components
  */
 class OrganizationsPlacesComponents
 {

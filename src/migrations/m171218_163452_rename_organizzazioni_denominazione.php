@@ -1,16 +1,16 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    open20\amos\organizzazioni
  * @category   CategoryName
  */
 
 use yii\db\Migration;
-use lispa\amos\organizzazioni\models\Profilo;
+use open20\amos\organizzazioni\models\Profilo;
 
 class m171218_163452_rename_organizzazioni_denominazione extends Migration
 {

@@ -1,18 +1,18 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\models\base
+ * @package    open20\amos\organizzazioni\models\base
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\models\base;
+namespace open20\amos\organizzazioni\models\base;
 
-use lispa\amos\core\record\Record;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\core\record\Record;
+use open20\amos\organizzazioni\Module;
 use yii\helpers\ArrayHelper;
 
 /**
@@ -33,7 +33,7 @@ use yii\helpers\ArrayHelper;
  * @property string $latitude
  * @property string $longitude
  *
- * @package lispa\amos\organizzazioni\models\base
+ * @package open20\amos\organizzazioni\models\base
  */
 abstract class OrganizationsPlaces extends Record
 {
@@ -95,7 +95,7 @@ abstract class OrganizationsPlaces extends Record
      */
     public function getOrganizations()
     {
-        return $this->hasMany(Module::instance()->createModel('Profilo')->className(), ['operational_headquarters_place_id' => 'place_id']);
+        return $this->hasMany(Module::instance()->model('Profilo'), ['operational_headquarters_place_id' => 'place_id']);
     }
 
     /**
@@ -103,6 +103,6 @@ abstract class OrganizationsPlaces extends Record
      */
     public function getOrganizations0()
     {
-        return $this->hasMany(Module::instance()->createModel('Profilo')->className(), ['registered_office_place_id' => 'place_id']);
+        return $this->hasMany(Module::instance()->model('Profilo'), ['registered_office_place_id' => 'place_id']);
     }
 }

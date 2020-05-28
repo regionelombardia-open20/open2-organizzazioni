@@ -1,45 +1,45 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo
+ * @package    open20\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
-use lispa\amos\admin\AmosAdmin;
-use lispa\amos\admin\models\UserProfile;
-use lispa\amos\attachments\components\AttachmentsInput;
-use lispa\amos\attachments\components\AttachmentsList;
-use lispa\amos\attachments\components\CropInput;
-use lispa\amos\core\forms\AccordionWidget;
-use lispa\amos\core\forms\ActiveForm;
-use lispa\amos\core\forms\CloseSaveButtonWidget;
-use lispa\amos\core\forms\editors\Select;
-use lispa\amos\core\forms\RequiredFieldsTipWidget;
-use lispa\amos\core\forms\TextEditorWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\cwh\widgets\DestinatariPlusTagWidget;
-use lispa\amos\organizzazioni\assets\OrganizzazioniAsset;
-use lispa\amos\organizzazioni\models\ProfiloEntiType;
-use lispa\amos\organizzazioni\models\ProfiloLegalForm;
-use lispa\amos\organizzazioni\models\ProfiloTypesPmi;
-use lispa\amos\organizzazioni\Module;
-use lispa\amos\organizzazioni\utility\OrganizzazioniUtility;
-use lispa\amos\organizzazioni\widgets\maps\PlaceWidget;
+use open20\amos\admin\AmosAdmin;
+use open20\amos\admin\models\UserProfile;
+use open20\amos\attachments\components\AttachmentsInput;
+use open20\amos\attachments\components\AttachmentsList;
+use open20\amos\attachments\components\CropInput;
+use open20\amos\core\forms\AccordionWidget;
+use open20\amos\core\forms\ActiveForm;
+use open20\amos\core\forms\CloseSaveButtonWidget;
+use open20\amos\core\forms\editors\Select;
+use open20\amos\core\forms\RequiredFieldsTipWidget;
+use open20\amos\core\forms\TextEditorWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\cwh\widgets\DestinatariPlusTagWidget;
+use open20\amos\organizzazioni\assets\OrganizzazioniAsset;
+use open20\amos\organizzazioni\models\ProfiloEntiType;
+use open20\amos\organizzazioni\models\ProfiloLegalForm;
+use open20\amos\organizzazioni\models\ProfiloTypesPmi;
+use open20\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\utility\OrganizzazioniUtility;
+use open20\amos\organizzazioni\widgets\maps\PlaceWidget;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\web\JsExpression;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\organizzazioni\models\Profilo $model
+ * @var open20\amos\organizzazioni\models\Profilo $model
  * @var yii\widgets\ActiveForm $form
- * @var lispa\amos\organizzazioni\models\ProfiloSediLegal $mainSedeLegale
- * @var lispa\amos\organizzazioni\models\ProfiloSediOperative $mainSedeOperativa
+ * @var open20\amos\organizzazioni\models\ProfiloSediLegal $mainSedeLegale
+ * @var open20\amos\organizzazioni\models\ProfiloSediOperative $mainSedeOperativa
  */
 
 $this->registerJs("    

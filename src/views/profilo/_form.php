@@ -1,45 +1,45 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo
+ * @package    open20\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
-use lispa\amos\admin\AmosAdmin;
-use lispa\amos\admin\models\UserProfile;
-use lispa\amos\attachments\components\AttachmentsInput;
-use lispa\amos\attachments\components\AttachmentsList;
-use lispa\amos\attachments\components\CropInput;
-use lispa\amos\core\forms\AccordionWidget;
-use lispa\amos\core\forms\ActiveForm;
-use lispa\amos\core\forms\CloseSaveButtonWidget;
-use lispa\amos\core\forms\editors\Select;
-use lispa\amos\core\forms\RequiredFieldsTipWidget;
-use lispa\amos\core\forms\TextEditorWidget;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\cwh\widgets\DestinatariPlusTagWidget;
-use lispa\amos\organizzazioni\assets\OrganizzazioniAsset;
-use lispa\amos\organizzazioni\models\ProfiloEntiType;
-use lispa\amos\organizzazioni\models\ProfiloLegalForm;
-use lispa\amos\organizzazioni\models\ProfiloTypesPmi;
-use lispa\amos\organizzazioni\Module;
-use lispa\amos\organizzazioni\utility\OrganizzazioniUtility;
-use lispa\amos\organizzazioni\widgets\maps\PlaceWidget;
+use open20\amos\admin\AmosAdmin;
+use open20\amos\admin\models\UserProfile;
+use open20\amos\attachments\components\AttachmentsInput;
+use open20\amos\attachments\components\AttachmentsList;
+use open20\amos\attachments\components\CropInput;
+use open20\amos\core\forms\AccordionWidget;
+use open20\amos\core\forms\ActiveForm;
+use open20\amos\core\forms\CloseSaveButtonWidget;
+use open20\amos\core\forms\editors\Select;
+use open20\amos\core\forms\RequiredFieldsTipWidget;
+use open20\amos\core\forms\TextEditorWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\cwh\widgets\DestinatariPlusTagWidget;
+use open20\amos\organizzazioni\assets\OrganizzazioniAsset;
+use open20\amos\organizzazioni\models\ProfiloEntiType;
+use open20\amos\organizzazioni\models\ProfiloLegalForm;
+use open20\amos\organizzazioni\models\ProfiloTypesPmi;
+use open20\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\utility\OrganizzazioniUtility;
+use open20\amos\organizzazioni\widgets\maps\PlaceWidget;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\web\JsExpression;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\organizzazioni\models\Profilo $model
+ * @var open20\amos\organizzazioni\models\Profilo $model
  * @var yii\widgets\ActiveForm $form
- * @var lispa\amos\organizzazioni\models\ProfiloSediLegal $mainLegalHeadquarter
- * @var lispa\amos\organizzazioni\models\ProfiloSediOperative $mainOperativeHeadquarter
+ * @var open20\amos\organizzazioni\models\ProfiloSediLegal $mainLegalHeadquarter
+ * @var open20\amos\organizzazioni\models\ProfiloSediOperative $mainOperativeHeadquarter
  */
 
 $this->registerJs("    
@@ -65,19 +65,18 @@ if (!empty($moduleL)) {
 /** @var Module $organizzazioniModule */
 $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
 
+$moduleTag = \Yii::$app->getModule('tag');
+
 $profiloEntiTypeElementId = Html::getInputId($model, 'profilo_enti_type_id');
 $istatCodeElementId = Html::getInputId($model, 'istat_code');
 $tipologiaDiOrganizzazione = Html::getInputId($model, 'tipologia_di_organizzazione');
 $typeMunicipality = ProfiloEntiType::TYPE_MUNICIPALITY;
 $sameHeadquarterElementId = Html::getInputId($model, 'la_sede_legale_e_la_stessa_del');
 $legalHeadquarterAddressElementId = Html::getInputId($model, 'mainLegalHeadquarterAddress');
+$disableFieldChecks = isset($organizzazioniModule->disableFieldChecks) ? $organizzazioniModule->disableFieldChecks : false;
+
 
 $js = <<<JS
-var profiloEntiTypeElement = $('#$profiloEntiTypeElementId');
-var istatCodeElement = $('#$istatCodeElementId');
-var tipologiaDiOrganizzazione = $('#$tipologiaDiOrganizzazione');
-var sameHeadquarterElementId = $('#$sameHeadquarterElementId');
-
 function addRequiredAsterisk(fieldName) {
     $('.field-' + fieldName).addClass('required');
 }
@@ -86,24 +85,7 @@ function removeRequiredAsterisk(fieldName) {
     $('.field-' + fieldName).removeClass('required');
 }
 
-function manageEnabledFields() {
-    if (profiloEntiTypeElement.val() == $typeMunicipality) {
-        addRequiredAsterisk('$istatCodeElementId');
-        istatCodeElement.prop("disabled", false);
-        tipologiaDiOrganizzazione.prop("disabled", true);
-    } else {
-        removeRequiredAsterisk('$istatCodeElementId');
-        istatCodeElement.prop("disabled", true);
-        tipologiaDiOrganizzazione.prop("disabled", false);
-    }
-}
-
-manageEnabledFields();
-
-profiloEntiTypeElement.change(function() {
-    manageEnabledFields();
-});
-
+var sameHeadquarterElementId = $('#$sameHeadquarterElementId');
 function manageLegalHeadquarterRequiredAddress() {
     if (sameHeadquarterElementId.val() == 1) {
         removeRequiredAsterisk('$legalHeadquarterAddressElementId');
@@ -120,6 +102,34 @@ sameHeadquarterElementId.change(function() {
 JS;
 $this->registerJs($js);
 
+
+$jsenablecheck = <<<JS
+var profiloEntiTypeElement = $('#$profiloEntiTypeElementId');
+var istatCodeElement = $('#$istatCodeElementId');
+//var tipologiaDiOrganizzazione = $('#$tipologiaDiOrganizzazione');
+
+function manageEnabledFields() {
+    if (profiloEntiTypeElement.val() == $typeMunicipality) {
+        addRequiredAsterisk('$istatCodeElementId');
+        istatCodeElement.prop("disabled", false);
+//        tipologiaDiOrganizzazione.prop("disabled", true);
+    } else {
+        removeRequiredAsterisk('$istatCodeElementId');
+        istatCodeElement.prop("disabled", true);
+//        tipologiaDiOrganizzazione.prop("disabled", false);
+    }
+}
+
+//manageEnabledFields();
+
+//profiloEntiTypeElement.change(function() {
+//    manageEnabledFields();
+//});
+JS;
+
+if (!$disableFieldChecks) {
+    $this->registerJs($jsenablecheck);
+}
 ?>
 
 <?php $form = ActiveForm::begin([
@@ -135,6 +145,9 @@ $this->registerJs($js);
 
 /** @var ProfiloEntiType $modelProfiloEntiType */
 $modelProfiloEntiType = Module::instance()->createModel('ProfiloEntiType');
+
+/** @var ProfiloEntiType $modelProfiloTipoStruttura */
+$modelProfiloTipoStruttura = Module::instance()->createModel('ProfiloTipoStruttura');
 
 /** @var ProfiloTypesPmi $modelProfiloTypesPmi */
 $modelProfiloTypesPmi = Module::instance()->createModel('ProfiloTypesPmi');
@@ -152,23 +165,42 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
         <div class="col-xs-12"><?= Html::tag('h2', Module::t('amosorganizzazioni', '#settings_general_title'), ['class' => 'subtitle-form']) ?></div>
         <div class="col-md-8 col-xs-12">
             <?= $form->field($model, 'name')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#name_field_placeholder')])->hint(Module::t('amosorganizzazioni', '#name_field_hint')) ?>
-            <div class="col-md-6 col-xs-12">
-                <?= $form->field($model, 'profilo_enti_type_id')->widget(Select::classname(), [
-                    'data' => ArrayHelper::map($modelProfiloEntiType::find()->all(), 'id', 'name'),
-                    'language' => substr(Yii::$app->language, 0, 2),
-                    'options' => [
-                        'multiple' => false,
-                        'placeholder' => Module::t('amosorganizzazioni', 'Seleziona') . '...',
-                        'disabled' => (!$model->isNewRecord),
-                    ],
-                    'pluginOptions' => [
-                        'allowClear' => true
-                    ]
-                ]) ?>
-            </div>
-            <div class="col-md-6 col-xs-12">
-                <?= $form->field($model, 'istat_code')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#istat_code_field_placeholder')]) ?>
-            </div>
+            <?php if ($organizzazioniModule->enableProfiloTipologiaStruttura === true): ?>
+                <div class="col-xs-12">
+                    <?= $form->field($model, 'tipologia_struttura_id')->widget(Select::classname(), [
+                        'data' => ArrayHelper::map($modelProfiloTipoStruttura::find()->all(), 'id', 'name'),
+                        'language' => substr(Yii::$app->language, 0, 2),
+                        'options' => [
+                            'multiple' => false,
+                            'placeholder' => Module::t('amosorganizzazioni', 'Seleziona') . '...',
+                        ],
+                        'pluginOptions' => [
+                            'allowClear' => true
+                        ]
+                    ]) ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($organizzazioniModule->enableProfiloEntiType === true): ?>
+                <div class="col-md-6 col-xs-12">
+                    <?= $form->field($model, 'profilo_enti_type_id')->widget(Select::classname(), [
+                        'data' => ArrayHelper::map($modelProfiloEntiType::find()->all(), 'id', 'name'),
+                        'language' => substr(Yii::$app->language, 0, 2),
+                        'options' => [
+                            'multiple' => false,
+                            'placeholder' => Module::t('amosorganizzazioni', 'Seleziona') . '...',
+                            'disabled' => (!$model->isNewRecord),
+                        ],
+                        'pluginOptions' => [
+                            'allowClear' => true
+                        ]
+                    ]) ?>
+                </div>
+                <div class="col-md-6 col-xs-12">
+                    <?= $form->field($model, 'istat_code')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#istat_code_field_placeholder')]) ?>
+                </div>
+            <?php endif; ?>
+
             <div class="col-md-6 col-xs-12">
                 <?= $form->field($model, 'tipologia_di_organizzazione')->widget(Select::classname(), [
                     'data' => ArrayHelper::map($modelProfiloTypesPmi::find()->asArray()->all(), 'id', 'name'),
@@ -234,7 +266,7 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                     ]
                 ); ?>
             <?php else: ?>
-                <?= $this->render('@vendor/lispa/amos-organizzazioni/src/views/profilo-sedi/_old_style_address_fields', ['form' => $form, 'modelSedi' => $mainOperativeHeadquarter]); ?>
+                <?= $this->render('@vendor/open20/amos-organizzazioni/src/views/profilo-sedi/_old_style_address_fields', ['form' => $form, 'modelSedi' => $mainOperativeHeadquarter]); ?>
             <?php endif; ?>
 
             <div class="col-xs-12">
@@ -317,6 +349,9 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                     ],
                 ]); ?>
             </div>
+            <div class="col-xs-12">
+                <?= $form->field($model, 'contatto_referente_operativo')->textInput(['maxlength' => true]); ?>
+            </div>
             <div class="col-xs-12<?= ($organizzazioniModule->forceSameSede ? ' hidden' : '') ?>">
                 <?= $form->field($model, 'la_sede_legale_e_la_stessa_del', [
                     'options' => [
@@ -343,7 +378,7 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                                 ); ?>
                             </div>
                         <?php else: ?>
-                            <?= $this->render('@vendor/lispa/amos-organizzazioni/src/views/profilo-sedi/_old_style_address_fields', ['form' => $form, 'modelSedi' => $mainLegalHeadquarter]); ?>
+                            <?= $this->render('@vendor/open20/amos-organizzazioni/src/views/profilo-sedi/_old_style_address_fields', ['form' => $form, 'modelSedi' => $mainLegalHeadquarter]); ?>
                         <?php endif; ?>
                     <?php endif; ?>
 
@@ -373,14 +408,20 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                     </div>
                 </div>
             </div>
-            <div class="col-xs-12">
-                <?= Html::tag('h2', Module::t('amosorganizzazioni', '#settings_receiver_title'), ['class' => 'subtitle-form']) ?>
-                <div class="col-xs-12 receiver-section">
-                    <?= DestinatariPlusTagWidget::widget([
-                        'model' => $model,
-                    ]); ?>
+            <?php if (!is_null($moduleTag)): ?>
+                <div class="row">
+                    <div class="col-xs-12">
+                        <?= Html::tag('h2', Module::t('amosorganizzazioni', '#settings_receiver_title'), ['class' => 'subtitle-form']) ?>
+                        <div class="col-xs-12 receiver-section">
+                            <?= DestinatariPlusTagWidget::widget([
+                                'model' => $model,
+                                'moduleCwh' => $moduleCwh,
+                                'scope' => $scope
+                            ]); ?>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            <?php endif; ?>
         </div>
 
         <div class="col-md-4 col-xs-12">
@@ -451,6 +492,26 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                     [
                         'header' => Module::t('amosorganizzazioni', '#other_headquarters'),
                         'content' => $this->render('_other_headquarters', ['model' => $model, 'isView' => false]),
+                    ]
+                ],
+                'headerOptions' => ['tag' => 'h2'],
+                'clientOptions' => [
+                    'collapsible' => false,
+                    'active' => false,
+                    'icons' => [
+                        'header' => 'ui-icon-amos am am-plus-square',
+                        'activeHeader' => 'ui-icon-amos am am-minus-square',
+                    ]
+                ],
+                'options' => [
+                    'class' => 'first-accordion'
+                ]
+            ]); ?>
+            <?= AccordionWidget::widget([
+                'items' => [
+                    [
+                        'header' => Module::t('amosorganizzazioni', '#employees'),
+                        'content' => $this->render('organization-employees', ['model' => $model, 'isUpdate' => true]),
                     ]
                 ],
                 'headerOptions' => ['tag' => 'h2'],

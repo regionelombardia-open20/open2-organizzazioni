@@ -1,18 +1,18 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo
+ * @package    open20\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
-use lispa\amos\core\forms\CreateNewButtonWidget;
-use lispa\amos\core\views\AmosGridView;
-use lispa\amos\organizzazioni\models\ProfiloSedi;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\core\forms\CreateNewButtonWidget;
+use open20\amos\core\views\AmosGridView;
+use open20\amos\organizzazioni\models\ProfiloSedi;
+use open20\amos\organizzazioni\Module;
 use kartik\alert\Alert;
 use yii\data\ActiveDataProvider;
 use yii\web\View;
@@ -20,7 +20,7 @@ use yii\web\View;
 /**
  * @var yii\web\View $this
  * @var yii\data\ActiveDataProvider $dataProvider
- * @var lispa\amos\organizzazioni\models\Profilo $model
+ * @var open20\amos\organizzazioni\models\Profilo $model
  * @var bool $isView
  */
 

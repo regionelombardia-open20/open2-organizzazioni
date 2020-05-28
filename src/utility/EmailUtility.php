@@ -1,27 +1,27 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\utility
+ * @package    open20\amos\organizzazioni\utility
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\utility;
+namespace open20\amos\organizzazioni\utility;
 
-use lispa\amos\admin\models\UserProfile;
-use lispa\amos\core\controllers\CrudController;
-use lispa\amos\core\interfaces\ModelGrammarInterface;
-use lispa\amos\core\utilities\Email;
-use lispa\amos\organizzazioni\models\Profilo;
-use lispa\amos\organizzazioni\models\ProfiloSedi;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\admin\models\UserProfile;
+use open20\amos\core\controllers\CrudController;
+use open20\amos\core\interfaces\ModelGrammarInterface;
+use open20\amos\core\utilities\Email;
+use open20\amos\organizzazioni\models\Profilo;
+use open20\amos\organizzazioni\models\ProfiloSedi;
+use open20\amos\organizzazioni\Module;
 
 /**
  * Class EmailUtility
- * @package lispa\amos\organizzazioni\utility
+ * @package open20\amos\organizzazioni\utility
  */
 class EmailUtility
 {
@@ -120,14 +120,14 @@ class EmailUtility
 
     /**
      * EmailUtility constructor.
-     * @param $type
-     * @param $role
-     * @param Profilo|ProfiloSedi $model
-     * @param $userName
-     * @param $refereeName
+     * @param string $type
+     * @param string $role
+     * @param Profilo $model
+     * @param string $userName
+     * @param string $refereeName
      * @param string|null $url
      * @param int|null $user_id
-     * @throws \yii\base\InvalidConfigException
+     * @throws \ReflectionException
      */
     function __construct($type, $role, $model, $userName, $refereeName, $url = null, $user_id = null)
     {
@@ -143,16 +143,12 @@ class EmailUtility
         /** @var ModelGrammarInterface $grammar */
         $grammar = $this->model->getGrammar();
         if ($this->model instanceof Profilo) {
-            $this->pathEmail = '@vendor/lispa/amos-organizzazioni/src/views/profilo/';
-            $this->contextLabel = $grammar->getArticleSingular() . $grammar->getModelSingularLabel();
+            $this->pathEmail = '@vendor/open20/amos-organizzazioni/src/views/profilo/';
+            $articleSingular = $grammar->getArticleSingular();
+            $this->contextLabel = $articleSingular . (substr($articleSingular, -1) == "'" ? '' : ' ') . $grammar->getModelSingularLabel();
         } elseif ($this->model instanceof ProfiloSedi) {
-            $this->pathEmail = '@vendor/lispa/amos-organizzazioni/src/views/profilo-sedi/';
+            $this->pathEmail = '@vendor/open20/amos-organizzazioni/src/views/profilo-sedi/';
             $this->contextLabel = $grammar->getArticleSingular() . ' ' . $grammar->getModelSingularLabel();
-        }
-        if (isset($url)) {
-            $this->url = $url;
-        } else {
-            $this->url = \Yii::$app->urlManager->createAbsoluteUrl($model->getFullViewUrl());
         }
         $this->appName = \Yii::$app->name;
 
@@ -162,10 +158,12 @@ class EmailUtility
                 'text' => 'registration-notification'
             ],
             self::REGISTRATION_REQUEST => [
+                'url' => '/myactivities/my-activities/index',
                 'subject' => 'registration-request-subject',
                 'text' => 'registration-request'
             ],
             self::INVITATION => [
+                'url' => '/myactivities/my-activities/index',
                 'subject' => 'invitation-subject',
                 'text' => 'invitation'
             ],
@@ -194,6 +192,14 @@ class EmailUtility
                 'text' => 'deleted-organization'
             ]
         ];
+
+        if (isset($url)) {
+            $this->url = $url;
+        } elseif (isset($this->emailConfs[$type]['url'])) {
+            $this->url = \Yii::$app->urlManager->createAbsoluteUrl($this->emailConfs[$type]['url']);
+        } else {
+            $this->url = \Yii::$app->urlManager->createAbsoluteUrl($model->getFullViewUrl());
+        }
     }
 
     /**

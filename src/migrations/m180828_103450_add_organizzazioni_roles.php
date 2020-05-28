@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\migrations
+ * @package    open20\amos\organizzazioni\migrations
  * @category   CategoryName
  */
 
-use lispa\amos\core\migration\AmosMigrationPermissions;
+use open20\amos\core\migration\AmosMigrationPermissions;
 use yii\helpers\ArrayHelper;
 use yii\rbac\Permission;
 
@@ -51,7 +51,7 @@ class m180828_103450_add_organizzazioni_roles extends AmosMigrationPermissions
                 'parent' => ['AMMINISTRATORE_ORGANIZZAZIONI', 'BASIC_USER'],
                 'children' => [
                     'PROFILO_READ',
-                    \lispa\amos\organizzazioni\widgets\icons\WidgetIconProfilo::className()
+                    \open20\amos\organizzazioni\widgets\icons\WidgetIconProfilo::className()
                 ]
             ],
         ];
@@ -61,7 +61,7 @@ class m180828_103450_add_organizzazioni_roles extends AmosMigrationPermissions
     {
         return [
             [
-                'name' => \lispa\amos\organizzazioni\widgets\icons\WidgetIconProfilo::className(),
+                'name' => \open20\amos\organizzazioni\widgets\icons\WidgetIconProfilo::className(),
                 'update' => true,
                 'newValues' => [
                     'removeParents' => ['PROFILO_READ']

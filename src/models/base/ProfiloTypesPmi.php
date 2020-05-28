@@ -1,18 +1,18 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\models\base
+ * @package    open20\amos\organizzazioni\models\base
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\models\base;
+namespace open20\amos\organizzazioni\models\base;
 
-use lispa\amos\core\record\Record;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\core\record\Record;
+use open20\amos\organizzazioni\Module;
 use yii\helpers\ArrayHelper;
 
 /**
@@ -29,7 +29,7 @@ use yii\helpers\ArrayHelper;
  * @property integer $updated_by
  * @property integer $deleted_by
  *
- * @package lispa\amos\organizzazioni\models\base
+ * @package open20\amos\organizzazioni\models\base
  */
 abstract class ProfiloTypesPmi extends Record
 {

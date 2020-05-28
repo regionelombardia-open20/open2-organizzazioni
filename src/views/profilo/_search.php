@@ -1,23 +1,23 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo
+ * @package    open20\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
-use lispa\amos\core\helpers\Html;
-use lispa\amos\organizzazioni\Module;
-use lispa\amos\tag\AmosTag;
-use lispa\amos\tag\widgets\TagWidget;
+use open20\amos\core\helpers\Html;
+use open20\amos\organizzazioni\Module;
+use open20\amos\tag\AmosTag;
+use open20\amos\tag\widgets\TagWidget;
 use yii\widgets\ActiveForm;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\organizzazioni\models\search\ProfiloSearch $model
+ * @var open20\amos\organizzazioni\models\search\ProfiloSearch $model
  * @var yii\widgets\ActiveForm $form
  */
 
@@ -58,7 +58,7 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
         <?= $form->field($model, 'istat_code')->textInput(['placeholder' => Module::t('amosorganizzazioni', '#search_placeholder_istat_code')]) ?>
     </div>
 
-    <?php if (isset($moduleTag) && in_array(Module::instance()->createModel('Profilo')->className(), $moduleTag->modelsEnabled) && $moduleTag->behaviors): ?>
+    <?php if (isset($moduleTag) && in_array(Module::instance()->model('Profilo'), $moduleTag->modelsEnabled) && $moduleTag->behaviors): ?>
         <div class="col-xs-12">
             <?php
             $params = \Yii::$app->request->getQueryParams();

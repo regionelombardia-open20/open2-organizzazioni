@@ -1,24 +1,24 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    open20\amos\organizzazioni
  * @category   CategoryName
  */
 
+use open20\amos\core\forms\ContextMenuWidget;
+use open20\amos\core\forms\CreatedUpdatedWidget;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\organizzazioni\assets\OrganizzazioniAsset;
+use open20\amos\organizzazioni\Module;
 use yii\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\core\forms\ContextMenuWidget;
-use lispa\amos\core\forms\CreatedUpdatedWidget;
-use lispa\amos\organizzazioni\Module;
-use lispa\amos\organizzazioni\assets\OrganizzazioniAsset;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\organizzazioni\models\Profilo $model
+ * @var open20\amos\organizzazioni\models\Profilo $model
  */
 
 $moduleL = \Yii::$app->getModule('layout');
@@ -40,10 +40,9 @@ if (!empty($moduleL)) {
             $url = $model->logoOrganization->getUrl('original', [
                 'class' => 'img-responsive'
             ]);
-            echo Html::img($url,['alt' => $model->name, 'class' => 'img-responsive']);
-        }
-        else{
-            echo AmosIcons::show('building',[],'dash');
+            echo Html::img($url, ['alt' => $model->name, 'class' => 'img-responsive']);
+        } else {
+            echo AmosIcons::show('building', [], 'dash');
         }
         ?>
     </div>
@@ -57,6 +56,6 @@ if (!empty($moduleL)) {
     </div>
     <div class="col-xs-12 nop icon-footer">
         <?= CreatedUpdatedWidget::widget(['model' => $model, 'isTooltip' => true]) ?> <!-- BISOGNA VISUALIZZARE LO STATO -->
-        <?= Html::a(Module::t('amosorganizzazioni','#icon_card_link') . AmosIcons::show('forward'),'#',['class' => 'icon-footer-link'])?>
+        <?= Html::a(Module::t('amosorganizzazioni', '#icon_card_link') . AmosIcons::show('forward'), '#', ['class' => 'icon-footer-link']) ?>
     </div>
 </div>

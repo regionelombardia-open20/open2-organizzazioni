@@ -1,18 +1,18 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\models\base
+ * @package    open20\amos\organizzazioni\models\base
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\models\base;
+namespace open20\amos\organizzazioni\models\base;
 
-use lispa\amos\core\record\Record;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\core\record\Record;
+use open20\amos\organizzazioni\Module;
 
 /**
  * Class ProfiloSedi
@@ -43,15 +43,15 @@ use lispa\amos\organizzazioni\Module;
  * @property integer $updated_by
  * @property integer $deleted_by
  *
- * @property \lispa\amos\organizzazioni\models\Profilo $profilo
- * @property \lispa\amos\organizzazioni\models\ProfiloSediTypes $profiloSediType
- * @property \lispa\amos\organizzazioni\models\ProfiloSediUserMm[] $profiloSediUserMms
- * @property \lispa\amos\core\user\User[] $profiloSediUsers
- * @property \lispa\amos\comuni\models\IstatNazioni $country
- * @property \lispa\amos\comuni\models\IstatProvince $province
- * @property \lispa\amos\comuni\models\IstatComuni $city
+ * @property \open20\amos\organizzazioni\models\Profilo $profilo
+ * @property \open20\amos\organizzazioni\models\ProfiloSediTypes $profiloSediType
+ * @property \open20\amos\organizzazioni\models\ProfiloSediUserMm[] $profiloSediUserMms
+ * @property \open20\amos\core\user\User[] $profiloSediUsers
+ * @property \open20\amos\comuni\models\IstatNazioni $country
+ * @property \open20\amos\comuni\models\IstatProvince $province
+ * @property \open20\amos\comuni\models\IstatComuni $city
  *
- * @package lispa\amos\organizzazioni\models\base
+ * @package open20\amos\organizzazioni\models\base
  */
 abstract class ProfiloSedi extends Record
 {
@@ -82,20 +82,73 @@ abstract class ProfiloSedi extends Record
      */
     public function rules()
     {
+        $enableSediRequired = Module::instance()->enableSediRequired;
         $requiredFields = [
-            'name',
+//            'name',
             'profilo_id',
             'profilo_sedi_type_id',
         ];
-        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
-            $requiredFields[] = 'cap_text';
-            $requiredFields[] = 'address_text';
-            $requiredFields[] = 'country_id';
-            $requiredFields[] = 'province_id';
-            $requiredFields[] = 'city_id';
-        } else {
-            $requiredFields[] = 'address';
+//        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+//            $requiredFields[] = 'cap_text';
+//            $requiredFields[] = 'address_text';
+//            $requiredFields[] = 'country_id';
+//            $requiredFields[] = 'province_id';
+//            $requiredFields[] = 'city_id';
+//        } else {
+//            if ($enableSediRequired) {
+//                $requiredFields[] = 'address';
+//            }
+//        }
+
+
+
+
+
+
+//        if ($this->is_main == 1) {
+//            if ($this->organizzazioniModule->enableSediRequired) {
+//                $requiredFields[] = 'name';
+//                if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+//                    $requiredFields[] = 'cap_text';
+//                    $requiredFields[] = 'address_text';
+//                    $requiredFields[] = 'country_id';
+//                    $requiredFields[] = 'province_id';
+//                    $requiredFields[] = 'city_id';
+//                } else {
+//                    $requiredFields[] = 'address';
+//                }
+//            }
+//        } else {
+//            $requiredFields[] = 'name';
+//            if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+//                $requiredFields[] = 'cap_text';
+//                $requiredFields[] = 'address_text';
+//                $requiredFields[] = 'country_id';
+//                $requiredFields[] = 'province_id';
+//                $requiredFields[] = 'city_id';
+//            } else {
+//                $requiredFields[] = 'address';
+//            }
+//        }
+
+
+        if (
+            (($this->is_main == 1) && $this->organizzazioniModule->enableSediRequired) ||
+            ($this->is_main == 0)
+        ) {
+            $requiredFields[] = 'name';
+            if ($this->organizzazioniModule->oldStyleAddressEnabled) {
+                $requiredFields[] = 'cap_text';
+                $requiredFields[] = 'address_text';
+                $requiredFields[] = 'country_id';
+                $requiredFields[] = 'province_id';
+                $requiredFields[] = 'city_id';
+            } else {
+                $requiredFields[] = 'address';
+            }
         }
+
+
         return [
             [$requiredFields, 'required'],
             [['description'], 'string'],
@@ -116,11 +169,11 @@ abstract class ProfiloSedi extends Record
                 'updated_at',
                 'deleted_at'
             ], 'safe'],
-            [['cap_text'], 'string', 'max' => 5],
+            [['cap_text'], 'string', 'min' => 5, 'max' => 5],
             [['phone', 'fax'], 'string', 'max' => 50],
             [['name', 'address', 'email', 'pec', 'address_text'], 'string', 'max' => 255],
             [['email', 'pec'], 'email'],
-            [['profilo_id'], 'exist', 'skipOnError' => true, 'targetClass' => $this->organizzazioniModule->createModel('Profilo')->className(), 'targetAttribute' => ['profilo_id' => 'id']],
+            [['profilo_id'], 'exist', 'skipOnError' => true, 'targetClass' => $this->organizzazioniModule->model('Profilo'), 'targetAttribute' => ['profilo_id' => 'id']],
             [['profilo_sedi_type_id'], 'exist', 'skipOnError' => true, 'targetClass' => $this->organizzazioniModule->createModel('ProfiloSediTypes')->className(), 'targetAttribute' => ['profilo_sedi_type_id' => 'id']],
         ];
     }
@@ -139,7 +192,7 @@ abstract class ProfiloSedi extends Record
             'active' => Module::t('amosorganizzazioni', 'Active'),
             'phone' => Module::t('amosorganizzazioni', 'Phone'),
             'fax' => Module::t('amosorganizzazioni', 'Fax'),
-            'email' => Module::t('amosorganizzazioni', 'Email'),
+            'email' => Module::t('amosorganizzazioni', '#headquarter_email'),
             'pec' => Module::t('amosorganizzazioni', 'PEC'),
             'address_text' => Module::t('amosorganizzazioni', 'Address'),
             'cap_text' => Module::t('amosorganizzazioni', 'CAP'),
@@ -165,7 +218,7 @@ abstract class ProfiloSedi extends Record
      */
     public function getProfilo()
     {
-        return $this->hasOne($this->organizzazioniModule->createModel('Profilo')->className(), ['id' => 'profilo_id']);
+        return $this->hasOne($this->organizzazioniModule->model('Profilo'), ['id' => 'profilo_id']);
     }
 
     /**
@@ -189,7 +242,7 @@ abstract class ProfiloSedi extends Record
      */
     public function getProfiloSediUsers()
     {
-        return $this->hasMany(\lispa\amos\core\user\User::className(), ['id' => 'user_id'])->via('profiloSediUserMms');
+        return $this->hasMany(\open20\amos\core\user\User::className(), ['id' => 'user_id'])->via('profiloSediUserMms');
     }
 
     /**
@@ -197,7 +250,7 @@ abstract class ProfiloSedi extends Record
      */
     public function getCountry()
     {
-        return $this->hasOne(\lispa\amos\comuni\models\IstatNazioni::className(), ['id' => 'country_id']);
+        return $this->hasOne(\open20\amos\comuni\models\IstatNazioni::className(), ['id' => 'country_id']);
     }
 
     /**
@@ -205,7 +258,7 @@ abstract class ProfiloSedi extends Record
      */
     public function getProvince()
     {
-        return $this->hasOne(\lispa\amos\comuni\models\IstatProvince::className(), ['id' => 'province_id']);
+        return $this->hasOne(\open20\amos\comuni\models\IstatProvince::className(), ['id' => 'province_id']);
     }
 
     /**
@@ -213,6 +266,6 @@ abstract class ProfiloSedi extends Record
      */
     public function getCity()
     {
-        return $this->hasOne(\lispa\amos\comuni\models\IstatComuni::className(), ['id' => 'city_id']);
+        return $this->hasOne(\open20\amos\comuni\models\IstatComuni::className(), ['id' => 'city_id']);
     }
 }

@@ -1,41 +1,43 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni
+ * @package    open20\amos\organizzazioni
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni;
+namespace open20\amos\organizzazioni;
 
-use lispa\amos\core\exceptions\AmosException;
-use lispa\amos\core\interfaces\OrganizationsModuleInterface;
-use lispa\amos\core\interfaces\SearchModuleInterface;
-use lispa\amos\core\module\AmosModule;
-use lispa\amos\core\widget\WidgetAbstract;
-use lispa\amos\organizzazioni\i18n\grammar\ProfiloGrammar;
-use lispa\amos\organizzazioni\models\Profilo;
-use lispa\amos\organizzazioni\models\ProfiloUserMm;
-use lispa\amos\organizzazioni\utility\OrganizzazioniUtility;
-use lispa\amos\organizzazioni\widgets\JoinedOrganizationsWidget;
-use lispa\amos\organizzazioni\widgets\JoinedOrgParticipantsTasksWidget;
-use lispa\amos\organizzazioni\widgets\ProfiloCardWidget;
+use open20\amos\core\exceptions\AmosException;
+use open20\amos\core\interfaces\InvitationExternalInterface;
+use open20\amos\core\interfaces\OrganizationsModuleInterface;
+use open20\amos\core\interfaces\SearchModuleInterface;
+use open20\amos\core\module\AmosModule;
+use open20\amos\core\widget\WidgetAbstract;
+use open20\amos\organizzazioni\i18n\grammar\ProfiloGrammar;
+use open20\amos\organizzazioni\models\Profilo;
+use open20\amos\organizzazioni\models\ProfiloUserMm;
+use open20\amos\organizzazioni\utility\OrganizzazioniUtility;
+use open20\amos\organizzazioni\widgets\JoinedOrganizationsWidget;
+use open20\amos\organizzazioni\widgets\JoinedOrgParticipantsTasksWidget;
+use open20\amos\organizzazioni\widgets\ProfiloCardWidget;
 use Yii;
 use yii\helpers\ArrayHelper;
+use yii\log\Logger;
 
 /**
  * Class Module
- * @package lispa\amos\organizzazioni
+ * @package open20\amos\organizzazioni
  */
-class Module extends AmosModule implements OrganizationsModuleInterface, SearchModuleInterface
+class Module extends AmosModule implements OrganizationsModuleInterface, SearchModuleInterface, InvitationExternalInterface
 {
     /**
      * @inheritdoc
      */
-    public $controllerNamespace = 'lispa\amos\organizzazioni\controllers';
+    public $controllerNamespace = 'open20\amos\organizzazioni\controllers';
     public $newFileMode = 0666;
     public $name = 'organizzazioni';
 
@@ -59,7 +61,12 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      */
     public $db_fields_translation = [
         [
-            'namespace' => 'lispa\amos\organizzazioni\models\ProfiloEntiType',
+            'namespace' => 'open20\amos\organizzazioni\models\ProfiloEntiType',
+            'attributes' => ['name'],
+            'category' => 'amosorganizzazioni',
+        ],
+        [
+            'namespace' => 'open20\amos\organizzazioni\models\ProfiloTipoStruttura',
             'attributes' => ['name'],
             'category' => 'amosorganizzazioni',
         ],
@@ -79,6 +86,11 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      * @var bool $enableSediRequired
      */
     public $enableSediRequired = true;
+
+    /**
+     * @var bool $enableCodeIstatRequired
+     */
+    public $enableCodeIstatRequired = true;
 
     /**
      * @var bool $enableRappresentanteLegaleText
@@ -113,16 +125,73 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     public $enabled_widget_sedi = true;
 
     /**
+     * @var bool $viewEmailEmployees
+     */
+    public $viewEmailEmployees = false;
+
+    /**
+     * @var bool $inviteUserOfOrganizationParent
+     */
+    public $inviteUserOfOrganizationParent = false;
+
+    /**
+     * @var bool $disableFieldChecks
+     */
+    public $disableFieldChecks = false;
+
+    /**
+     * If true this configuration enable Organizzazioni module manager to create
+     * a reserved community.
+     * These community can be made/managed by legal representative and operative referee.
+     * @var bool $enableConfirmUsersJoinRequests
+     */
+    public $enableCommunityCreation = false;
+
+    /**
+     * Is community amos module loaded?
+     *
+     * @var \open20\amos\community\AmosCommunity
+     */
+    public $communityModule = null;
+
+    /**
+     * @var bool $enableProfiloEntiType
+     */
+    public $enableProfiloEntiType = true;
+
+    /**
+     * @var bool $enableProfiloTipologiaStruttura
+     */
+    public $enableProfiloTipologiaStruttura = false;
+
+    /**
+     * @var bool $enableContattoReferenteOperativo
+     */
+    public $enableContattoReferenteOperativo = false;
+    
+    /**
+     * @var bool $externalInvitationUsers
+     */
+    public $externalInvitationUsers = false;
+
+    /**
+     * @var string $overrideUserContextAssociationStatus
+     */
+    public $overrideUserContextAssociationStatus = '';
+
+    /**
      * @inheritdoc
      */
     public function init()
     {
         parent::init();
 
-        \Yii::setAlias('@lispa/amos/' . static::getModuleName() . '/controllers/', __DIR__ . '/controllers/');
+        \Yii::setAlias('@open20/amos/' . static::getModuleName() . '/controllers/', __DIR__ . '/controllers/');
         // custom initialization code goes here
         $config = require(__DIR__ . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php');
         \Yii::configure($this, ArrayHelper::merge($config, ["params" => $this->params]));
+
+        $this->communityModule = Yii::$app->getModule('community');
     }
 
     /**
@@ -144,6 +213,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
             'ProfiloUserMm' => __NAMESPACE__ . '\\' . 'models\ProfiloUserMm',
             'ProfiloSearch' => __NAMESPACE__ . '\\' . 'models\search\ProfiloSearch',
             'ProfiloSediSearch' => __NAMESPACE__ . '\\' . 'models\search\ProfiloSediSearch',
+            'ProfiloTipoStruttura' => __NAMESPACE__ . '\\' . 'models\ProfiloTipoStruttura',
         ];
     }
 
@@ -189,7 +259,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     public function getWidgetIcons()
     {
         return [
-            \lispa\amos\organizzazioni\widgets\icons\WidgetIconProfilo::className(),
+            \open20\amos\organizzazioni\widgets\icons\WidgetIconProfilo::className(),
         ];
     }
 
@@ -230,7 +300,9 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      */
     public function getOrganizationsListQuery()
     {
-        $query = Profilo::find();
+        /** @var Profilo $profiloModel */
+        $profiloModel = $this->createModel('Profilo');
+        $query = $profiloModel::find();
         $query->orderBy(['name' => SORT_ASC]);
 
         return $query;
@@ -239,12 +311,15 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     /**
      * @inheritdoc
      */
-    public function saveOrganizationUserMm($user_id, $organization_id, $user_profile_role_id = null, $user_profile_area_id = null)
+    public function saveOrganizationUserMm($user_id, $organization_id, $user_profile_role_id = null, $user_profile_area_id = null, $overrideStatus = '')
     {
         try {
-            $org = ProfiloUserMm::findOne(['profilo_id' => $organization_id, 'user_id' => $user_id]);
+            /** @var ProfiloUserMm $profiloUserMm */
+            $profiloUserMm = $this->createModel('ProfiloUserMm');
+            $org = $profiloUserMm::findOne(['profilo_id' => $organization_id, 'user_id' => $user_id]);
             if (empty($org)) {
-                $org = new ProfiloUserMm();
+                /** @var ProfiloUserMm $org */
+                $org = $this->createModel('ProfiloUserMm');
                 $org->profilo_id = $organization_id;
                 $org->user_id = $user_id;
                 if (!empty($user_profile_role_id)) {
@@ -253,11 +328,18 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
                 if (!empty($user_profile_area_id)) {
                     $org->user_profile_area_id = $user_profile_area_id;
                 }
+                if ($overrideStatus) {
+                    $org->status = $overrideStatus;
+                } else {
+                    // TODO mettere questo quando sarà finita la modifica per la conferma dell'invito da parte dell'utente invitato
+                    $org->status = ($this->enableConfirmUsersJoinRequests ? $profiloUserMm::STATUS_WAITING_REQUEST_CONFIRM : $profiloUserMm::STATUS_WAITING_OK_USER);
+//                  $org->status = ($this->enableConfirmUsersJoinRequests ? $profiloUserMm::STATUS_WAITING_REQUEST_CONFIRM : $profiloUserMm::STATUS_ACTIVE);
+                }
                 return $org->save(false);
             }
             return true;
         } catch (\Exception $ex) {
-            Yii::getLogger()->log($ex->getMessage(), \yii\log\Logger::LEVEL_ERROR);
+            Yii::getLogger()->log($ex->getMessage(), Logger::LEVEL_ERROR);
             return false;
         }
     }
@@ -269,9 +351,11 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         $model = null;
         try {
-            $model = Profilo::findOne(['id' => $id]);
+            /** @var Profilo $profiloModel */
+            $profiloModel = $this->createModel('Profilo');
+            $model = $profiloModel::findOne(['id' => $id]);
         } catch (\Exception $ex) {
-            Yii::getLogger()->log($ex->getMessage(), \yii\log\Logger::LEVEL_ERROR);
+            Yii::getLogger()->log($ex->getMessage(), Logger::LEVEL_ERROR);
         }
         return $model;
     }
@@ -312,4 +396,15 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
         return OrganizzazioniUtility::getOrganizationsRepresentedOrReferredByUserId($userId, $onlyIds, $returnQuery);
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function addUserContextAssociation($userId, $modelId)
+    {
+        if (strlen($this->overrideUserContextAssociationStatus) > 0) {
+            return $this->saveOrganizationUserMm($userId, $modelId, null, null, $this->overrideUserContextAssociationStatus);
+        } else {
+            return $this->saveOrganizationUserMm($userId, $modelId);
+        }
+    }
 }

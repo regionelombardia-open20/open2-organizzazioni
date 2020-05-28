@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\i18n\it-IT
+ * @package    open20\amos\organizzazioni\i18n\it-IT
  * @category   CategoryName
  */
 
@@ -14,6 +14,8 @@ return [
     'Accedi al Plugin organizzazioni' => 'Accedi al Plugin organizzazioni',
     '#accepted_invitation_mail_text_1' => "ha accettato l'invito al",
     '#accepted_invitation_mail_title' => 'Invito accettato',
+    '#accept_invitation' => 'Accetta invito',
+    '#accept_invitation_question' => "Vuoi veramente accettare l'invito?",
     'Active' => 'Attiva',
     'ACTIVE' => 'Richiesta accettata',
     '#active_sede_type' => 'Attiva',
@@ -26,6 +28,7 @@ return [
     'Aggiornato da' => 'Aggiornato da',
     'Aggiornato il' => 'Aggiornato il',
     'Aggiungi dipendenti' => 'Aggiungi dipendenti',
+    '#alert_invite_employees' => "E' necessario salvare prima di poter invitare dipendenti",
     '#alert_new_headquarters' => "E' necessario salvare prima di poter aggiungere altre sedi",
     'Allegati ' => 'Allegati',
     'Allegati' => 'Allegati',
@@ -35,6 +38,7 @@ return [
     '#article_indefinite' => "un'",
     '#article_plural' => 'le',
     '#article_singular' => "l'",
+    '#ask_to_be_employee' => 'Diventa dipendente',
     'asked to participate to :' => 'ha chiesto di partecipare a:',
     'asked to participate to' => 'ha chiesto di partecipare a',
     'Associa Sedi' => 'Associa Sedi',
@@ -42,6 +46,7 @@ return [
     '#attachments_field' => 'Campo allegati',
     '#attachments_field_hint' => 'Tieni premuto il tasto "MAIUSCOLO" mentre selezioni i file, per caricarne più di uno alla volta',
     '#attachments_title' => 'Allegati',
+    'Associate employees' => 'Associa dipendenti',
     'Aziende' => 'Aziende',
     'Azioni' => 'Azioni',
     '#cancel' => 'Annulla',
@@ -63,13 +68,20 @@ return [
     '#codice_fiscale_field_placeholder' => 'Inserisci Codice Fiscale',
     'Codice Fiscale' => 'Codice Fiscale',
     'Codice recupero place' => 'Codice recupero place\'',
+    '#community_create_already_exists' => 'La community è già esistente.',
+    '#community_create_error' => 'Errore durante la creazione della community.',
+    '#community_create_success' => 'Community creata correttamente.',
     'Company ID' => 'ID Azienda',
     'Comune (Amministratori e dipendenti comunali)' => 'Comune (Amministratori e dipendenti comunali)',
     'confirmed the invitation to the' => 'ha accettato l\'invito alla',
     'Consente all\'utente di modificare l\'entità Organizzazioni' => 'Consente all\'utente di modificare l\'entità Organizzazioni',
+    'Contatto referente operativo' => 'Contatto referente operativo',
     'Country' => 'Nazione',
     'Created At' => 'Creato Il',
     'Created By' => 'Creato Da',
+    '#create_community_for_organization' => 'Crea una community associata<br />a questa organizzazione',
+    '#create_community_for_organization_question' => 'Sicuro di voler creare la community?',
+    '#create_community_for_organization_title' => 'Crea una community associata a questa organizzazione',
     'Create headquarters' => 'Crea sede',
     'Create organization' => 'Crea organizzazione',
     '#create_other_headquarter' => 'Crea altra sede',
@@ -101,6 +113,7 @@ return [
     '#email_field_placeholder' => 'Inserisci una email valida',
     '#employees' => 'Dipendenti',
     'Enti' => 'Enti',
+    '#error_associate_organization_m2m_userprofile_not_found' => "Profilo utente non trovato mentre si tentava di associare un'organizzazione all'utente",
     '#error_main_headquarters_migration_legal' => 'Errore durante il salvataggio della sede legale principale',
     '#error_main_headquarters_migration_operative' => 'Errore durante il salvataggio della sede operativa principale',
     'Error occured while subscribing the user' => 'Si è verificato un errore nell\'iscrizione dell\'utente',
@@ -121,6 +134,7 @@ return [
     'has been rejected by' => 'non accettato da',
     'has role:' => 'ha il ruolo:',
     '#headquarter' => 'Sede',
+    '#headquarter_email' => 'Email',
     'Headquarter type' => 'Tipologia sede',
     '#icon_card_link' => 'Associa',
     'ID' => 'ID',
@@ -133,6 +147,8 @@ return [
     'Invitation to' => 'Invito a',
     '#invitation_mail_text_1' => 'ti ha invitato ad iscriverti al',
     '#invitation_received_mail_title' => 'Invito ricevuto',
+    'INVITED' => 'Invitato',
+    'Invite employees' => 'Invita dipendenti',
     'Is Deletable' => "E' cancellabile",
     'Istat Code' => 'Codice Istat',
     '#istat_code_field_placeholder' => 'Inserisci codice Istat',
@@ -150,8 +166,10 @@ return [
     '#join_organization_already_referee' => "L'utente {nomeCognome} è già il legale rappresentante o il referente operativo dell'organizzazione {organizationName}, quindi non può essere aggiunto come membro",
     '#join_organization_error' => "Si è verificato un errore nell'iscrizione dell'utente {nomeCognome} all'organizzazione {organizationName}",
     '#join_organization_request_forwarded_to_referees' => "La tua richiesta è stata inoltrata ai referenti dell'organizzazione {organizationName} ed è in attesa di approvazione",
+    "#join_organization_user_accept" => "Sei ora un membro dell'organizzazione '{organizationName}'",
     '#join_organization_user_accepted' => "{nomeCognome} è ora un membro dell'organizzazione {organizationName}",
     '#join_organization_user_already_joined' => "L'utente {nomeCognome} è già iscritto all'organizzazione {organizationName}",
+    '#join_organization_user_reject' => "Hai rifiutato l'iscrizione all'organizzazione '{organizationName}'",
     '#join_organization_user_rejected' => "L'iscrizione dell'utente {nomeCognome} all'organizzazione {organizationName} è stata rifiutata",
     '#join_organization_user_rejected_successfully' => "L'iscrizione dell'utente {nomeCognome} all'organizzazione {organizationName} è stata rifiutata correttamente",
     '#join_organization_user_waiting_request_confirm' => "La richiesta di iscrizione dell'utente {nomeCognome} all'organizzazione {organizationName} è in attesa di essere confermata",
@@ -187,6 +205,9 @@ return [
     '#organization_responsible' => 'Responsabile',
     'Organizzazione' => 'Organizzazione',
     'Organizzazioni' => 'Organizzazioni',
+    '#organizzazioni_dashoard_description' => '',
+    'ORGANIZZAZIONI_MANAGER' => 'Manager organizzazione',
+    'ORGANIZZAZIONI_PARTICIPANT' => 'Partecipante organizzazione',
     '#organizzazioni_plural' => 'organizzazioni',
     '#organizzazioni_singular' => 'organizzazione',
     '#other_headquarters' => 'Altre sedi',
@@ -221,6 +242,7 @@ return [
     'REJECTED' => 'Richiesta rifiutata',
     '#rejected_invitation_mail_text_1' => "non ha accettato l'invito al",
     '#rejected_invitation_mail_title' => 'Invito non accettato',
+    '#request_sent' => 'Richiesta inviata',
     'Reset' => 'Annulla',
     '#responsabile_field_placeholder' => 'Inserisci responsabile',
     'Risposta' => 'Risposta',
@@ -255,6 +277,7 @@ return [
     'Sito web' => 'Sito web',
     '#social_title' => 'Link social',
     'Stato' => 'Stato',
+    'surname_name' => 'nome_cognome',
     '#tags_title' => 'Tag Aree di Interesse',
     '#telefono_field_placeholder' => 'Inserisci telefono',
     'Telefono' => 'Telefono',
@@ -275,6 +298,8 @@ return [
     'Update headquarter' => 'Aggiorna sede',
     'Update organization' => 'Aggiorna organizzazione',
     'User ID' => 'ID utente',
+    'user_image' => 'immagine_utente',
+    '#userIsEmployee_no_model_id' => 'userIsEmployee: id non presente',
     '#user_profile_area_label' => 'Area',
     '#user_profile_role_label' => 'Ruolo',
     'Utente' => 'Utente',
@@ -297,4 +322,6 @@ return [
     'You are now linked to the organization' => 'Sei ora collegato alla organizzazione',
     'You cannot access the headquarters list directly' => 'Non puoi accedere alla lista delle sedi in modo diretto',
     'Your role is: ' => 'Il tuo ruolo è: ',
+    
+    '#visit_community_btn_title' => 'Entra nella Community',
 ];

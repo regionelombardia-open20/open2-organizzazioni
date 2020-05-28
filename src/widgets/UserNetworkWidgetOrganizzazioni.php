@@ -1,29 +1,29 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\widgets
+ * @package    open20\amos\organizzazioni\widgets
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\widgets;
+namespace open20\amos\organizzazioni\widgets;
 
-use lispa\amos\admin\AmosAdmin;
-use lispa\amos\admin\models\UserProfile;
-use lispa\amos\admin\models\UserProfileArea;
-use lispa\amos\admin\models\UserProfileRole;
-use lispa\amos\core\forms\editors\m2mWidget\M2MWidget;
-use lispa\amos\core\forms\editors\Select;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\core\user\User;
-use lispa\amos\core\utilities\JsUtility;
-use lispa\amos\organizzazioni\models\Profilo;
-use lispa\amos\organizzazioni\models\ProfiloUserMm;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\admin\AmosAdmin;
+use open20\amos\admin\models\UserProfile;
+use open20\amos\admin\models\UserProfileArea;
+use open20\amos\admin\models\UserProfileRole;
+use open20\amos\core\forms\editors\m2mWidget\M2MWidget;
+use open20\amos\core\forms\editors\Select;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\core\user\User;
+use open20\amos\core\utilities\JsUtility;
+use open20\amos\organizzazioni\models\Profilo;
+use open20\amos\organizzazioni\models\ProfiloUserMm;
+use open20\amos\organizzazioni\Module;
 use Yii;
 use yii\base\Widget;
 use yii\bootstrap\Modal;
@@ -34,7 +34,7 @@ use yii\widgets\PjaxAsset;
 
 /**
  * Class UserNetworkWidgetOrganizzazioni
- * @package lispa\amos\organizzazioni\widgets
+ * @package open20\amos\organizzazioni\widgets
  */
 class UserNetworkWidgetOrganizzazioni extends Widget
 {
@@ -104,17 +104,20 @@ class UserNetworkWidgetOrganizzazioni extends Widget
 
         $query = $this->getModelDataQuery(static::getSearchPostName());
 
+        /** @var UserProfile $userProfileModel */
+        $userProfileModel = AmosAdmin::instance()->createModel('UserProfile');
         /** @var UserProfile $model */
-        $model = User::findOne($this->userId)->getProfile();
-        $loggedUserId = Yii::$app->getUser()->id;
-        $this->isUpdate = $this->isUpdate && ($loggedUserId == $model->user_id);
+        $model = $userProfileModel::findOne(['user_id' => $this->userId]);
+        $loggedUser = Yii::$app->getUser();
+        $loggedUserId = $loggedUser->id;
+        $this->isUpdate = $this->isUpdate && (($loggedUserId == $model->user_id) || Yii::$app->user->can('AMMINISTRATORE_ORGANIZZAZIONI'));
 
         /** @var Profilo $profilo */
         $profilo = Module::instance()->createModel('Profilo');
         $itemsMittente = $profilo->getUserNetworkWidgetColumns();
 
         $actionColumnsButtons = [
-            'deleteRelation' => function ($url, $model) {
+            'deleteRelation' => function ($url, $model) use ($loggedUser, $loggedUserId) {
                 /** @var ProfiloUserMm $model */
                 $url = '/' . Module::getModuleName() . '/profilo/elimina-m2m';
                 $organizationId = $model->profilo_id;
@@ -124,9 +127,11 @@ class UserNetworkWidgetOrganizzazioni extends Widget
                     'id' => $organizationId,
                     'targetId' => $targetId
                 ]);
-                $loggedUser = Yii::$app->getUser();
                 $btnDelete = '';
-                if ($loggedUser->id == $this->userId && ($model->profilo->created_by != $loggedUser->id || $loggedUser->can('ADMIN'))) {
+                if (
+                    (($loggedUserId == $this->userId) && (($model->profilo->created_by != $loggedUserId) || $loggedUser->can('AMMINISTRATORE_ORGANIZZAZIONI'))) ||
+                    $loggedUser->can('AMMINISTRATORE_ORGANIZZAZIONI')
+                ) {
                     $btnDelete = Html::a(AmosIcons::show('close', ['class' => 'btn-delete-relation']),
                         $urlDelete,
                         [

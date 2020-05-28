@@ -1,33 +1,33 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo
+ * @package    open20\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
 
-use lispa\amos\core\forms\editors\m2mWidget\M2MWidget;
-use lispa\amos\organizzazioni\models\Profilo;
+use open20\amos\core\forms\editors\m2mWidget\M2MWidget;
+use open20\amos\organizzazioni\models\Profilo;
 use yii\db\ActiveQuery;
 
 /**
  * @var yii\web\View $this
- * @var \lispa\amos\projectmanagement\models\Projects $model
+ * @var \open20\amos\projectmanagement\models\Projects $model
  */
 
 $this->title = $model;
-$this->params['breadcrumbs'][] = ['label' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Projects'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => \open20\amos\projectmanagement\Module::t('amosproject_management', 'Projects'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = [
     'label' => strip_tags($model),
     'url' => ['update', 'id' => $model->id, '#' => 'tab-organizations']
 ];
-$this->params['breadcrumbs'][] = \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Invite Organizations');
+$this->params['breadcrumbs'][] = \open20\amos\projectmanagement\Module::t('amosproject_management', 'Invite Organizations');
 
 /** @var Profilo $organizationModelClass */
-$organizationModelClass = \lispa\amos\organizzazioni\Module::instance()->createModel('Profilo')->className();
+$organizationModelClass = \open20\amos\organizzazioni\Module::instance()->model('Profilo');
 
 /** @var ActiveQuery $query */
 $query = $organizationModelClass::find()->andFilterWhere([
@@ -61,18 +61,18 @@ if (isset($post['genericSearch'])) {
     ],
     'viewSearch' => (isset($viewM2MWidgetGenericSearch) ? $viewM2MWidgetGenericSearch : false),
     'targetUrlController' => 'projects',
-    'moduleClassName' => \lispa\amos\projectmanagement\Module::className(),
+    'moduleClassName' => \open20\amos\projectmanagement\Module::className(),
     'postName' => 'Project',
     'postKey' => 'Organization',
     'targetColumnsToView' => [
         'name' => [
             'attribute' => 'name',
-            'label' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Name'),
+            'label' => \open20\amos\projectmanagement\Module::t('amosproject_management', 'Name'),
             'headerOptions' => [
-                'id' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Name'),
+                'id' => \open20\amos\projectmanagement\Module::t('amosproject_management', 'Name'),
             ],
             'contentOptions' => [
-                'headers' => \lispa\amos\projectmanagement\Module::t('amosproject_management', 'Name'),
+                'headers' => \open20\amos\projectmanagement\Module::t('amosproject_management', 'Name'),
             ]
         ],
         'indirizzo',

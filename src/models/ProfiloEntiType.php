@@ -1,27 +1,27 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\models
+ * @package    open20\amos\organizzazioni\models
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\models;
+namespace open20\amos\organizzazioni\models;
 
-use lispa\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\Module;
 
 /**
  * Class ProfiloEntiType
  * This is the model class for table "profilo_enti_type".
  *
- * @property \lispa\amos\organizzazioni\models\Profilo[] $profili
+ * @property \open20\amos\organizzazioni\models\Profilo[] $profili
  *
- * @package lispa\amos\organizzazioni\models
+ * @package open20\amos\organizzazioni\models
  */
-class ProfiloEntiType extends \lispa\amos\organizzazioni\models\base\ProfiloEntiType
+class ProfiloEntiType extends \open20\amos\organizzazioni\models\base\ProfiloEntiType
 {
     const TYPE_MUNICIPALITY = 1;
     const TYPE_OTHER_ENTITY = 2;

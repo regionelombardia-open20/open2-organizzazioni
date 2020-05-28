@@ -1,32 +1,38 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\models
+ * @package    open20\amos\organizzazioni\models
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\models;
+namespace open20\amos\organizzazioni\models;
 
-use lispa\amos\admin\AmosAdmin;
-use lispa\amos\attachments\behaviors\FileBehavior;
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\interfaces\OrganizationsModelInterface;
-use lispa\amos\core\validators\CfPivaValidator;
-use lispa\amos\core\validators\PIVAValidator;
-use lispa\amos\cwh\AmosCwh;
-use lispa\amos\cwh\models\CwhAuthAssignment;
-use lispa\amos\cwh\models\CwhConfig;
-use lispa\amos\organizzazioni\components\OrganizationsPlacesComponents;
-use lispa\amos\organizzazioni\i18n\grammar\ProfiloGrammar;
-use lispa\amos\organizzazioni\Module;
-use lispa\amos\organizzazioni\widgets\icons\WidgetIconProfilo;
-use lispa\amos\organizzazioni\widgets\ProfiloCardWidget;
-use lispa\amos\organizzazioni\widgets\UserNetworkWidget;
+use open20\amos\admin\AmosAdmin;
+use open20\amos\attachments\behaviors\FileBehavior;
+use open20\amos\community\models\CommunityContextInterface;
+use open20\amos\community\models\CommunityUserMm;
+use open20\amos\core\exceptions\AmosException;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\core\interfaces\OrganizationsModelInterface;
+use open20\amos\core\user\User;
+use open20\amos\core\validators\CfPivaValidator;
+use open20\amos\core\validators\PIVAValidator;
+use open20\amos\cwh\AmosCwh;
+use open20\amos\cwh\models\CwhAuthAssignment;
+use open20\amos\cwh\models\CwhConfig;
+use open20\amos\organizzazioni\components\OrganizationsPlacesComponents;
+use open20\amos\organizzazioni\i18n\grammar\ProfiloGrammar;
+use open20\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\widgets\icons\WidgetIconProfilo;
+use open20\amos\organizzazioni\widgets\ProfiloCardWidget;
+use open20\amos\organizzazioni\widgets\UserNetworkWidget;
 use Yii;
+use yii\db\ActiveQuery;
 use yii\db\Query;
 use yii\helpers\ArrayHelper;
 
@@ -34,15 +40,18 @@ use yii\helpers\ArrayHelper;
  * Class Profilo
  * This is the model class for table "profilo".
  *
- * @property \lispa\amos\organizzazioni\models\ProfiloSediOperative $operativeHeadquarter
- * @property \lispa\amos\organizzazioni\models\ProfiloSediLegal $legalHeadquarter
- * @property \lispa\amos\organizzazioni\models\OrganizationsPlaces $sedeIndirizzo
- * @property \lispa\amos\organizzazioni\models\OrganizationsPlaces $sedeLegaleIndirizzo
+ * @property \open20\amos\organizzazioni\models\ProfiloSediOperative $operativeHeadquarter
+ * @property \open20\amos\organizzazioni\models\ProfiloSediLegal $legalHeadquarter
+ * @property \open20\amos\organizzazioni\models\OrganizationsPlaces $sedeIndirizzo
+ * @property \open20\amos\organizzazioni\models\OrganizationsPlaces $sedeLegaleIndirizzo
  *
- * @package lispa\amos\organizzazioni\models
+ * @package open20\amos\organizzazioni\models
  */
-class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements OrganizationsModelInterface
+class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements OrganizationsModelInterface, CommunityContextInterface
 {
+    const ORGANIZZAZIONI_MANAGER = 'ORGANIZZAZIONI_MANAGER';
+    const ORGANIZZAZIONI_PARTICIPANT = 'ORGANIZZAZIONI_PARTICIPANT';
+
     private $allegati;
 
     /**
@@ -243,6 +252,7 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      * Returns the text hint for the specified attribute.
      * @param string $attribute the attribute name
      * @return string the attribute hint
+     * @see attributeHints
      */
     public function getAttributeHint($attribute)
     {
@@ -333,6 +343,11 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
             [
                 'slug' => 'tipologia_di_organizzazione',
                 'label' => $labels['tipologia_di_organizzazione'],
+                'type' => 'string'
+            ],
+            [
+                'slug' => 'tipologia_struttura_id',
+                'label' => $labels['tipologia_struttura_id'],
                 'type' => 'string'
             ],
             [
@@ -496,19 +511,100 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getGridViewColumns()
     {
-        return [
-            'profilo_enti_type_id' => [
+        $loggedUserId = \Yii::$app->user->id;
+
+        $template = '{view}{update}{delete}';
+        if (
+            ($this->organizzazioniModule->enableCommunityCreation == true)
+            && (!empty($this->organizzazioniModule->communityModule))) {
+            $template = '{community}' . $template;
+        }
+
+        $columns = [];
+        if ($this->organizzazioniModule->enableProfiloEntiType === true) {
+            $columns['profilo_enti_type_id'] = [
                 'attribute' => 'profilo_enti_type_id',
                 'value' => 'profiloEntiType.name'
-            ],
-            'name',
-            'formaLegale.name',
-            'addressField:raw',
-            'operativeHeadquarter.email',
-            [
-                'class' => 'lispa\amos\core\views\grid\ActionColumn',
+            ];
+        }
+        $columns[] = 'name';
+        $columns[] = 'formaLegale.name';
+        if ($this->organizzazioniModule->enableProfiloTipologiaStruttura === true) {
+            $columns[] = 'tipologiaStruttura.name';
+        }
+//        $columns[] = 'rappresentanteLegale';
+//        $columns[] = 'referenteOperativo';
+        $columns[] = 'addressField:raw';
+        $columns[] = 'operativeHeadquarter.email';
+        $columns[] = [
+            'class' => 'open20\amos\core\views\grid\ActionColumn',
+            'template' => $template,
+            'buttons' => [
+                'community' => function ($url, $model) use ($loggedUserId) {
+                    /** @var Profilo $model */
+                    $url = '';
+                    if (is_null($model->community_id)) {
+                        if (in_array($loggedUserId, [$model->rappresentante_legale, $model->referente_operativo])) {
+                            $url = Html::a(
+                                AmosIcons::show('globe-lock'),
+                                ['/organizzazioni/profilo/create-community/', 'id' => $model->id],
+                                [
+                                    'class' => 'btn btn-tools-secondary',
+                                    'title' => Module::t('amosorganizzazioni', 'Crea una community associata a questa organizzazione'),
+                                    'data-confirm' => Module::t('amosorganizzazioni', 'Sicuro di voler creare la Community?')
+                                ]
+                            );
+                        }
+                    } else {
+                        $userInList = false;
+                        foreach ($model->communityUserMm as $userCommunity) { // User not yet subscribed to the event
+                            if ($userCommunity->user_id == $loggedUserId) {
+                                $userInList = true;
+                                $userStatus = $userCommunity->status;
+                                break;
+                            }
+                        }
+                        if (Yii::$app->user->can('ADMIN', ['model' => $model])) {
+                            $userInList = true;
+                            $userStatus = CommunityUserMm::STATUS_ACTIVE;
+                        }
+
+                        if ($userInList === true) {
+                            $showButton = true;
+                            switch ($userStatus) {
+                                case CommunityUserMm::STATUS_WAITING_OK_COMMUNITY_MANAGER:
+                                    $button['title'] = Module::t('amosorganizzazioni', 'Request sent');
+                                    $button['options']['class'] .= ' disabled';
+                                    break;
+                                case CommunityUserMm::STATUS_WAITING_OK_USER:
+                                    $button['title'] = Module::t('amosorganizzazioni', 'Accept invitation');
+                                    $button['url'] = [
+                                        '/community/community/accept-user',
+                                        'communityId' => $model->community_id,
+                                        'userId' => Yii::$app->user->id
+                                    ];
+                                    $button['options']['data']['confirm'] = Module::t('amosorganizzazioni', 'Do you really want to accept invitation?');
+                                    break;
+                                case CommunityUserMm::STATUS_ACTIVE:
+                                    $url = Html::a(
+                                        AmosIcons::show('globe'),
+                                        ['/community/join', 'id' => $model->community_id],
+                                        [
+                                            'class' => 'btn btn-tools-secondary',
+                                            'title' => Module::t('amosorganizzazioni', 'Accedi alla community associata a questa organizzazione'),
+                                        ]
+                                    );
+                                    break;
+                            }
+                        }
+                    }
+
+                    return $url;
+                }
             ]
         ];
+
+        return $columns;
     }
 
     /**
@@ -516,31 +612,37 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getUserNetworkWidgetColumns()
     {
-        return [
-            'profilo.profilo_enti_type_id' => [
+        $columns = [];
+
+        if ($this->organizzazioniModule->enableProfiloEntiType === true) {
+            $columns['profilo.profilo_enti_type_id'] = [
                 'attribute' => 'profilo.profilo_enti_type_id',
                 'value' => 'profilo.profiloEntiType.name'
+            ];
+        }
+        $columns['logo_id'] = [
+            'headerOptions' => [
+                'id' => Module::t('amosorganizzazioni', '#logo'),
             ],
-            'logo_id' => [
-                'headerOptions' => [
-                    'id' => Module::t('amosorganizzazioni', '#logo'),
-                ],
-                'contentOptions' => [
-                    'headers' => Module::t('amosorganizzazioni', '#logo'),
-                ],
-                'label' => Module::t('amosorganizzazioni', '#logo'),
-                'format' => 'raw',
-                'value' => function ($model) {
-                    /** @var ProfiloUserMm $model */
-                    return ProfiloCardWidget::widget(['model' => $model->profilo]);
-                }
+            'contentOptions' => [
+                'headers' => Module::t('amosorganizzazioni', '#logo'),
             ],
-            'profilo.name',
-            [
-                'attribute' => 'profilo.createdUserProfile.created_by',
-                'value' => 'profilo.createdUserProfile.nomeCognome'
-            ],
+            'label' => Module::t('amosorganizzazioni', '#logo'),
+            'format' => 'raw',
+            'value' => function ($model) {
+                /** @var ProfiloUserMm $model */
+                return ProfiloCardWidget::widget(['model' => $model->profilo]);
+            }
         ];
+
+        $columns[] = 'profilo.name';
+
+        $columns[] = [
+            'attribute' => 'profilo.createdUserProfile.created_by',
+            'value' => 'profilo.createdUserProfile.nomeCognome'
+        ];
+
+        return $columns;
     }
 
     /**
@@ -587,14 +689,6 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      * @return string The name that correspond to 'draft' status for the content model
      */
     public function getDraftStatus()
-    {
-        return null;
-    }
-
-    /**
-     * @return string The name of model validator role
-     */
-    public function getValidatorRole()
     {
         return null;
     }
@@ -673,7 +767,7 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getMmClassName()
     {
-        return ProfiloUserMm::className();
+        return $this->organizzazioniModule->model('ProfiloUserMm');
     }
 
     /**
@@ -712,7 +806,7 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
 //        }
 //        $query = self::find()->distinct();
 //        $queryJoined = Profilo::find()->distinct();
-//        $queryJoined->innerJoin(\lispa\amos\organizzazioni\models\ProfiloUserMm::tableName(),
+//        $queryJoined->innerJoin(\open20\amos\organizzazioni\models\ProfiloUserMm::tableName(),
 //            Profilo::tableName() . '.id = ' . ProfiloUserMm::tableName() . '.profilo_id'
 //            . ' AND ' . ProfiloUserMm::tableName() . '.user_id = ' . $userId)
 //            ->andWhere(ProfiloUserMm::tableName() . '.deleted_at is null');
@@ -814,6 +908,49 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
         }
     }
 
+    // Block x Community
+
+    /**
+     * @return string The name of model validator role
+     */
+    public function getValidatorRole()
+    {
+        return self::ORGANIZZAZIONI_MANAGER;
+    }
+
+    /**
+     * Array containing the possible roles of a community Member
+     * @return array
+     */
+    public function getContextRoles()
+    {
+        $context_roles = [
+            self::ORGANIZZAZIONI_MANAGER,
+            self::ORGANIZZAZIONI_PARTICIPANT
+        ];
+
+        return $context_roles;
+    }
+
+    /**
+     * The name of the basic member role
+     * @return string
+     */
+    public function getBaseRole()
+    {
+        return self::ORGANIZZAZIONI_PARTICIPANT;
+    }
+
+
+    /**
+     * The name of the greatest role a member can have
+     * @return string
+     */
+    public function getManagerRole()
+    {
+        return self::ORGANIZZAZIONI_MANAGER;
+    }
+
     /**
      * Array containing user permission for a given role
      * @param string $role
@@ -821,8 +958,89 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
      */
     public function getRolePermissions($role)
     {
-        return ['CWH_PERMISSION_CREATE', 'CWH_PERMISSION_VALIDATE'];
+        switch ($role) {
+            case self::ORGANIZZAZIONI_MANAGER:
+                return ['CWH_PERMISSION_CREATE', 'CWH_PERMISSION_VALIDATE'];
+                break;
+            case self::ORGANIZZAZIONI_PARTICIPANT:
+                return ['CWH_PERMISSION_CREATE'];
+                break;
+            default:
+                return ['CWH_PERMISSION_CREATE'];
+                break;
+        }
     }
+
+    /**
+     * Array containing the next level for a given initial role
+     * @param string $role
+     * @return string
+     */
+    public function getNextRole($role)
+    {
+        switch ($role) {
+            case self::ORGANIZZAZIONI_MANAGER :
+                return self::ORGANIZZAZIONI_PARTICIPANT;
+                break;
+            case self::ORGANIZZAZIONI_PARTICIPANT :
+                return self::ORGANIZZAZIONI_MANAGER;
+                break;
+            default :
+                return self::ORGANIZZAZIONI_PARTICIPANT;
+                break;
+        }
+    }
+
+    /**
+     * The community created by the context model (community related to project-management, events or a community itself)
+     * @return Community
+     */
+    public function getCommunityModel()
+    {
+        return $this->community;
+    }
+
+    /**
+     * For m2m widget actions: return the plugin module name to construct redirect URL
+     * @return string
+     */
+    public function getPluginModule()
+    {
+        return 'organizzazioni';
+    }
+
+    /**
+     * For m2m widget actions: return the plugin controller name to construct redirect URL
+     * @return string
+     */
+    public function getPluginController()
+    {
+        return 'organizzazioni';
+    }
+
+    /**
+     * For m2m widget actions: return the controller action name to construct redirect URL
+     * @return string
+     */
+    public function getRedirectAction()
+    {
+        return 'view';
+    }
+
+    /**
+     * Active query to search the users to associate in the additional association page
+     *
+     * @param integer $communityId Id of the community created by the context model
+     * @return ActiveQuery
+     */
+    public function getAdditionalAssociationTargetQuery($communityId)
+    {
+        /** @var ActiveQuery $communityUserMms */
+        $communityUserMms = CommunityUserMm::find()->andWhere(['community_id' => $communityId]);
+        return User::find()->andFilterWhere(['not in', 'id', $communityUserMms->select('user_id')]);
+    }
+
+    // End Bloc x Community
 
 
     public function getNameField()
@@ -1062,5 +1280,32 @@ class Profilo extends \lispa\amos\organizzazioni\models\base\Profilo implements 
                 $profiloTable . '.deleted_at' => null,
             ]);
         return $query->all();
+    }
+
+    /**
+     * This method checks if the user is already an employee for this organization.
+     * If the parameter is null, the method uses the logged user id.
+     * If the method is called on a new object, it throw an AmosException.
+     * @param int|null $userId
+     * @return bool
+     * @throws AmosException
+     */
+    public function userIsEmployee($userId = null)
+    {
+        if (is_null($userId)) {
+            $userId = Yii::$app->user->id;
+        }
+
+        if (!$this->id) {
+            throw new AmosException(Module::t('amosorganizzazioni', '#userIsEmployee_no_model_id'));
+        }
+
+        if (($this->rappresentante_legale == $userId) || ($this->referente_operativo == $userId)) {
+            return true;
+        }
+
+        $profiloUsersCount = $this->getProfiloUsers()->andWhere([User::tableName() . '.id' => $userId])->count();
+
+        return ($profiloUsersCount > 0);
     }
 }

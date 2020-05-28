@@ -1,22 +1,22 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\widgets
+ * @package    open20\amos\organizzazioni\widgets
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\widgets;
+namespace open20\amos\organizzazioni\widgets;
 
-use lispa\amos\core\helpers\Html;
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\organizzazioni\models\Profilo;
-use lispa\amos\organizzazioni\models\ProfiloSedi;
-use lispa\amos\organizzazioni\models\ProfiloSediUserMm;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\organizzazioni\models\Profilo;
+use open20\amos\organizzazioni\models\ProfiloSedi;
+use open20\amos\organizzazioni\models\ProfiloSediUserMm;
+use open20\amos\organizzazioni\Module;
 use Yii;
 use yii\base\Widget;
 use yii\bootstrap\Modal;
@@ -24,7 +24,7 @@ use yii\helpers\ArrayHelper;
 
 /**
  * Class JoinProfiloSediWidget
- * @package lispa\amos\organizzazioni\widgets
+ * @package open20\amos\organizzazioni\widgets
  */
 class JoinProfiloSediWidget extends Widget
 {

@@ -1,25 +1,25 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\widgets\icons
+ * @package    open20\amos\organizzazioni\widgets\icons
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\widgets\icons;
+namespace open20\amos\organizzazioni\widgets\icons;
 
-use lispa\amos\core\icons\AmosIcons;
-use lispa\amos\core\widget\WidgetAbstract;
-use lispa\amos\core\widget\WidgetIcon;
-use lispa\amos\organizzazioni\Module;
+use open20\amos\core\icons\AmosIcons;
+use open20\amos\core\widget\WidgetAbstract;
+use open20\amos\core\widget\WidgetIcon;
+use open20\amos\organizzazioni\Module;
 use yii\helpers\ArrayHelper;
 
 /**
  * Class WidgetIconProfilo
- * @package lispa\amos\organizzazioni\widgets\icons
+ * @package open20\amos\organizzazioni\widgets\icons
  */
 class WidgetIconProfilo extends WidgetIcon
 {

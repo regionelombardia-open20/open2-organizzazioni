@@ -1,26 +1,26 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\organizzazioni\views\profilo-sedi
+ * @package    open20\amos\organizzazioni\views\profilo-sedi
  * @category   CategoryName
  */
 
-use lispa\amos\core\forms\ActiveForm;
-use lispa\amos\core\forms\CloseSaveButtonWidget;
-use lispa\amos\core\forms\editors\Select;
-use lispa\amos\core\forms\RequiredFieldsTipWidget;
-use lispa\amos\core\forms\Tabs;
-use lispa\amos\organizzazioni\Module;
-use lispa\amos\organizzazioni\utility\OrganizzazioniUtility;
-use lispa\amos\organizzazioni\widgets\maps\PlaceWidget;
+use open20\amos\core\forms\ActiveForm;
+use open20\amos\core\forms\CloseSaveButtonWidget;
+use open20\amos\core\forms\editors\Select;
+use open20\amos\core\forms\RequiredFieldsTipWidget;
+use open20\amos\core\forms\Tabs;
+use open20\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\utility\OrganizzazioniUtility;
+use open20\amos\organizzazioni\widgets\maps\PlaceWidget;
 
 /**
  * @var yii\web\View $this
- * @var lispa\amos\organizzazioni\models\ProfiloSedi $model
+ * @var open20\amos\organizzazioni\models\ProfiloSedi $model
  * @var yii\widgets\ActiveForm $form
  */
 
@@ -75,7 +75,7 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
                 ); ?>
             </div>
         <?php else: ?>
-            <?= $this->render('@vendor/lispa/amos-organizzazioni/src/views/profilo-sedi/_old_style_address_fields', ['form' => $form, 'modelSedi' => $model]); ?>
+            <?= $this->render('@vendor/open20/amos-organizzazioni/src/views/profilo-sedi/_old_style_address_fields', ['form' => $form, 'modelSedi' => $model]); ?>
         <?php endif; ?>
         <div class="col-md-6 col-xs-12">
             <?= $form->field($model, 'email')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#email_field_placeholder')]) ?>

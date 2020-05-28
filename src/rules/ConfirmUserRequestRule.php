@@ -1,27 +1,27 @@
 <?php
 
 /**
- * Lombardia Informatica S.p.A.
+ * Aria S.p.A.
  * OPEN 2.0
  *
  *
- * @package    lispa\amos\admin\rules
+ * @package    open20\amos\admin\rules
  * @category   CategoryName
  */
 
-namespace lispa\amos\organizzazioni\rules;
+namespace open20\amos\organizzazioni\rules;
 
-use lispa\amos\core\record\Record;
-use lispa\amos\core\rules\BasicContentRule;
-use lispa\amos\organizzazioni\models\Profilo;
-use lispa\amos\organizzazioni\models\ProfiloSedi;
-use lispa\amos\organizzazioni\models\ProfiloSediUserMm;
-use lispa\amos\organizzazioni\models\ProfiloUserMm;
-use lispa\amos\organizzazioni\utility\OrganizzazioniUtility;
+use open20\amos\core\record\Record;
+use open20\amos\core\rules\BasicContentRule;
+use open20\amos\organizzazioni\models\Profilo;
+use open20\amos\organizzazioni\models\ProfiloSedi;
+use open20\amos\organizzazioni\models\ProfiloSediUserMm;
+use open20\amos\organizzazioni\models\ProfiloUserMm;
+use open20\amos\organizzazioni\utility\OrganizzazioniUtility;
 
 /**
  * Class ConfirmUserRequestRule
- * @package lispa\amos\organizzazioni\rules
+ * @package open20\amos\organizzazioni\rules
  */
 class ConfirmUserRequestRule extends BasicContentRule
 {
