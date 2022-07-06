@@ -18,9 +18,9 @@ use open20\amos\core\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
 use open20\amos\core\user\User;
 use open20\amos\core\utilities\JsUtility;
+use open20\amos\organizzazioni\models\Profilo;
 use open20\amos\organizzazioni\models\ProfiloSedi;
 use open20\amos\organizzazioni\models\ProfiloSediUserMm;
-use open20\amos\organizzazioni\models\ProfiloUserMm;
 use open20\amos\organizzazioni\Module;
 use Yii;
 use yii\base\Widget;
@@ -106,7 +106,7 @@ class UserNetworkWidgetSedi extends Widget
         $this->isUpdate = $this->isUpdate && ($loggedUserId == $model->user_id);
 
         /** @var ProfiloSedi $profiloSedi */
-        $profiloSedi = Module::instance()->createModel('ProfiloSedi');
+        $profiloSedi = $this->organizationsModule->createModel('ProfiloSedi');
         $itemsMittente = $profiloSedi->getUserNetworkWidgetColumns();
 
         if ($this->organizationsModule->enableConfirmUsersJoinRequests) {
@@ -190,14 +190,22 @@ class UserNetworkWidgetSedi extends Widget
      */
     private function getModelDataQuery($searchPostName)
     {
+        /** @var Profilo $profilo */
+        $profilo = $this->organizationsModule->createModel('Profilo');
         /** @var ProfiloSedi $profiloSedi */
-        $profiloSedi = Module::instance()->createModel('ProfiloSedi');
+        $profiloSedi = $this->organizationsModule->createModel('ProfiloSedi');
         /** @var ProfiloSediUserMm $profiloSediUserMm */
-        $profiloSediUserMm = Module::instance()->createModel('ProfiloSediUserMm');
+        $profiloSediUserMm = $this->organizationsModule->createModel('ProfiloSediUserMm');
+        
         /** @var ActiveQuery $query */
         $query = $profiloSediUserMm::find();
         $query->innerJoinWith('profiloSedi');
+        $query->innerJoin($profilo::tableName(), \Yii::$app->db->quoteColumnName($profilo::tableName() . '.id') . ' = ' . \Yii::$app->db->quoteColumnName($profiloSedi::tableName() . '.profilo_id'));
+        
         $query->andWhere([$profiloSediUserMm::tableName() . '.user_id' => $this->userId]);
+        if ($this->organizationsModule->enableWorkflow) {
+            $query->andWhere([$profilo::tableName() . '.status' => $profilo->getValidatedStatus()]);
+        }
 
         $searchName = Yii::$app->request->post($searchPostName);
         if (!is_null($searchName) && !empty($searchName)) {

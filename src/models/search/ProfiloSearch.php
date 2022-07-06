@@ -22,7 +22,7 @@ use open20\amos\organizzazioni\models\Profilo;
 class ProfiloSearch extends Profilo implements SearchModelInterface
 {
     public $isSearch = true;
-
+    
     /**
      * @inheritdoc
      */
@@ -36,7 +36,24 @@ class ProfiloSearch extends Profilo implements SearchModelInterface
             ], 'safe'],
         ];
     }
-
+    
+    /**
+     * @inheritdoc
+     */
+    public function baseSearch($params)
+    {
+        //init the default search values
+        $this->initOrderVars();
+        
+        //check params to get orders value
+        $this->setOrderVars($params);
+        
+        /** @var Profilo $className */
+        $className = $this->organizzazioniModule->model('Profilo');
+        
+        return $className::find()->distinct();
+    }
+    
     /**
      * @inheritdoc
      */
@@ -48,7 +65,7 @@ class ProfiloSearch extends Profilo implements SearchModelInterface
             'istat_code',
         ];
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -59,5 +76,24 @@ class ProfiloSearch extends Profilo implements SearchModelInterface
             'partita_iva',
             'istat_code',
         ];
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function filterValidated($query)
+    {
+        $query->andWhere([static::tableName() . '.status' => Profilo::PROFILO_WORKFLOW_STATUS_VALIDATED]);
+    }
+    
+    /**
+     * @param array $params
+     * @param null $limit
+     * @return \yii\data\ActiveDataProvider|\yii\data\BaseDataProvider
+     * @throws \yii\base\InvalidConfigException
+     */
+    public function searchToValidateProfilo($params, $limit = null)
+    {
+        return $this->search($params, 'to-validate', $limit);
     }
 }

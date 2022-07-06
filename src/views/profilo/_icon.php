@@ -56,6 +56,7 @@ if (!empty($moduleL)) {
     </div>
     <div class="col-xs-12 nop icon-footer">
         <?= CreatedUpdatedWidget::widget(['model' => $model, 'isTooltip' => true]) ?> <!-- BISOGNA VISUALIZZARE LO STATO -->
-        <?= Html::a(Module::t('amosorganizzazioni', '#icon_card_link') . AmosIcons::show('forward'), '#', ['class' => 'icon-footer-link']) ?>
+<!-- TODO: prima di riabilitare questo link capire se serve veramente e nel caso sistemarlo per renderne il funzionamento identico al pulsante in view. -->
+<!--        < ?= Html::a(Module::t('amosorganizzazioni', '#icon_card_link') . AmosIcons::show('forward'), '#', ['class' => 'icon-footer-link']) ?>-->
     </div>
 </div>

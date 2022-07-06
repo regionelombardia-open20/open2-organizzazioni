@@ -143,18 +143,19 @@ if ($organizzazioniModule->enableCommunityCreation) {
                     ]); ?>
                 <?php endif; ?>
                 </span>
-
-                <?php if ($showButton): ?>
-                    <span class="organization-community">
+                
+                <?php if (!$organizzazioniModule->enableWorkflow || ($organizzazioniModule->enableWorkflow && ($model->status == $model->getValidatedStatus()))): ?>
+                    <?php if ($showButton): ?>
+                        <span class="organization-community">
                         <?php if ($waitingOkUser): ?>
                             <?= JoinCommunityWidget::widget(['model' => $model->community]); ?>
                         <?php else: ?>
                             <?= Html::a($button['title'], $button['url'], $button['options']); ?>
                         <?php endif; ?>
                     </span>
-                <?php endif; ?>
-                <?php if (!$model->userIsEmployee($loggedUserId) && Yii::$app->user->can('ASSOCIATE_ORGANIZZAZIONI_TO_USER', ['model' => $loggedUserProfile])): ?>
-                    <span class="organization-community">
+                    <?php endif; ?>
+                    <?php if (!$model->userIsEmployee($loggedUserId) && Yii::$app->user->can('ASSOCIATE_ORGANIZZAZIONI_TO_USER', ['model' => $loggedUserProfile])): ?>
+                        <span class="organization-community">
                         <?= JoinProfiloWidget::widget([
                             'model' => $model,
                             'userId' => $loggedUserId,
@@ -162,6 +163,7 @@ if ($organizzazioniModule->enableCommunityCreation) {
                             'customBtnLabel' => Module::t('amosorganizzazioni', '#ask_to_be_employee'),
                         ]) ?>
                     </span>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
@@ -265,7 +267,7 @@ if ($organizzazioniModule->enableCommunityCreation) {
             }
             ?>
         </div>
-
+        
         <?php if ($organizzazioniModule->enableMembershipOrganizations && !is_null($model->parent)): ?>
             <div class="col-xs-12 father-organization-container">
                 <div class="col-xs-12 father-organization-content">
@@ -329,7 +331,7 @@ if ($organizzazioniModule->enableCommunityCreation) {
         $accordionSedeLegale = '';
         $sedeLegaleIndirizzo = '';
         $mapSedeLegale = '';
-
+        
         if (!$organizzazioniModule->oldStyleAddressEnabled) {
             $sedeLegaleIndirizzo = $model->sedeLegaleIndirizzo;
             if ($sedeLegaleIndirizzo) {
@@ -342,12 +344,12 @@ if ($organizzazioniModule->enableCommunityCreation) {
                 ]);
             }
         }
-
+        
         $accordionSedeLegale .= Html::tag('div',
             $mapSedeLegale,
             ['class' => 'col-md-5 col-xs-6']
         );
-
+        
         if ($hasLegalHeadquarter) {
             $slIndirizzo = Html::tag('div',
                 Html::tag('div',
@@ -357,7 +359,7 @@ if ($organizzazioniModule->enableCommunityCreation) {
                     $model->getAddressFieldSedeLegaleForView(),
                     ['class' => 'col-xs-8 nop info-value']),
                 ['class' => 'col-xs-12 nop']);
-
+            
             $slEmail = Html::tag('div',
                 Html::tag('div',
                     $legalHeadquarter->getAttributeLabel('email'),
@@ -366,7 +368,7 @@ if ($organizzazioniModule->enableCommunityCreation) {
                     $legalHeadquarter->email,
                     ['class' => 'col-xs-8 nop info-value']),
                 ['class' => 'col-xs-12 nop']);
-
+            
             $slPec = Html::tag('div',
                 Html::tag('div',
                     $legalHeadquarter->getAttributeLabel('pec'),
@@ -375,7 +377,7 @@ if ($organizzazioniModule->enableCommunityCreation) {
                     $legalHeadquarter->pec,
                     ['class' => 'col-xs-8 nop info-value']),
                 ['class' => 'col-xs-12 nop']);
-
+            
             $slTelefono = Html::tag('div',
                 Html::tag('div',
                     $legalHeadquarter->getAttributeLabel('phone'),
@@ -384,7 +386,7 @@ if ($organizzazioniModule->enableCommunityCreation) {
                     $legalHeadquarter->phone,
                     ['class' => 'col-xs-8 nop info-value']),
                 ['class' => 'col-xs-12 nop']);
-
+            
             $slFax = Html::tag('div',
                 Html::tag('div',
                     $legalHeadquarter->getAttributeLabel('fax'),
@@ -393,13 +395,13 @@ if ($organizzazioniModule->enableCommunityCreation) {
                     $legalHeadquarter->fax,
                     ['class' => 'col-xs-8 nop info-value']),
                 ['class' => 'col-xs-12 nop']);
-
+            
             $accordionSedeLegale .= Html::tag('div',
                 $slIndirizzo . $slEmail . $slPec . $slTelefono . $slFax,
                 ['class' => 'col-md-7 col-xs-6']
             );
         }
-
+        
         ?>
         <?= AccordionWidget::widget([
             'items' => [
@@ -422,11 +424,11 @@ if ($organizzazioniModule->enableCommunityCreation) {
             ]
         ]);
         ?>
-
+        
         <?php if ($organizzazioniModule->enableSocial): ?>
             <?php
             $accordionSocial = '';
-
+            
             $accordionSocial .= Html::tag('div',
                 AmosIcons::show('facebook-box') . Html::tag('span', $model->facebook),
                 ['class' => 'col-sm-6 col-xs-12']);
@@ -462,7 +464,7 @@ if ($organizzazioniModule->enableCommunityCreation) {
             ]);
             ?>
         <?php endif; ?>
-
+        
         <?= AccordionWidget::widget([
             'items' => [
                 [
@@ -480,7 +482,7 @@ if ($organizzazioniModule->enableCommunityCreation) {
                 ]
             ],
         ]); ?>
-
+        
         <?= AccordionWidget::widget([
             'items' => [
                 [

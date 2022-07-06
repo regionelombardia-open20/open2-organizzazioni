@@ -78,3 +78,11 @@ if (isset($modules['tag'])) {
 ```
 
 Then go in the tag manager and configure the roles for the trees you want for this model.
+
+### Module configuration params
+
+* **enableSocial** - boolean, default = true  
+If true enable the social sections in form and view of an organization.
+
+* **enableWorkflow** - boolean, default = false  
+If true enable the validation workflow for the organizations.

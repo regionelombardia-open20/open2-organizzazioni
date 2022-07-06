@@ -48,8 +48,8 @@ class ProfiloSediController extends \open20\amos\organizzazioni\controllers\base
     {
         parent::init();
         
-        $this->setMmTableName(Module::instance()->createModel('ProfiloSediUserMm')->className());
-        $this->setStartObjClassName(Module::instance()->createModel('ProfiloSedi')->className());
+        $this->setMmTableName($this->organizzazioniModule->createModel('ProfiloSediUserMm')->className());
+        $this->setStartObjClassName($this->organizzazioniModule->createModel('ProfiloSedi')->className());
         $this->setMmStartKey('profilo_sedi_id');
         $this->setTargetObjClassName(AmosAdmin::instance()->createModel('UserProfile')->className());
         $this->setMmTargetKey('user_id');
@@ -134,7 +134,7 @@ class ProfiloSediController extends \open20\amos\organizzazioni\controllers\base
     public function getAssociateHeadquarterM2mQuery($userId)
     {
         /** @var ProfiloSedi $headquarter */
-        $headquarter = Module::instance()->createModel('ProfiloSedi');
+        $headquarter = $this->organizzazioniModule->createModel('ProfiloSedi');
         
         /** @var ActiveQuery $query */
         $query = $headquarter->getAssociateHeadquarterQuery($userId);
@@ -194,10 +194,10 @@ class ProfiloSediController extends \open20\amos\organizzazioni\controllers\base
         $userId = \Yii::$app->request->get('id');
         Url::remember();
         
-        $this->setMmTableName(Module::instance()->createModel('ProfiloSediUserMm')->className());
+        $this->setMmTableName($this->organizzazioniModule->createModel('ProfiloSediUserMm')->className());
         $this->setStartObjClassName(User::className());
         $this->setMmStartKey('user_id');
-        $this->setTargetObjClassName(Module::instance()->createModel('ProfiloSedi')->className());
+        $this->setTargetObjClassName($this->organizzazioniModule->createModel('ProfiloSedi')->className());
         $this->setMmTargetKey('profilo_sedi_id');
         $this->setRedirectAction('update');
         $this->setTargetUrl('associate-headquarter-m2m');
@@ -248,9 +248,23 @@ class ProfiloSediController extends \open20\amos\organizzazioni\controllers\base
         $profiloSediModel = $this->organizzazioniModule->createModel('ProfiloSedi');
         $headquarter = $profiloSediModel::findOne($headquarterId);
         if (!is_null($headquarter)) {
+            $organization = $headquarter->profilo;
             $headquarterName = " '" . $headquarter->name . "'";
-            $organizationName = "'" . $headquarter->profilo->name . "'";
+            $organizationName = "'" . $organization->name . "'";
+            if ($this->organizzazioniModule->enableWorkflow  && ($organization->status != $organization->getValidatedStatus())) {
+                Yii::$app->getSession()->addFlash('danger', Module::tHtml('amosorganizzazioni', '#join_headquarter_not_validated_organization', [
+                    'headquarterName' => $headquarterName,
+                    'organizationName' => $organizationName
+                ]));
+                $action = (isset($redirectAction) ? $redirectAction : $defaultAction);
+                return $this->redirect($action);
+            }
+        } else {
+            Yii::$app->getSession()->addFlash('danger', Module::tHtml('amosorganizzazioni', '#join_headquarter_not_found_headquarter'));
+            $action = (isset($redirectAction) ? $redirectAction : $defaultAction);
+            return $this->redirect($action);
         }
+        
         /** @var ProfiloSediUserMm $profiloSediUserMm */
         $profiloSediUserMm = $this->organizzazioniModule->createModel('ProfiloSediUserMm');
         $userHeadquarter = $profiloSediUserMm::findOne(['profilo_sedi_id' => $headquarterId, 'user_id' => $userId]);
@@ -369,7 +383,7 @@ class ProfiloSediController extends \open20\amos\organizzazioni\controllers\base
     private function acceptOrRejectUser($profiloSediId, $userId, $acccept)
     {
         /** @var ProfiloSediUserMm $profiloSediUserMm */
-        $profiloSediUserMm = Module::instance()->createModel('ProfiloSediUserMm');
+        $profiloSediUserMm = $this->organizzazioniModule->createModel('ProfiloSediUserMm');
         /** @var ProfiloSediUserMm $userHeadquarter */
         $userHeadquarter = $profiloSediUserMm::findOne(['profilo_sedi_id' => $profiloSediId, 'user_id' => $userId]);
         $redirectUrl = '';
@@ -386,7 +400,7 @@ class ProfiloSediController extends \open20\amos\organizzazioni\controllers\base
             }
             
             /** @var ProfiloSedi $profiloSediModel */
-            $profiloSediModel = Module::instance()->createModel('ProfiloSedi');
+            $profiloSediModel = $this->organizzazioniModule->createModel('ProfiloSedi');
             $headquarter = $profiloSediModel::findOne($profiloSediId);
             if (!is_null($headquarter)) {
                 $headquarterName = "'" . $headquarter->name . "'";

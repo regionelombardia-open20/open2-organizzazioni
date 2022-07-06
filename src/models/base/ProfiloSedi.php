@@ -143,7 +143,7 @@ abstract class ProfiloSedi extends Record
             'description' => Module::t('amosorganizzazioni', 'Description'),
             'address' => Module::t('amosorganizzazioni', 'Address'),
             'is_main' => Module::t('amosorganizzazioni', 'Is Main'),
-            'active' => Module::t('amosorganizzazioni', '#active_profilo_sedi'),
+            'active' => Module::t('amosorganizzazioni', 'Active'),
             'phone' => Module::t('amosorganizzazioni', 'Phone'),
             'fax' => Module::t('amosorganizzazioni', 'Fax'),
             'email' => Module::t('amosorganizzazioni', '#headquarter_email'),

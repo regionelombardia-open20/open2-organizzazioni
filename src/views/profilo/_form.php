@@ -22,33 +22,31 @@ use open20\amos\core\forms\RequiredFieldsTipWidget;
 use open20\amos\core\forms\TextEditorWidget;
 use open20\amos\core\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
-use open20\amos\cwh\AmosCwh;
 use open20\amos\cwh\widgets\DestinatariPlusTagWidget;
 use open20\amos\organizzazioni\assets\OrganizzazioniAsset;
 use open20\amos\organizzazioni\controllers\ProfiloController;
 use open20\amos\organizzazioni\models\Profilo;
 use open20\amos\organizzazioni\models\ProfiloEntiType;
 use open20\amos\organizzazioni\models\ProfiloLegalForm;
-use open20\amos\organizzazioni\models\ProfiloSediLegal;
-use open20\amos\organizzazioni\models\ProfiloSediOperative;
 use open20\amos\organizzazioni\models\ProfiloTypesPmi;
 use open20\amos\organizzazioni\Module;
 use open20\amos\organizzazioni\utility\OrganizzazioniUtility;
 use open20\amos\organizzazioni\widgets\maps\PlaceWidget;
 use open20\amos\tag\AmosTag;
+use open20\amos\workflow\widgets\WorkflowTransitionButtonsWidget;
+use open20\amos\workflow\widgets\WorkflowTransitionStateDescriptorWidget;
 use kartik\alert\Alert;
 use yii\helpers\ArrayHelper;
 use yii\web\JsExpression;
 use yii\web\View;
-use yii\widgets\ActiveForm as ActiveForm2;
 
 /**
- * @var View $this
- * @var Profilo $model
- * @var ActiveForm2 $form
- * @var ProfiloSediLegal $mainLegalHeadquarter
- * @var ProfiloSediOperative $mainOperativeHeadquarter
- * @var AmosCwh $moduleCwh
+ * @var \yii\web\View $this
+ * @var \open20\amos\organizzazioni\models\Profilo $model
+ * @var \open20\amos\core\forms\ActiveForm $form
+ * @var \open20\amos\organizzazioni\models\ProfiloSediLegal $mainLegalHeadquarter
+ * @var \open20\amos\organizzazioni\models\ProfiloSediOperative $mainOperativeHeadquarter
+ * @var \open20\amos\cwh\AmosCwh $moduleCwh
  * @var array $scope
  */
 
@@ -88,7 +86,7 @@ $typeMunicipality = ProfiloEntiType::TYPE_MUNICIPALITY;
 $sameHeadquarterElementId = Html::getInputId($model, 'la_sede_legale_e_la_stessa_del');
 $legalHeadquarterAddressElementId = Html::getInputId($model, 'mainLegalHeadquarterAddress');
 $disableFieldChecks = isset($organizzazioniModule->disableFieldChecks) ? $organizzazioniModule->disableFieldChecks : false;
-
+$workflowIsEnabled = $organizzazioniModule->enableWorkflow;
 
 $js = <<<JS
 function addRequiredAsterisk(fieldName) {
@@ -157,6 +155,7 @@ if (!$disableFieldChecks) {
     ]
 ]);
 
+
 /** @var ProfiloEntiType $modelProfiloEntiType */
 $modelProfiloEntiType = $organizzazioniModule->createModel('ProfiloEntiType');
 
@@ -173,6 +172,17 @@ $modelProfiloLegalForm = $organizzazioniModule->createModel('ProfiloLegalForm');
 $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
 
 ?>
+
+<?php if ($workflowIsEnabled): ?>
+    <?= WorkflowTransitionStateDescriptorWidget::widget([
+        'form' => $form,
+        'model' => $model,
+        'workflowId' => Profilo::PROFILO_WORKFLOW,
+        'classDivIcon' => '',
+        'classDivMessage' => 'message',
+        'viewWidgetOnNewRecord' => false
+    ]); ?>
+<?php endif; ?>
 
 <div class="area-profilo-form col-xs-12 nop">
     <div class="row">
@@ -555,7 +565,40 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
             ]); ?>
         </div>
         <div class="col-xs-12"><?= RequiredFieldsTipWidget::widget() ?></div>
-        <div class="col-xs-12"><?= CloseSaveButtonWidget::widget(['model' => $model]); ?></div>
+        <?php if (!$workflowIsEnabled): ?>
+            <div class="col-xs-12"><?= CloseSaveButtonWidget::widget(['model' => $model]); ?></div>
+        <?php else: ?>
+            <?php
+            $statusToRenderToHide = $model->getStatusToRenderToHide();
+            ?>
+            <?= WorkflowTransitionButtonsWidget::widget([
+                'form' => $form,
+                'model' => $model,
+                'workflowId' => Profilo::PROFILO_WORKFLOW,
+                'viewWidgetOnNewRecord' => true,
+                'closeButton' => Html::a(Module::t('amosorganizzazioni', 'Annulla'), Yii::$app->session->get('previousUrl'), ['class' => 'btn btn-secondary']),
+                'initialStatusName' => "DRAFT",
+                'initialStatus' => Profilo::PROFILO_WORKFLOW_STATUS_DRAFT,
+                'statusToRender' => $statusToRenderToHide['statusToRender'],
+                //POII-1147 gli utenti validatore/facilitatore o ADMIN possono sempre salvare la news => parametro a false
+                //altrimenti se stato VALIDATO => pulsante salva nascosto
+                'hideSaveDraftStatus' => $statusToRenderToHide['hideDraftStatus'],
+                'draftButtons' => [
+                    Profilo::PROFILO_WORKFLOW_STATUS_TOVALIDATE => [
+                        'button' => Html::submitButton(Module::t('amosorganizzazioni', 'Save'), ['class' => 'btn btn-workflow']),
+                        'description' => 'le modifiche e mantieni in "richiesta di pubblicazione"'
+                    ],
+                    Profilo::PROFILO_WORKFLOW_STATUS_VALIDATED => [
+                        'button' => Html::submitButton(Module::t('amosorganizzazioni', 'Save'), ['class' => 'btn btn-workflow']),
+                        'description' => Module::t('amosorganizzazioni', 'le modifiche e mantieni "pubblicata"'),
+                    ],
+                    'default' => [
+                        'button' => Html::submitButton(Module::t('amosorganizzazioni', 'save draft'), ['class' => 'btn btn-workflow']),
+                        'description' => Module::t('amosorganizzazioni', 'potrai richiedere la pubblicazione in seguito'),
+                    ]
+                ]
+            ]); ?>
+        <?php endif; ?>
     </div>
 </div>
 <?php ActiveForm::end(); ?>

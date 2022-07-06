@@ -16,6 +16,8 @@ use open20\amos\admin\models\UserProfile;
 use open20\amos\community\models\CommunityUserMm;
 use open20\amos\core\forms\editors\m2mWidget\controllers\M2MWidgetControllerTrait;
 use open20\amos\core\forms\editors\m2mWidget\M2MEventsEnum;
+use open20\amos\core\helpers\Html;
+use open20\amos\core\icons\AmosIcons;
 use open20\amos\core\module\BaseAmosModule;
 use open20\amos\core\record\Record;
 use open20\amos\core\user\User;
@@ -26,6 +28,7 @@ use open20\amos\organizzazioni\utility\EmailUtility;
 use open20\amos\organizzazioni\utility\OrganizzazioniUtility;
 use open20\amos\organizzazioni\widgets\JoinProfiloWidget;
 use open20\amos\organizzazioni\widgets\ProfiloCardWidget;
+use raoul2000\workflow\base\WorkflowException;
 use Yii;
 use yii\base\Event;
 use yii\db\ActiveQuery;
@@ -140,6 +143,21 @@ class ProfiloController extends base\ProfiloController
                             'associa-m2m',
                         ],
                         'roles' => ['ADD_EMPLOYEE_TO_ORGANIZATION_PERMISSION']
+                    ],
+                    [
+                        'allow' => true,
+                        'actions' => [
+                            'profilo-to-publish',
+                        ],
+                        'roles' => ['AMMINISTRATORE_ORGANIZZAZIONI']
+                    ],
+                    [
+                        'allow' => true,
+                        'actions' => [
+                            'validate-profilo',
+                            'reject-profilo',
+                        ],
+                        'roles' => ['PROFILO_VALIDATOR']
                     ],
                 ]
             ],
@@ -433,6 +451,9 @@ class ProfiloController extends base\ProfiloController
         $alreadyAssociatedOrganizationIds = $queryAssociated->column();
         
         $query = $organization->getUserNetworkAssociationQuery($userId);
+        if ($this->organizzazioniModule->enableWorkflow) {
+            $query->andWhere([$profiloTable . '.status' => $organization->getValidatedStatus()]);
+        }
         $query->andWhere(['not in', $profiloTable . '.id', $alreadyAssociatedOrganizationIds]);
         
         $post = Yii::$app->request->post();
@@ -573,7 +594,19 @@ class ProfiloController extends base\ProfiloController
         $organization = $profiloModel::findOne($organizationId);
         if (!is_null($organization)) {
             $organizationName = "'" . $organization->name . "'";
+            if ($this->organizzazioniModule->enableWorkflow  && ($organization->status != $organization->getValidatedStatus())) {
+                Yii::$app->getSession()->addFlash('danger', Module::tHtml('amosorganizzazioni', '#join_organization_not_validated_organization', [
+                    'organizationName' => $organizationName
+                ]));
+                $action = (isset($redirectAction) ? $redirectAction : $defaultAction);
+                return $this->redirect($action);
+            }
+        } else {
+            Yii::$app->getSession()->addFlash('danger', Module::tHtml('amosorganizzazioni', '#join_organization_not_found_organization'));
+            $action = (isset($redirectAction) ? $redirectAction : $defaultAction);
+            return $this->redirect($action);
         }
+        
         /** @var ProfiloUserMm $profiloUserMm */
         $profiloUserMm = $this->organizzazioniModule->createModel('ProfiloUserMm');
         $userOrganization = $profiloUserMm::findOne(['profilo_id' => $organizationId, 'user_id' => $userId]);
@@ -1009,5 +1042,156 @@ class ProfiloController extends base\ProfiloController
         }
         
         return $this->redirect($model->getFullViewUrl());
+    }
+    
+    /**
+     * @param string|null $currentView
+     * @return string
+     */
+    public function actionProfiloToPublish($currentView = null)
+    {
+        if (!$this->organizzazioniModule->enableWorkflow) {
+            return $this->redirect(['/organizzazioni/profilo/index']);
+        }
+        $this->setDataProvider($this->getModelSearch()->searchToValidateProfilo(Yii::$app->request->getQueryParams()));
+        $this->setAvailableViews([
+            'grid' => [
+                'name' => 'grid',
+                'label' => AmosIcons::show('view-list-alt') . Html::tag('p', Module::tHtml('amoscore', 'Table')),
+                'url' => '?currentView=grid'
+            ]
+        ]);
+        //$this->view->params['currentDashboard'] = $this->getCurrentDashboard();
+        $this->setCurrentView($this->getAvailableView('grid'));
+        return $this->baseListsAction(Module::t('amosorganizzazioni', 'To Validate'));
+    }
+    
+    /**
+     * Base operations for list views
+     * @param string $pageTitle
+     * @return string
+     */
+    protected function baseListsAction($pageTitle)
+    {
+        Url::remember();
+        $this->setTitleAndBreadcrumbs($pageTitle);
+        $this->setListViewsParams();
+        $renderParams = [
+            'dataProvider' => $this->getDataProvider(),
+            'model' => $this->getModelSearch(),
+            'currentView' => $this->getCurrentView(),
+            'availableViews' => $this->getAvailableViews(),
+            'url' => ($this->url) ? $this->url : null,
+            'parametro' => ($this->parametro) ? $this->parametro : null
+        ];
+        return $this->render('index', $renderParams);
+    }
+    
+    /**
+     * Used for set page title and breadcrumbs.
+     * @param string $organizzazioniPageTitle
+     */
+    protected function setTitleAndBreadcrumbs($organizzazioniPageTitle)
+    {
+        $this->setNetworkDashboardBreadcrumb();
+        Yii::$app->session->set('previousTitle', $organizzazioniPageTitle);
+        Yii::$app->session->set('previousUrl', Url::previous());
+        Yii::$app->view->title = $organizzazioniPageTitle;
+        Yii::$app->view->params['breadcrumbs'][] = ['label' => $organizzazioniPageTitle];
+    }
+    
+    public function setNetworkDashboardBreadcrumb()
+    {
+        /** @var \open20\amos\cwh\AmosCwh $moduleCwh */
+        $moduleCwh = Yii::$app->getModule('cwh');
+        $scope = NULL;
+        if (!empty($moduleCwh)) {
+            $scope = $moduleCwh->getCwhScope();
+        }
+        if (!empty($scope)) {
+            if (isset($scope['community'])) {
+                $communityId = $scope['community'];
+                $community = \open20\amos\community\models\Community::findOne($communityId);
+                $dashboardCommunityTitle = Module::t('amosorganizzazioni', "Dashboard") . ' ' . $community->name;
+                $dasbboardCommunityUrl = Yii::$app->urlManager->createUrl(['community/join', 'id' => $communityId]);
+                Yii::$app->view->params['breadcrumbs'][] = ['label' => $dashboardCommunityTitle, 'url' => $dasbboardCommunityUrl];
+            }
+        }
+    }
+    
+    protected function setListViewsParams()
+    {
+        $this->setCreateNewBtnLabel();
+        $this->setUpLayout('list');
+        Yii::$app->session->set(Module::beginCreateNewSessionKey(), Url::previous());
+        $this->view->params['currentDashboard'] = $this->getCurrentDashboard();
+    }
+    
+    /**
+     * Set a view param used in \open20\amos\core\forms\CreateNewButtonWidget
+     */
+    private function setCreateNewBtnLabel()
+    {
+        Yii::$app->view->params['createNewBtnParams'] = [
+            'createNewBtnLabel' => Module::t('amosorganizzazioni', '#add_organization'),
+            'urlCreateNew' => '/organizzazioni/profilo/create'
+        ];
+    }
+    
+    /**
+     * @param int $id
+     * @return \yii\web\Response
+     * @throws \yii\web\NotFoundHttpException
+     */
+    public function actionRejectProfilo($id)
+    {
+        if (!$this->organizzazioniModule->enableWorkflow) {
+            Yii::$app->session->addFlash('danger', Module::t('amosorganizzazioni', '#workflow_disabled'));
+            return $this->redirect(Url::previous());
+        }
+        $this->model = $this->findModel($id);
+        try {
+            $this->model->sendToStatus(Profilo::PROFILO_WORKFLOW_STATUS_DRAFT);
+            $ok = $this->model->save(false);
+            if ($ok) {
+                Yii::$app->session->addFlash('success', Module::t('amosorganizzazioni', 'Organizzazione respita!'));
+            } else {
+                Yii::$app->session->addFlash('danger', Module::t('amosorganizzazioni', 'Errore durante il rifiuto dell\'organizzazione'));
+            }
+        } catch (WorkflowException $e) {
+            Yii::$app->session->addFlash('danger', $e->getMessage());
+            return $this->redirect(Url::previous());
+        }
+        
+        return $this->redirect(Url::previous());
+    }
+    
+    /**
+     * @param int $id
+     * @return \yii\web\Response
+     * @throws \yii\web\NotFoundHttpException
+     */
+    public function actionValidateProfilo($id)
+    {
+        if (!$this->organizzazioniModule->enableWorkflow) {
+            Yii::$app->session->addFlash('danger', Module::t('amosorganizzazioni', '#workflow_disabled'));
+            return $this->redirect(Url::previous());
+        }
+        $this->model = $this->findModel($id);
+        try {
+            $this->model->sendToStatus(Profilo::PROFILO_WORKFLOW_STATUS_VALIDATED);
+            
+            $ok = $this->model->save(false);
+            if ($ok) {
+                Yii::$app->session->addFlash('success', Module::t('amosorganizzazioni', 'Organizzazione validata!'));
+            } else {
+                Yii::$app->session->addFlash('danger', Module::t('amosorganizzazioni', 'Errore durante la validzione dell\'organizzazione'));
+            }
+        } catch (WorkflowException $e) {
+            Yii::$app->session->addFlash('danger', $e->getMessage());
+            return $this->redirect(Url::previous());
+        }
+        
+        return $this->redirect(Url::previous());
     }
 }

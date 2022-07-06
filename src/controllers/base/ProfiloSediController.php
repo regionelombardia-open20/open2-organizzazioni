@@ -39,10 +39,10 @@ class ProfiloSediController extends CrudController
      */
     public function init()
     {
-        $model = Module::instance()->createModel('ProfiloSedi');
-        $modelSearch = Module::instance()->createModel('ProfiloSediSearch');
-
         $this->organizzazioniModule = Module::instance();
+    
+        $model = $this->organizzazioniModule->createModel('ProfiloSedi');
+        $modelSearch = $this->organizzazioniModule->createModel('ProfiloSediSearch');
 
         $this->setModelObj($model);
         $this->setModelSearch($modelSearch);
@@ -163,7 +163,7 @@ class ProfiloSediController extends CrudController
     {
         $this->setUpLayout('form');
 
-        $this->model = Module::instance()->createModel('ProfiloSedi');
+        $this->model = $this->organizzazioniModule->createModel('ProfiloSedi');
         $this->model->profilo_id = $profiloId;
 
         if ($this->model->load(Yii::$app->request->post()) && $this->model->validate()) {

@@ -5,7 +5,7 @@
  * OPEN 2.0
  *
  *
- * @package    open20\amos\admin\rules
+ * @package    open20\amos\organizzazioni\rules
  * @category   CategoryName
  */
 

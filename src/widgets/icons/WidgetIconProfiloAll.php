@@ -15,17 +15,13 @@ use open20\amos\core\icons\AmosIcons;
 use open20\amos\core\widget\WidgetAbstract;
 use open20\amos\core\widget\WidgetIcon;
 use open20\amos\organizzazioni\Module;
-use open20\amos\utility\models\BulletCounters;
 use yii\helpers\ArrayHelper;
 
 /**
- * Class WidgetIconProfilo
- *
- * This is the DASHBOARD widget!!!
- *
+ * Class WidgetIconProfiloAll
  * @package open20\amos\organizzazioni\widgets\icons
  */
-class WidgetIconProfilo extends WidgetIcon
+class WidgetIconProfiloAll extends WidgetIcon
 {
     /**
      * @inheritdoc
@@ -54,7 +50,7 @@ class WidgetIconProfilo extends WidgetIcon
             $this->setUrl(['/organizzazioni/profilo/index']);
         }
         
-        $this->setCode('PROFILO');
+        $this->setCode('PROFILO_ALL');
         $this->setModuleName('organizzazioni');
         $this->setNamespace(__CLASS__);
         
@@ -63,15 +59,5 @@ class WidgetIconProfilo extends WidgetIcon
                 $this->getClassSpan(), $paramsClassSpan
             )
         );
-        
-        // Read and reset counter from bullet_counters table, bacthed calculated!
-        if ($this->disableBulletCounters == false) {
-            $this->setBulletCount(
-                BulletCounters::getAmosWidgetIconCounter(
-                    \Yii::$app->getUser()->getId(), Module::getModuleName(), $this->getNamespace(),
-                    $this->resetBulletCount()
-                )
-            );
-        }
     }
 }

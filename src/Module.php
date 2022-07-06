@@ -185,9 +185,14 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     public $enableTipologiaOrganizzazione = true;
     
     /**
-     * @var bool $enableProfiloEntiType
+     * @var bool $enableFormaLegale
      */
     public $enableFormaLegale = true;
+    
+    /**
+     * @var bool $enableWorkflow
+     */
+    public $enableWorkflow = false;
     
     /**
      * @inheritdoc
@@ -197,7 +202,6 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
         parent::init();
         
         \Yii::setAlias('@open20/amos/' . static::getModuleName() . '/controllers/', __DIR__ . '/controllers/');
-        // custom initialization code goes here
         $config = require(__DIR__ . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php');
         \Yii::configure($this, ArrayHelper::merge($config, ["params" => $this->params]));
         

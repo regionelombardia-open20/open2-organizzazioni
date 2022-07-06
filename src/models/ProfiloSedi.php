@@ -306,6 +306,8 @@ class ProfiloSedi extends \open20\amos\organizzazioni\models\base\ProfiloSedi im
      */
     public function getAssociateHeadquarterQuery($userId)
     {
+        /** @var Profilo $profilo */
+        $profilo = $this->organizzazioniModule->createModel('Profilo');
         /** @var ProfiloSediUserMm $profiloSediUserMm */
         $profiloSediUserMm = $this->organizzazioniModule->createModel('ProfiloSediUserMm');
         /** @var ActiveQuery $queryUserMm */
@@ -315,6 +317,10 @@ class ProfiloSedi extends \open20\amos\organizzazioni\models\base\ProfiloSedi im
         $userHeadquarterIds = $queryUserMm->column();
         /** @var ActiveQuery $query */
         $query = static::find();
+        $query->innerJoinWith('profilo');
+        if ($this->organizzazioniModule->enableWorkflow) {
+            $query->andWhere([$profilo::tableName() . '.status' => $profilo->getValidatedStatus()]);
+        }
         $query->andWhere([static::tableName() . '.active' => 1]);
         $query->andWhere([static::tableName() . '.is_main' => 0]);
         $query->andWhere(['not in', static::tableName() . '.id', $userHeadquarterIds]);

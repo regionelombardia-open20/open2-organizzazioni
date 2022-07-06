@@ -5,7 +5,7 @@
  * OPEN 2.0
  *
  *
- * @package    open20\amos\bestpratices\views\best-pratice\help
+ * @package    open20\amos\organizzazioni\views\profilo\help
  * @category   CategoryName
  */
 

@@ -33,10 +33,14 @@ use open20\amos\organizzazioni\widgets\icons\WidgetIconProfilo;
 use open20\amos\organizzazioni\widgets\ProfiloCardWidget;
 use open20\amos\organizzazioni\widgets\UserNetworkWidget;
 use open20\amos\organizzazioni\widgets\UserNetworkWidgetOrganizzazioni;
+use raoul2000\workflow\base\Status;
 use Yii;
 use yii\db\ActiveQuery;
 use yii\db\Query;
 use yii\helpers\ArrayHelper;
+use open20\amos\workflow\behaviors\WorkflowLogFunctionsBehavior;
+use raoul2000\workflow\base\SimpleWorkflowBehavior;
+use open20\amos\community\utilities\CommunityUtil;
 
 /**
  * Class Profilo
@@ -47,13 +51,24 @@ use yii\helpers\ArrayHelper;
  * @property \open20\amos\organizzazioni\models\OrganizationsPlaces $sedeIndirizzo
  * @property \open20\amos\organizzazioni\models\OrganizationsPlaces $sedeLegaleIndirizzo
  *
+ * @method \cornernote\workflow\manager\components\WorkflowDbSource getWorkflowSource()
+ * @method bool sendToStatus(Status|string $status)
+ *
  * @package open20\amos\organizzazioni\models
  */
 class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements OrganizationsModelInterface, CommunityContextInterface
 {
     const ORGANIZZAZIONI_MANAGER = 'ORGANIZZAZIONI_MANAGER';
     const ORGANIZZAZIONI_PARTICIPANT = 'ORGANIZZAZIONI_PARTICIPANT';
+    
+    // Workflow ID
+    const PROFILO_WORKFLOW = 'ProfiloWorkflow';
 
+    // Workflow states IDS
+    const PROFILO_WORKFLOW_STATUS_DRAFT = 'ProfiloWorkflow/DRAFT';
+    const PROFILO_WORKFLOW_STATUS_TOVALIDATE = 'ProfiloWorkflow/TOVALIDATE';
+    const PROFILO_WORKFLOW_STATUS_VALIDATED = 'ProfiloWorkflow/VALIDATED';
+    
     private $allegati;
 
     /**
@@ -82,7 +97,6 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
         return [
             //inserire il campo o i campi rappresentativi del modulo
             'name',
-//            'la_sede_legale_e_la_stessa_del',
 //            'rappresentante_legale',
 //            'referente_operativo',
         ];
@@ -132,12 +146,24 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
      */
     public function behaviors()
     {
-        return ArrayHelper::merge(parent::behaviors(),
-            [
-                'fileBehavior' => [
-                    'class' => FileBehavior::className()
-                ],
-            ]);
+        $behaviors = [
+            'fileBehavior' => [
+                'class' => FileBehavior::className()
+            ],
+        ];
+        
+        if ($this->organizzazioniModule->enableWorkflow) {
+            $behaviors['workflow'] = [
+                'class' => SimpleWorkflowBehavior::className(),
+                'defaultWorkflowId' => self::PROFILO_WORKFLOW,
+                'propagateErrorsToModel' => true
+            ];
+            $behaviors['workflowLog'] = [
+                'class' => WorkflowLogFunctionsBehavior::className(),
+            ];
+        }
+        
+        return ArrayHelper::merge(parent::behaviors(), $behaviors);
     }
 
     /**
@@ -159,6 +185,12 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
             $mainLegalHeadquarter = $this->legalHeadquarter;
             if (!is_null($mainLegalHeadquarter)) {
                 $this->mainLegalHeadquarterAddress = $mainLegalHeadquarter->address;
+            }
+        }
+        
+        if ($this->isNewRecord) {
+            if ($this->organizzazioniModule->enableWorkflow) {
+                $this->setInitialStatus();
             }
         }
 
@@ -203,6 +235,17 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
             ]);
         }
         return $rules;
+    }
+    
+    /**
+     * This method set the initial workflow status in the model.
+     * @throws \raoul2000\workflow\base\WorkflowException
+     */
+    public function setInitialStatus()
+    {
+        if ($this->organizzazioniModule->enableWorkflow) {
+            $this->status = $this->getWorkflowSource()->getWorkflow(self::PROFILO_WORKFLOW)->getInitialStatusId();
+        }
     }
 
     public function organizationsBeforeValidate()
@@ -537,6 +580,15 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
 //        $columns[] = 'referenteOperativo';
         $columns[] = 'addressField:raw';
         $columns[] = 'operativeHeadquarter.email';
+        if ($this->organizzazioniModule->enableWorkflow && Yii::$app->user->can('AMMINISTRATORE_ORGANIZZAZIONI')) {
+            $columns['status'] = [
+                'attribute' => 'status',
+                'value' => function ($model) {
+                    /** @var \open20\amos\organizzazioni\models\Profilo $model */
+                    return $model->getWorkflowBaseStatusLabel();
+                }
+            ];
+        }
         $columns[] = [
             'class' => 'open20\amos\core\views\grid\ActionColumn',
             'template' => $template,
@@ -675,7 +727,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
      */
     public function getToValidateStatus()
     {
-        return null;
+        return self::PROFILO_WORKFLOW_STATUS_TOVALIDATE;
     }
 
     /**
@@ -683,7 +735,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
      */
     public function getValidatedStatus()
     {
-        return null;
+        return self::PROFILO_WORKFLOW_STATUS_VALIDATED;
     }
 
     /**
@@ -691,7 +743,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
      */
     public function getDraftStatus()
     {
-        return null;
+       return self::PROFILO_WORKFLOW_STATUS_DRAFT;
     }
 
     /**
@@ -741,7 +793,9 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
         if (!isset($userId)) {
             $userId = $this->getUserId();
         }
-        $mmRow = ProfiloUserMm::findOne([
+        /** @var ProfiloUserMm $mmModel */
+        $mmModel = $this->organizzazioniModule->createModel('ProfiloUserMm');
+        $mmRow = $mmModel::findOne([
             $this->getMmNetworkIdFieldName() => $networkId,
             $this->getMmUserIdFieldName() => $userId,
         ]);
@@ -924,7 +978,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
      */
     public function getValidatorRole()
     {
-        return self::ORGANIZZAZIONI_MANAGER;
+        return strtoupper('PROFILO_VALIDATOR');
     }
 
     /**
@@ -1316,5 +1370,61 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
         $profiloUsersCount = $this->getProfiloUsers()->andWhere([User::tableName() . '.id' => $userId])->count();
 
         return ($profiloUsersCount > 0);
+    }
+	
+	 /**
+     * @return array
+     */
+    public function getStatusToRenderToHide()
+    {
+        $statusToRender = [
+            self::PROFILO_WORKFLOW_STATUS_DRAFT => Module::t('amosorganizzazioni', 'Modifica in corso'),
+        ];
+        $isCommunityManager = false;
+        if (!is_null(\Yii::$app->getModule('community'))) {
+            $isCommunityManager = CommunityUtil::isLoggedCommunityManager();
+            if ($isCommunityManager) {
+                $isCommunityManager = true;
+            }
+        }
+		
+        // if you are a community manager a validator/facilitator or ADMIN you Can publish directly
+        if (\Yii::$app->user->can('ProfiloValidate', ['model' => $this]) || \Yii::$app->user->can('ADMIN') || $isCommunityManager) {
+            $statusToRender = ArrayHelper::merge($statusToRender, [self::PROFILO_WORKFLOW_STATUS_VALIDATED => Module::t('amosorganizzazioni', 'Pubblicata')]);
+            $hideDraftStatus = [];
+        } else {
+            $statusToRender = ArrayHelper::merge($statusToRender, [
+                self::PROFILO_WORKFLOW_STATUS_TOVALIDATE => Module::t('amosorganizzazioni', 'Richiedi pubblicazione'),
+            ]);
+            $hideDraftStatus[] = self::PROFILO_WORKFLOW_STATUS_VALIDATED;
+			
+        }
+        return ['statusToRender' => $statusToRender, 'hideDraftStatus' => $hideDraftStatus];
+    }
+
+    /**
+     * @return boolean
+     */
+    public function hasSubNetworks()
+    {
+        return true;
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function getWorkflowBaseStatusLabel()
+    {
+        $status = parent::getWorkflowBaseStatusLabel();
+        return ((strlen($status) > 0) ? Module::t('amosorganizzazioni', $status) : '-');
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function getWorkflowStatusLabel()
+    {
+        $status = parent::getWorkflowStatusLabel();
+        return ((strlen($status) > 0) ? Module::t('amosorganizzazioni', $status) : '-');
     }
 }

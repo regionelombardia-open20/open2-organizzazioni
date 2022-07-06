@@ -28,6 +28,7 @@ use yii\helpers\ArrayHelper;
  * This is the base-model class for table "profilo".
  *
  * @property integer $id
+ * @property string $status
  * @property string $name
  * @property string $partita_iva
  * @property string $codice_fiscale
@@ -163,7 +164,8 @@ abstract class Profilo extends NetworkModel
                 'sede_legale_pec',
                 'responsabile',
                 'rappresentante_legale_text',
-                'contatto_referente_operativo'
+                'contatto_referente_operativo',
+                'status'
             ], 'string', 'max' => 255],
             [['istat_code'], 'string', 'max' => 10],
             [['logoOrganization'], 'file', 'extensions' => 'jpeg, jpg, png, gif', 'maxFiles' => 1],
@@ -198,6 +200,7 @@ abstract class Profilo extends NetworkModel
     {
         return ArrayHelper::merge(parent::attributeLabels(), [
             'id' => Module::t('amosorganizzazioni', 'ID'),
+            'status' => AmosCommunity::t('amosorganizzazioni', 'Status'),
             'name' => Module::t('amosorganizzazioni', 'Denominazione'),
             'partita_iva' => Module::t('amosorganizzazioni', 'Partita Iva'),
             'codice_fiscale' => Module::t('amosorganizzazioni', 'Codice Fiscale'),

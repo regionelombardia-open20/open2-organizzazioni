@@ -113,7 +113,7 @@ class UserNetworkWidgetOrganizzazioni extends Widget
         $this->isUpdate = $this->isUpdate && (($loggedUserId == $model->user_id) || Yii::$app->user->can('AMMINISTRATORE_ORGANIZZAZIONI'));
 
         /** @var Profilo $profilo */
-        $profilo = Module::instance()->createModel('Profilo');
+        $profilo = $this->organizationsModule->createModel('Profilo');
         $itemsMittente = $profilo->getUserNetworkWidgetColumns();
 
         $actionColumnsButtons = [
@@ -322,13 +322,16 @@ class UserNetworkWidgetOrganizzazioni extends Widget
     private function getModelDataQuery($searchPostName)
     {
         /** @var Profilo $profilo */
-        $profilo = Module::instance()->createModel('Profilo');
+        $profilo = $this->organizationsModule->createModel('Profilo');
         /** @var ProfiloUserMm $profiloUserMm */
-        $profiloUserMm = Module::instance()->createModel('ProfiloUserMm');
+        $profiloUserMm = $this->organizationsModule->createModel('ProfiloUserMm');
         /** @var ActiveQuery $query */
         $query = $profiloUserMm::find();
         $query->innerJoinWith('profilo');
         $query->andWhere([$profiloUserMm::tableName() . '.user_id' => $this->userId]);
+        if ($this->organizationsModule->enableWorkflow) {
+            $query->andWhere([$profilo::tableName() . '.status' => $profilo->getValidatedStatus()]);
+        }
 
         $searchName = Yii::$app->request->post($searchPostName);
         if (!is_null($searchName) && !empty($searchName)) {

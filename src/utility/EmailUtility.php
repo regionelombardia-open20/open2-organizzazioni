@@ -172,7 +172,6 @@ class EmailUtility
                 'text' => 'accept-invitation'
             ],
             self::WELCOME => [
-                'url' => '/dashboard',
                 'subject' => 'welcome-subject',
                 'text' => 'welcome'
             ],
