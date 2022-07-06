@@ -12,11 +12,14 @@
 namespace open20\amos\organizzazioni;
 
 use open20\amos\core\exceptions\AmosException;
+use open20\amos\core\interfaces\BreadcrumbInterface;
 use open20\amos\core\interfaces\InvitationExternalInterface;
 use open20\amos\core\interfaces\OrganizationsModuleInterface;
 use open20\amos\core\interfaces\SearchModuleInterface;
 use open20\amos\core\module\AmosModule;
 use open20\amos\core\widget\WidgetAbstract;
+use open20\amos\invitations\models\Invitation;
+use open20\amos\organizzazioni\components\ImportManager;
 use open20\amos\organizzazioni\i18n\grammar\ProfiloGrammar;
 use open20\amos\organizzazioni\models\Profilo;
 use open20\amos\organizzazioni\models\ProfiloUserMm;
@@ -32,8 +35,18 @@ use yii\log\Logger;
  * Class Module
  * @package open20\amos\organizzazioni
  */
-class Module extends AmosModule implements OrganizationsModuleInterface, SearchModuleInterface, InvitationExternalInterface
+class Module extends AmosModule implements OrganizationsModuleInterface, SearchModuleInterface, InvitationExternalInterface, BreadcrumbInterface
 {
+    /**
+     * @var Profilo|null $contextModelOrganization
+     */
+    protected $contextModelOrganization;
+    
+    /**
+     * @var int|string|null $contextModelId
+     */
+    protected $contextModelId;
+    
     /**
      * @inheritdoc
      */
@@ -50,7 +63,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      * @var array $defaultListViews This set the default order for the views in lists
      */
     public $defaultListViews = ['grid', 'icon'];
-
+    
     /**
      * @var bool $enableAddOtherLegalHeadquarters If true it's possible to add other legal headquarters. The headquarter type is visible in create headquarter select.
      */
@@ -75,12 +88,17 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     /**
      * @var bool $enableSocial
      */
-    public $enableSocial = true;
+    public $enableSocial = false;
     
     /**
      * @var bool $oldStyleAddressEnabled
      */
     public $oldStyleAddressEnabled = false;
+    
+    /**
+     * @var bool $enableOrganizationAttachments
+     */
+    public $enableOrganizationAttachments = true;
     
     /**
      * @var bool $enableSediRequired
@@ -128,6 +146,26 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      * @var bool $viewEmailEmployees
      */
     public $viewEmailEmployees = false;
+    
+    /**
+     * @var bool $viewStatusEmployees
+     */
+    public $viewStatusEmployees = true;
+    
+    /**
+     * @var bool $viewRoleEmployees
+     */
+    public $viewRoleEmployees = false;
+    
+    /**
+     * @var bool $userNetworkWidgetSearchOrganization
+     */
+    public $userNetworkWidgetSearchOrganization = true;
+    
+    /**
+     * @var bool $userNetworkWidgetSearchHeadquarter
+     */
+    public $userNetworkWidgetSearchHeadquarter = true;
     
     /**
      * @var bool $inviteUserOfOrganizationParent
@@ -195,14 +233,45 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     public $enableWorkflow = false;
     
     /**
-     * @var bool $sendNotificationOnValidate
+     * @var bool $enableUniqueSecretCodeForInvitation
      */
-    public $sendNotificationOnValidate = true;
+    public $enableUniqueSecretCodeForInvitation = false;
+    
+    /**
+     * @var array $addRequired
+     */
+    public $addRequired = [];
+    
+    /**
+     * @var bool $enableProfiloGroups
+     */
+    public $enableProfiloGroups = false;
+    
+    /**
+     * @var bool $excludeRefereesFromEployeesLists
+     */
+    public $excludeRefereesFromEployeesLists = false;
+    
+    /**
+     * @var array $importOrganizationsConf Configuration array for the organization importer. See README for the array structure.
+     */
+    public $importOrganizationsConf = [];
+    
+    /**
+     * @var ImportManager $importManager
+     */
+    public $importManager = null;
+    
     /**
      * @inheritdoc
      */
     public function init()
     {
+        if (Yii::$app instanceof \yii\console\Application) {
+            $this->controllerNamespace = 'open20\amos\organizzazioni\commands';
+            \Yii::setAlias('@open20/amos/' . static::getModuleName() . '/commands', __DIR__ . '/commands');
+        }
+        
         parent::init();
         
         \Yii::setAlias('@open20/amos/' . static::getModuleName() . '/controllers/', __DIR__ . '/controllers/');
@@ -210,6 +279,10 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
         \Yii::configure($this, ArrayHelper::merge($config, ["params" => $this->params]));
         
         $this->communityModule = Yii::$app->getModule('community');
+        
+        $this->importManager = new ImportManager([
+            'importOrganizationsConf' => $this->importOrganizationsConf
+        ]);
     }
     
     /**
@@ -221,6 +294,9 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
             'OrganizationsPlaces' => __NAMESPACE__ . '\\' . 'models\OrganizationsPlaces',
             'Profilo' => __NAMESPACE__ . '\\' . 'models\Profilo',
             'ProfiloEntiType' => __NAMESPACE__ . '\\' . 'models\ProfiloEntiType',
+            'ProfiloGroups' => __NAMESPACE__ . '\\' . 'models\ProfiloGroups',
+            'ProfiloGroupsMm' => __NAMESPACE__ . '\\' . 'models\ProfiloGroupsMm',
+            'ProfiloImport' => __NAMESPACE__ . '\\' . 'models\ProfiloImport',
             'ProfiloLegalForm' => __NAMESPACE__ . '\\' . 'models\ProfiloLegalForm',
             'ProfiloSedi' => __NAMESPACE__ . '\\' . 'models\ProfiloSedi',
             'ProfiloSediLegal' => __NAMESPACE__ . '\\' . 'models\ProfiloSediLegal',
@@ -230,6 +306,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
             'ProfiloTypesPmi' => __NAMESPACE__ . '\\' . 'models\ProfiloTypesPmi',
             'ProfiloUserMm' => __NAMESPACE__ . '\\' . 'models\ProfiloUserMm',
             'ProfiloSearch' => __NAMESPACE__ . '\\' . 'models\search\ProfiloSearch',
+            'ProfiloGroupsSearch' => __NAMESPACE__ . '\\' . 'models\search\ProfiloGroupsSearch',
             'ProfiloSediSearch' => __NAMESPACE__ . '\\' . 'models\search\ProfiloSediSearch',
             'ProfiloTipoStruttura' => __NAMESPACE__ . '\\' . 'models\ProfiloTipoStruttura',
         ];
@@ -419,10 +496,105 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      */
     public function addUserContextAssociation($userId, $modelId)
     {
+        if (is_string($modelId)) {
+            if (strpos($modelId, 'org-') === false) {
+                return false;
+            }
+            /** @var Profilo $profiloModel */
+            $profiloModel = $this->createModel('Profilo');
+            $organization = $profiloModel::findBySecretCode($modelId);
+            if (is_null($organization)) {
+                return false;
+            }
+            $modelId = $organization->id;
+        }
         if (strlen($this->overrideUserContextAssociationStatus) > 0) {
             return $this->saveOrganizationUserMm($userId, $modelId, null, null, $this->overrideUserContextAssociationStatus);
         } else {
             return $this->saveOrganizationUserMm($userId, $modelId);
         }
+    }
+    
+    /**
+     * @inheridoc
+     */
+    public function getFrontEndMenu($dept = 1)
+    {
+        $menu = parent::getFrontEndMenu();
+        $app = \Yii::$app;
+        if (!$app->user->isGuest && \Yii::$app->user->can('LETTORE_ORGANIZZAZIONI')) {
+            $menu .= $this->addFrontEndMenu(Module::t('amosorganizzazioni', '#menu_front_organizzazioni'), Module::toUrlModule('/profilo/index'), $dept);
+        }
+        return $menu;
+    }
+    
+    /**
+     * This method is useful to find an organization by the context model id of an invitation. Used only in the module.
+     * @param int|string $contextModelId
+     * @throws \yii\base\InvalidConfigException
+     */
+    protected function findOrganizationByContextModelId($contextModelId)
+    {
+        if (is_null($contextModelId)) {
+            $this->contextModelOrganization = null;
+            return;
+        }
+        if (is_null($this->contextModelOrganization) || ($this->contextModelId != $contextModelId)) {
+            $this->contextModelId = $contextModelId;
+            /** @var Profilo $profiloModel */
+            $profiloModel = $this->createModel('Profilo');
+            if (strpos($contextModelId, 'org-') !== false) {
+                $this->contextModelOrganization = $profiloModel::findBySecretCode($contextModelId);
+            } else {
+                $this->contextModelOrganization = $profiloModel::findOne($contextModelId);
+            }
+        }
+    }
+    
+    /**
+     * @param Invitation $invitation
+     * @return string
+     */
+    public function renderInvitationEmailSubject($invitation)
+    {
+        $this->findOrganizationByContextModelId($invitation->context_model_id);
+        $organizationName = (!is_null($this->contextModelOrganization) ? $this->contextModelOrganization->name : '');
+        return Module::t('amosorganizzazioni', '#invite_external_subject', ['platformName' => Yii::$app->name, 'organizationName' => $organizationName]);
+    }
+    
+    /**
+     * @param Invitation $invitation
+     * @return string
+     */
+    public function renderInvitationEmailText($invitation)
+    {
+        $this->findOrganizationByContextModelId($invitation->context_model_id);
+        return Yii::$app->controller->renderPartial('@vendor/open20/amos-organizzazioni/src/views/profilo/email/invitation_external_email', [
+            'invitation' => $invitation,
+            'organization' => $this->contextModelOrganization
+        ]);
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function getIndexActions()
+    {
+        return [
+            'profilo/index',
+            'profilo/to-validate',
+        ];
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function getControllerNames()
+    {
+        return [
+            'profilo' => self::t('amosorganizzazioni', "Organizzazioni"),
+            'profilo-groups' => self::t('amosorganizzazioni', "#organizations_groups"),
+            'profilo-sedi' => self::t('amosorganizzazioni', "Sedi"),
+        ];
     }
 }

@@ -7,14 +7,14 @@
     "proscription": "GPL-3.0",
     "require": {
         "php": ">=5.6.0",
-        "open20/amos-admin":"^2.0.29",
+        "open20/amos-admin":"^2.9.0",
         "open20/amos-attachments": "^1.1.10",
         "open20/amos-comuni":"^1.2.15",
-        "open20/amos-core":"^1.15.0",
+        "open20/amos-core": "^1.23.0",
         "open20/amos-cwh":"^2.1.17",
-        "open20/amos-dashboard":"^1.8.16",
+        "open20/amos-dashboard":"^1.9.0",
         "open20/amos-community":"^1.5.30",
-        "open20/amos-invitations": "^1.0.6",
+        "open20/amos-invitations": "^1.3.0",
         "open20/amos-tag":"*"
     },
     "autoload": {

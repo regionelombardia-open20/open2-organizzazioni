@@ -447,7 +447,7 @@ class OrganizzazioniUtility extends BaseObject
         $query->andWhere([$userTable . '.status' => User::STATUS_ACTIVE]);
         $query->andWhere(['<>', $userProfileTable . '.nome', UserProfileUtility::DELETED_ACCOUNT_NAME]);
         
-        if ($excludeReferees) {
+        if ($excludeReferees || $organizzazioniModule->excludeRefereesFromEployeesLists) {
             $refereesUserIds = [];
             if ($model->rappresentante_legale) {
                 $refereesUserIds[] = $model->rappresentante_legale;
@@ -551,5 +551,41 @@ class OrganizzazioniUtility extends BaseObject
         $query->andWhere(['community_id' => $communityId]);
         $communities = $query->all();
         return (!empty($communities));
+    }
+    
+    /**
+     * This method returns the register link for the old or new applications.
+     * @return string
+     */
+    public static function getRegisterLink()
+    {
+        if (\Yii::$app->isCmsApplication()) {
+            if (\Yii::$app->params['linkConfigurations']['registrationLinkCommon']) {
+                $strPosRes = strpos(\Yii::$app->params['linkConfigurations']['registrationLinkCommon'], '/');
+                return (($strPosRes === false) || ($strPosRes > 0) ? '/' : '') . \Yii::$app->params['linkConfigurations']['registrationLinkCommon'];
+            } else {
+                return '/' . \amos\userauth\frontend\Module::getModuleName() . '/default/register';
+            }
+        } else {
+            return '/' . AmosAdmin::getModuleName() . '/security/register';
+        }
+    }
+    
+    /**
+     * This method returns the login link for the old or new applications.
+     * @return string
+     */
+    public static function getLoginLink()
+    {
+        if (\Yii::$app->isCmsApplication()) {
+            if (\Yii::$app->params['linkConfigurations']['loginLinkCommon']) {
+                $strPosRes = strpos(\Yii::$app->params['linkConfigurations']['loginLinkCommon'], '/');
+                return (($strPosRes === false) || ($strPosRes > 0) ? '/' : '') . \Yii::$app->params['linkConfigurations']['loginLinkCommon'];
+            } else {
+                return '/site/login';
+            }
+        } else {
+            return '/' . AmosAdmin::getModuleName() . '/security/login';
+        }
     }
 }

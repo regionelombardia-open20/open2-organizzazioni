@@ -138,7 +138,7 @@ class UserNetworkWidgetSedi extends Widget
                         $urlDelete,
                         [
                             'title' => Module::t('amosorganizzazioni', '#delete'),
-                            'data-confirm' => Module::t('amosorganizzazioni', '#are_you_sure_cancel_headquarter'),
+                            'data-url-confirm' => Module::t('amosorganizzazioni', '#are_you_sure_cancel_headquarter'),
                         ]
                     );
                 }
@@ -156,7 +156,7 @@ class UserNetworkWidgetSedi extends Widget
                 'viewM2MWidgetGenericSearch' => true
             ],
             'gridId' => $gridId,
-            'firstGridSearch' => true,
+            'firstGridSearch' => $this->organizationsModule->userNetworkWidgetSearchHeadquarter,
             'itemsSenderPageSize' => 10,
             'pageParam' => 'page-organizations',
             'disableCreateButton' => true,
@@ -165,7 +165,7 @@ class UserNetworkWidgetSedi extends Widget
             'actionColumnsTemplate' => ($this->isUpdate ? '{deleteRelation}' : ''),
             'deleteRelationTargetIdField' => 'user_id',
             'targetUrl' => '/' . Module::getModuleName() . '/profilo-sedi/associate-headquarter-m2m',
-            'createNewTargetUrl' => '/admin/user-profile/create',
+            'createNewTargetUrl' => '/' . AmosAdmin::getModuleName() . '/user-profile/create',
             'moduleClassName' => Module::className(),
             'targetUrlController' => 'organizzazioni',
             'postName' => 'User',

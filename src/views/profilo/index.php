@@ -8,6 +8,8 @@
  * @package    open20\amos\organizzazioni\views\profilo
  * @category   CategoryName
  */
+
+use open20\amos\core\forms\ActiveForm;
 use open20\amos\core\views\DataProviderView;
 use open20\amos\organizzazioni\Module;
 
@@ -16,13 +18,28 @@ use open20\amos\organizzazioni\Module;
  * @var yii\data\ActiveDataProvider $dataProvider
  * @var open20\amos\organizzazioni\models\search\ProfiloSearch $model
  */
-$this->title                   = Module::t('amosorganizzazioni',
-        'Organizzazioni');
+$this->title = Module::t('amosorganizzazioni', 'Organizzazioni');
 $this->params['breadcrumbs'][] = $this->title;
 
 /** @var \open20\amos\organizzazioni\models\Profilo $profiloModel */
 $profiloModel = Module::instance()->createModel('Profilo');
+
+$modelGrammar = $model->getGrammar();
+$articleSingular = $modelGrammar->getArticleSingular();
+$spaceAfterArticleSingular = (substr($articleSingular, -1) == "'" ? '' : ' ');
+$altText = Module::t('amosorganizzazioni', '#go_to') . $articleSingular . $spaceAfterArticleSingular . strtolower($modelGrammar->getModelSingularLabel());
+
 ?>
+<?php
+$form = ActiveForm::begin([
+    'options' => [
+        'enctype' => 'multipart/form-data'
+    ]
+]);
+?>
+<?= $this->render('_modal', ['form' => $form, 'model' => $model]) ?>
+
+<?php ActiveForm::end(); ?>
 
 <div class="are-profilo-index">
     <?= $this->render('_search', ['model' => $model]); ?>
@@ -47,7 +64,10 @@ $profiloModel = Module::instance()->createModel('Profilo');
             'showItemToolbar' => false,
         ],
         'iconView' => [
-            'itemView' => '_icon'
+            'itemView' => '_icon',
+            'viewParams' => [
+                'altText' => $altText
+            ]
         ],
     ]);
     ?>

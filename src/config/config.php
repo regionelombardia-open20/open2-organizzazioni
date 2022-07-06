@@ -15,6 +15,7 @@ return [
         //active the search 
         'searchParams' => [
             'profilo' => true,
+            'profilo-groups' => true,
         ]
     ]
 ];

@@ -143,7 +143,7 @@ class OrganizationsMembersWidget extends Widget
 //            $this->enableModal = true;
 //        }
 
-//        $this->delete_member_message = ($this->delete_member_message) ? $this->delete_member_message : Module::t('amosorganizzazioni', 'Are you sure to remove this user?');
+        $this->delete_member_message = ($this->delete_member_message) ? $this->delete_member_message : Module::t('amosorganizzazioni', '#organizations_members_widget_delete_message');
         $this->organizationsModule = Module::instance();
     }
 
@@ -204,8 +204,6 @@ class OrganizationsMembersWidget extends Widget
         /** @var UserProfile $emptyUserProfile */
         $emptyUserProfile = AmosAdmin::instance()->createModel('UserProfile');
         $emptyUser = new User();
-//        $roleLabel = Module::t('amosorganizzazioni', '#profilo_user_mm_role_label');
-        $statusLabel = Module::t('amosorganizzazioni', '#profilo_user_mm_status_label');
 
         $itemsMittente = [
             'userImage' => [
@@ -252,34 +250,6 @@ class OrganizationsMembersWidget extends Widget
                 'attribute' => 'user.email',
                 'label' => $emptyUser->getAttributeLabel('email')
             ],
-            'status' => [
-                'attribute' => 'status',
-                'label' => $statusLabel,
-                'headerOptions' => [
-                    'id' => $statusLabel,
-                ],
-                'contentOptions' => [
-                    'headers' => $statusLabel,
-                ],
-                'value' => function ($model) {
-                    /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
-                    return Module::t('amosorganizzazioni', $model->status);
-                }
-            ],
-//            'role' => [
-//                'attribute' => 'role',
-//                'label' => $roleLabel,
-//                'headerOptions' => [
-//                    'id' => $roleLabel,
-//                ],
-//                'contentOptions' => [
-//                    'headers' => $roleLabel,
-//                ],
-//                'value' => function ($model) {
-//                    /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
-//                    return Module::t('amosorganizzazioni', $model->role);
-//                }
-//            ],
         ];
 
         $exportColumns = [
@@ -294,23 +264,60 @@ class OrganizationsMembersWidget extends Widget
 //                'attribute' => 'partnerOf.userProfile.nomeCognome',
 //                'label' => Module::t('amosorganizzazioni', 'Invited by')
 //            ],
-            'status' => [
+        ];
+
+        if ($this->organizationsModule->viewStatusEmployees) {
+            $statusLabel = Module::t('amosorganizzazioni', '#profilo_user_mm_status_label');
+            $itemsMittente['status'] = [
+                'attribute' => 'status',
+                'label' => $statusLabel,
+                'headerOptions' => [
+                    'id' => $statusLabel,
+                ],
+                'contentOptions' => [
+                    'headers' => $statusLabel,
+                ],
+                'value' => function ($model) {
+                    /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
+                    return Module::t('amosorganizzazioni', $model->status);
+                }
+            ];
+            $exportColumns['status'] = [
                 'attribute' => 'status',
                 'label' => Module::t('amosorganizzazioni', 'Confirm status'),
                 'value' => function ($model) {
                     /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
                     return Module::t('amosorganizzazioni', $model->status);
                 }
-            ],
-//            'invitation_accepted_at' => [
-//                'attribute' => 'invitation_accepted_at',
-//                'label' => Module::t('amosorganizzazioni', 'Confirm date'),
-//                'value' => function ($model) {
-//                    /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
-//                    return \Yii::$app->formatter->asDatetime($model->invitation_accepted_at, 'humanalwaysdatetime');
-//                }
-//            ]
-        ];
+            ];
+        }
+
+        if ($this->organizationsModule->viewRoleEmployees) {
+            $roleLabel = Module::t('amosorganizzazioni', '#profilo_user_mm_role_label');
+            $itemsMittente['role'] = [
+                'attribute' => 'role',
+                'label' => $roleLabel,
+                'headerOptions' => [
+                    'id' => $roleLabel,
+                ],
+                'contentOptions' => [
+                    'headers' => $roleLabel,
+                ],
+                'value' => function ($model) {
+                    /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
+                    return Module::t('amosorganizzazioni', $model->role);
+                }
+            ];
+        }
+
+//        $exportColumns['invitation_accepted_at'] = [
+//            'attribute' => 'invitation_accepted_at',
+//            'label' => Module::t('amosorganizzazioni', 'Confirm date'),
+//            'value' => function ($model) {
+//                /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
+//                return \Yii::$app->formatter->asDatetime($model->invitation_accepted_at, 'humanalwaysdatetime');
+//            }
+//        ];
 
         $viewEmailEmployees = false;
         if (isset($this->organizationsModule->viewEmailEmployees)) {
@@ -435,7 +442,8 @@ class OrganizationsMembersWidget extends Widget
                     [
                         $url,
                         'id' => $profilo->id,
-                        'targetId' => $targetId
+                        'targetId' => $targetId,
+                        'redirectAction' => \yii\helpers\Url::current()
                     ]
                 );
                 $loggedUser = Yii::$app->getUser();
@@ -444,7 +452,7 @@ class OrganizationsMembersWidget extends Widget
                         AmosIcons::show('close', ['class' => '']),
                         $urlDelete,
                         [
-                            'title' => Module::t('amosorganizzazioni', 'Delete'),
+                            'title' => Module::t('amosorganizzazioni', '#organizations_members_widget_delete_title'),
                             'data-confirm' => $this->delete_member_message,
                             'class' => 'btn btn-danger-inverse'
                         ]
@@ -516,7 +524,16 @@ class OrganizationsMembersWidget extends Widget
 
 //        $insass = ($inviteUserOfcommunityParent && !$isSubCommunity && $customInvitationForm) || (!$inviteUserOfcommunityParent && $customInvitationForm);
 
-        $targetUrl = '/invitations/invitation/index' . (\Yii::$app->user->can('INVITATIONS_ADMINISTRATOR') ? '-all' : '') . '/';
+        $createNewTargetUrl = [
+            '/invitations/invitation/index' . (\Yii::$app->user->can('INVITATIONS_ADMINISTRATOR') ? '-all' : '') . '/',
+            'moduleName' => Module::getModuleName()
+        ];
+        if ($this->organizationsModule->enableUniqueSecretCodeForInvitation) {
+            $createNewTargetUrl['contextModelId'] = $model->unique_secret_code;
+            $createNewTargetUrl['registerAction'] = 'register-with-code';
+        } else {
+            $createNewTargetUrl['contextModelId'] = $model->id;
+        }
         $widget = M2MWidget::widget(
             [
                 'model' => $model,
@@ -544,11 +561,7 @@ class OrganizationsMembersWidget extends Widget
 //            'targetUrl' => $insass ? '/community/community/insass-m2m' : '/community/community/associa-m2m',
                 'targetUrl' => '/organizzazioni/profilo/associa-m2m',
                 'additionalTargetUrl' => '/organizzazioni/profilo/additional-associate-m2m',
-                'createNewTargetUrl' => [
-                    $targetUrl,
-                    'moduleName' => Module::getModuleName(),
-                    'contextModelId' => $model->id
-                ],
+                'createNewTargetUrl' => $createNewTargetUrl,
                 'moduleClassName' => Module::className(),
                 'targetUrlController' => 'profilo',
                 'postName' => 'Profilo',

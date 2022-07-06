@@ -120,6 +120,12 @@ if ($organizzazioniModule->enableCommunityCreation) {
 ?>
 
 <div class="organizzazioni-view col-xs-12 nop">
+    <?= ContextMenuWidget::widget([
+        'model' => $model,
+        'actionModify' => $model->getFullUpdateUrl(),
+        'actionDelete' => $model->getFullDeleteUrl()
+    ]) ?>
+
     <div class="col-xs-12 info-view-header">
         <div class="col-md-3 col-xs-12 nop">
             <?php
@@ -168,87 +174,119 @@ if ($organizzazioniModule->enableCommunityCreation) {
             </div>
         </div>
 
-        <div class="col-md-5 col-xs-12 info-body nop">
+        <div class="col-md-6 col-xs-12 info-body nop">
             <!--            <div class="col-lg-12 col-xs-12 nop">-->
-            <!--                <div class="col-xs-4 nop info-label">-->
+            <!--                <div class="col-xs-12 col-sm-4 nop info-label">-->
             <?php //echo $model->getAttributeLabel('name') ?><!--</div>-->
-            <!--                <div class="col-xs-8 nop info-value">--><?php //echo $model->name ?><!--</div>-->
+            <!--                <div class="col-xs-12 col-sm-8 nop info-value">--><?php //echo $model->name ?><!--</div>-->
             <!--            </div>-->
             <?php
             $profiloEntiTypeNotNull = (!is_null($model->profiloEntiType));
             $profiloTipoStrutturaNotNull = (!is_null($model->tipologia_struttura_id));
             ?>
+            <?php if ($organizzazioniModule->enableUniqueSecretCodeForInvitation && Yii::$app->user->can('PROFILO_UPDATE', ['model' => $model])): ?>
+                <div class="col-md-12 col-xs-12 m-t-15 nop">
+                    <div class="col-xs-12 col-sm-4 nop info-label"><?= $model->getAttributeLabel('unique_secret_code') ?></div>
+                    <div class="col-xs-12 col-sm-8 nop info-value"><?= $model->unique_secret_code; ?></div>
+                </div>
+            <?php endif; ?>
             <?php if ($organizzazioniModule->enableProfiloEntiType === true): ?>
-                <div class="col-md-12 col-xs-12 nop">
-                    <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('profilo_enti_type_id') ?></div>
-                    <div class="col-xs-8 nop info-value"><?= $profiloEntiTypeNotNull ? $model->profiloEntiType->name : '' ?></div>
+                <div class="col-md-12 col-xs-12 m-t-15 nop">
+                    <div class="col-xs-12 col-sm-4 nop info-label"><?= $model->getAttributeLabel('profilo_enti_type_id') ?></div>
+                    <div class="col-xs-12 col-sm-8 nop info-value"><?= $profiloEntiTypeNotNull ? $model->profiloEntiType->name : '' ?></div>
                 </div>
             <?php endif; ?>
             <?php if ($organizzazioniModule->enableProfiloTipologiaStruttura === true): ?>
-                <div class="col-md-12 col-xs-12 nop">
-                    <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('tipologia_struttura_id') ?></div>
-                    <div class="col-xs-8 nop info-value"><?= $profiloTipoStrutturaNotNull ? $model->tipologiaStruttura->name : '' ?></div>
+                <div class="col-md-12 col-xs-12 m-t-15 nop">
+                    <div class="col-xs-12 col-sm-4 nop info-label"><?= $model->getAttributeLabel('tipologia_struttura_id') ?></div>
+                    <div class="col-xs-12 col-sm-8 nop info-value"><?= $profiloTipoStrutturaNotNull ? $model->tipologiaStruttura->name : '' ?></div>
                 </div>
             <?php endif; ?>
             <!-- if without else because the entity type must be present -->
             <?php if ($profiloEntiTypeNotNull && ($organizzazioniModule->enableProfiloEntiType === true)): ?>
                 <?php if ($model->isMunicipality()): ?>
-                    <div class="col-md-12 col-xs-12 nop">
-                        <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('istat_code') ?></div>
-                        <div class="col-xs-8 nop info-value"><?= !empty($model->istat_code) ? $model->istat_code : '' ?></div>
+                    <div class="col-md-12 col-xs-12 m-t-15 nop">
+                        <div class="col-xs-12 col-sm-4 nop info-label"><?= $model->getAttributeLabel('istat_code') ?></div>
+                        <div class="col-xs-12 col-sm-8 nop info-value"><?= !empty($model->istat_code) ? $model->istat_code : '' ?></div>
                     </div>
-                <?php elseif ($model->isOtherEntity()): ?>
-                    <div class="col-md-12 col-xs-12 nop">
-                        <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('tipologia_di_organizzazione') ?></div>
-                        <div class="col-xs-8 nop info-value"><?= !empty($model->tipologiaDiOrganizzazione) ? $model->tipologiaDiOrganizzazione->name : '-' ?></div>
+                <?php elseif ($model->isOtherEntity() && ($organizzazioniModule->enableTipologiaOrganizzazione === true)): ?>
+                    <div class="col-md-12 col-xs-12 m-t-15 nop">
+                        <div class="col-xs-12 col-sm-4 nop info-label"><?= $model->getAttributeLabel('tipologia_di_organizzazione') ?></div>
+                        <div class="col-xs-12 col-sm-8 nop info-value"><?= !empty($model->tipologiaDiOrganizzazione) ? $model->tipologiaDiOrganizzazione->name : '-' ?></div>
                     </div>
                 <?php endif; ?>
+            <?php elseif ($organizzazioniModule->enableTipologiaOrganizzazione === true): ?>
+                <div class="col-md-12 col-xs-12 m-t-15 nop">
+                    <div class="col-xs-12 col-sm-4 nop info-label"><?= $model->getAttributeLabel('tipologia_di_organizzazione') ?></div>
+                    <div class="col-xs-12 col-sm-8 nop info-value"><?= !empty($model->tipologiaDiOrganizzazione) ? $model->tipologiaDiOrganizzazione->name : '-' ?></div>
+                </div>
             <?php endif; ?>
-            <div class="col-md-12 col-xs-12 nop">
-                <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('forma_legale') ?></div>
-                <div class="col-xs-8 nop info-value"><?= !empty($model->formaLegale) ? $model->formaLegale->name : '-' ?></div>
-            </div>
-            <div class="col-md-12 col-xs-12 nop">
-                <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('partita_iva') ?></div>
-                <div class="col-xs-8 nop info-value"><?= ($model->partita_iva ? $model->partita_iva : '-') ?></div>
-            </div>
-            <div class="col-md-12 col-xs-12 nop">
-                <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('codice_fiscale') ?></div>
-                <div class="col-xs-8 nop info-value"><?= ($model->codice_fiscale ? $model->codice_fiscale : '-') ?></div>
+            <?php if ($organizzazioniModule->enableFormaLegale === true): ?>
+                <div class="col-md-12 col-xs-12 m-t-15 nop">
+                    <div class="col-xs-12 col-sm-4 nop info-label"><?= $model->getAttributeLabel('forma_legale') ?></div>
+                    <div class="col-xs-12 col-sm-8 nop info-value"><?= !empty($model->formaLegale) ? $model->formaLegale->name : '-' ?></div>
+                </div>
+            <?php endif; ?>
+            <div class="col-md-12 col-xs-12 m-t-15 nop">
+                <div class="col-xs-12 col-sm-4 nop info-label"><?= $model->getAttributeLabel('partita_iva') ?></div>
+                <div class="col-xs-12 col-sm-8 nop info-value"><?= ($model->partita_iva ? $model->partita_iva : '-') ?></div>
             </div>
             <div class="col-md-12 col-xs-12 m-t-15 nop">
-                <div class="col-xs-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('email') ?></div>
-                <div class="col-xs-8 nop info-value"><?= $hasOperativeHeadquarter ? $operativeHeadquarter->email : '-' ?></div>
+                <div class="col-xs-12 col-sm-4 nop info-label"><?= $model->getAttributeLabel('codice_fiscale') ?></div>
+                <div class="col-xs-12 col-sm-8 nop info-value"><?= ($model->codice_fiscale ? $model->codice_fiscale : '-') ?></div>
             </div>
-            <div class="col-md-12 col-xs-12 nop">
-                <div class="col-xs-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('pec') ?></div>
-                <div class="col-xs-8 nop info-value"><?= $hasOperativeHeadquarter ? $operativeHeadquarter->pec : '-' ?></div>
+            <div class="col-md-12 col-xs-12 m-t-15 nop">
+                <div class="col-xs-12 col-sm-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('email') ?></div>
+                <div class="col-xs-12 col-sm-8 nop info-value"><?= $hasOperativeHeadquarter ? $operativeHeadquarter->email : '-' ?></div>
             </div>
-            <div class="col-md-12 col-xs-12 nop">
-                <div class="col-xs-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('phone') ?></div>
-                <div class="col-xs-8 nop info-value"><?= $hasOperativeHeadquarter ? $operativeHeadquarter->phone : '-' ?></div>
+            <div class="col-md-12 col-xs-12 m-t-15 nop">
+                <div class="col-xs-12 col-sm-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('pec') ?></div>
+                <div class="col-xs-12 col-sm-8 nop info-value"><?= $hasOperativeHeadquarter ? $operativeHeadquarter->pec : '-' ?></div>
             </div>
-            <div class="col-md-12 col-xs-12 nop">
-                <div class="col-xs-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('fax') ?></div>
-                <div class="col-xs-8 nop info-value"><?= $hasOperativeHeadquarter ? $operativeHeadquarter->fax : '-' ?></div>
+            <div class="col-md-12 col-xs-12 m-t-15 nop">
+                <div class="col-xs-12 col-sm-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('phone') ?></div>
+                <div class="col-xs-12 col-sm-8 nop info-value"><?= $hasOperativeHeadquarter ? $operativeHeadquarter->phone : '-' ?></div>
+            </div>
+            <div class="col-md-12 col-xs-12 m-t-15 nop">
+                <div class="col-xs-12 col-sm-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('fax') ?></div>
+                <div class="col-xs-12 col-sm-8 nop info-value"><?= $hasOperativeHeadquarter ? $operativeHeadquarter->fax : '-' ?></div>
             </div>
             <!--            <div class="col-lg-12 col-xs-12 nop">-->
-            <!--                <div class="col-xs-4 nop info-label">-->
+            <!--                <div class="col-xs-12 col-sm-4 nop info-label">-->
             <?php //echo $model->getAttributeLabel('sito_web') ?><!--</div>-->
-            <!--                <div class="col-xs-8 nop info-value">--><?php //echo $model->sito_web ?><!--</div>-->
+            <!--                <div class="col-xs-12 col-sm-8 nop info-value">--><?php //echo $model->sito_web ?><!--</div>-->
             <!--            </div>-->
             <div class="col-md-12 col-xs-12 m-t-15 nop">
-                <div class="col-xs-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('address') ?></div>
-                <div class="col-xs-8 nop info-value"><?= $model->getAddressFieldForView() ?></div>
+                <div class="col-xs-12 col-sm-4 nop info-label"><?= $emptyProfiloSedi->getAttributeLabel('address') ?></div>
+                <div class="col-xs-12 col-sm-8 nop info-value"><?= $model->getAddressFieldForView() ?></div>
             </div>
+
+            <div class="col-xs-12 info-view-body nop">
+                <div class="col-md-4 col-xs-12 nop">
+                    <div class="col-xs-12 col-sm-4 nop info-label"><?= $model->getAttributeLabel('responsabile') ?></div>
+                    <div class="col-xs-12 col-sm-8 nop info-value"><?= $model->responsabile ?></div>
+                </div>
+                <div class="col-md-4 col-xs-12 nop">
+                    <div class="col-xs-12 col-sm-4 nop info-label"><?= $model->getAttributeLabel('rappresentante_legale') ?></div>
+                    <?php if ($organizzazioniModule->enableRappresentanteLegaleText): ?>
+                        <div class="col-xs-12 col-sm-8 nop info-value"><?= !empty($model->rappresentante_legale_text) ? $model->rappresentante_legale_text : "" ?></div>
+                    <?php else: ?>
+                        <div class="col-xs-12 col-sm-8 nop info-value"><?= !empty($model->rappresentanteLegale) ? $model->rappresentanteLegale->nomeCognome : "" ?></div>
+                    <?php endif; ?>
+                </div>
+                <div class="col-md-4 col-xs-12 nop">
+                    <div class="col-xs-12 col-sm-4 nop info-label"><?= $model->getAttributeLabel('referente_operativo') ?></div>
+                    <div class="col-xs-12 col-sm-8 nop info-value"><?= !empty($model->referenteOperativo) ? $model->referenteOperativo->nomeCognome : "" ?></div>
+                </div>
+                <div class="col-md-12 col-xs-12 m-t-15 nop">
+                    <div class="col-xs-12 col-sm-4 nop info-label description-label"><?= $model->getAttributeLabel('presentazione_della_organizzaz') ?></div>
+                    <div class="col-xs-12 col-sm-8 nop info-value"><?= $model->presentazione_della_organizzaz ?></div>
+                </div>
+            </div>
+
         </div>
 
-        <div class="col-md-4 col-xs-12 nop">
-            <?= ContextMenuWidget::widget([
-                'model' => $model,
-                'actionModify' => $model->getFullUpdateUrl(),
-                'actionDelete' => $model->getFullDeleteUrl()
-            ]) ?>
+        <div class="col-md-3 col-xs-12 nop">
             <?php
             if (!$organizzazioniModule->oldStyleAddressEnabled) {
                 $sedeIndirizzo = $model->sedeIndirizzo;
@@ -288,7 +326,7 @@ if ($organizzazioniModule->enableCommunityCreation) {
                             <p><?= $model->parent->name ?></p>
                         </div>
                     </div>
-                    <div class="col-md-4 col-xs-12 nop">
+                    <div class="col-md-12 col-xs-12 m-t-15 nop">
                         <span><?= $model->parent->getAttributeLabel('responsabile') ?></span>
                         <span><?= $model->parent->responsabile ?></span>
                     </div class="col-md-4 col-xs-12 nop">
@@ -303,127 +341,106 @@ if ($organizzazioniModule->enableCommunityCreation) {
 
     </div>
 
-    <div class="col-xs-12 info-view-body">
-        <div class="col-md-4 col-xs-12 nop">
-            <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('responsabile') ?></div>
-            <div class="col-xs-8 nop info-value"><?= $model->responsabile ?></div>
-        </div>
-        <div class="col-md-4 col-xs-12 nop">
-            <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('rappresentante_legale') ?></div>
-            <?php if ($organizzazioniModule->enableRappresentanteLegaleText): ?>
-                <div class="col-xs-8 nop info-value"><?= !empty($model->rappresentante_legale_text) ? $model->rappresentante_legale_text : "" ?></div>
-            <?php else: ?>
-                <div class="col-xs-8 nop info-value"><?= !empty($model->rappresentanteLegale) ? $model->rappresentanteLegale->nomeCognome : "" ?></div>
-            <?php endif; ?>
-        </div>
-        <div class="col-md-4 col-xs-12 nop">
-            <div class="col-xs-4 nop info-label"><?= $model->getAttributeLabel('referente_operativo') ?></div>
-            <div class="col-xs-8 nop info-value"><?= !empty($model->referenteOperativo) ? $model->referenteOperativo->nomeCognome : "" ?></div>
-        </div>
-        <div class="col-md-12 col-xs-12 nop">
-            <div class="col-xs-4 nop info-label description-label"><?= $model->getAttributeLabel('presentazione_della_organizzaz') ?></div>
-            <div class="col-xs-8 nop info-value"><?= $model->presentazione_della_organizzaz ?></div>
-        </div>
-    </div>
-
     <div class="col-md-8 col-xs-12">
-        <?php
-        $accordionSedeLegale = '';
-        $sedeLegaleIndirizzo = '';
-        $mapSedeLegale = '';
-        
-        if (!$organizzazioniModule->oldStyleAddressEnabled) {
-            $sedeLegaleIndirizzo = $model->sedeLegaleIndirizzo;
-            if ($sedeLegaleIndirizzo) {
-                $mapSedeLegale = MapWidget::widget([
-                    'coordinates' => [
-                        'lat' => $sedeLegaleIndirizzo->latitude,
-                        'lng' => $sedeLegaleIndirizzo->longitude,
-                    ],
-                    'zoom' => 17
-                ]);
+        <?php if (!$organizzazioniModule->forceSameSede): ?>
+            <?php
+            $accordionSedeLegale = '';
+            $sedeLegaleIndirizzo = '';
+            $mapSedeLegale = '';
+            
+            if (!$organizzazioniModule->oldStyleAddressEnabled) {
+                $sedeLegaleIndirizzo = $model->sedeLegaleIndirizzo;
+                if ($sedeLegaleIndirizzo) {
+                    $mapSedeLegale = MapWidget::widget([
+                        'coordinates' => [
+                            'lat' => $sedeLegaleIndirizzo->latitude,
+                            'lng' => $sedeLegaleIndirizzo->longitude,
+                        ],
+                        'zoom' => 17
+                    ]);
+                }
             }
-        }
-        
-        $accordionSedeLegale .= Html::tag('div',
-            $mapSedeLegale,
-            ['class' => 'col-md-5 col-xs-6']
-        );
-        
-        if ($hasLegalHeadquarter) {
-            $slIndirizzo = Html::tag('div',
-                Html::tag('div',
-                    $legalHeadquarter->getAttributeLabel('address'),
-                    ['class' => 'col-xs-4 nop info-label']) .
-                Html::tag('div',
-                    $model->getAddressFieldSedeLegaleForView(),
-                    ['class' => 'col-xs-8 nop info-value']),
-                ['class' => 'col-xs-12 nop']);
-            
-            $slEmail = Html::tag('div',
-                Html::tag('div',
-                    $legalHeadquarter->getAttributeLabel('email'),
-                    ['class' => 'col-xs-4 nop info-label']) .
-                Html::tag('div',
-                    $legalHeadquarter->email,
-                    ['class' => 'col-xs-8 nop info-value']),
-                ['class' => 'col-xs-12 nop']);
-            
-            $slPec = Html::tag('div',
-                Html::tag('div',
-                    $legalHeadquarter->getAttributeLabel('pec'),
-                    ['class' => 'col-xs-4 nop info-label']) .
-                Html::tag('div',
-                    $legalHeadquarter->pec,
-                    ['class' => 'col-xs-8 nop info-value']),
-                ['class' => 'col-xs-12 nop']);
-            
-            $slTelefono = Html::tag('div',
-                Html::tag('div',
-                    $legalHeadquarter->getAttributeLabel('phone'),
-                    ['class' => 'col-xs-4 nop info-label']) .
-                Html::tag('div',
-                    $legalHeadquarter->phone,
-                    ['class' => 'col-xs-8 nop info-value']),
-                ['class' => 'col-xs-12 nop']);
-            
-            $slFax = Html::tag('div',
-                Html::tag('div',
-                    $legalHeadquarter->getAttributeLabel('fax'),
-                    ['class' => 'col-xs-4 nop info-label']) .
-                Html::tag('div',
-                    $legalHeadquarter->fax,
-                    ['class' => 'col-xs-8 nop info-value']),
-                ['class' => 'col-xs-12 nop']);
             
             $accordionSedeLegale .= Html::tag('div',
-                $slIndirizzo . $slEmail . $slPec . $slTelefono . $slFax,
-                ['class' => 'col-md-7 col-xs-6']
+                $mapSedeLegale,
+                ['class' => 'col-md-5 col-xs-6']
             );
-        }
-        
-        ?>
-        <?= AccordionWidget::widget([
-            'items' => [
-                [
-                    'header' => Module::t('amosorganizzazioni', '#view_accordion_sede_legale'),
-                    'content' => $accordionSedeLegale,
+            
+            if ($hasLegalHeadquarter) {
+                $slIndirizzo = Html::tag('div',
+                    Html::tag('div',
+                        $legalHeadquarter->getAttributeLabel('address'),
+                        ['class' => 'col-xs-12 col-sm-4 nop info-label']) .
+                    Html::tag('div',
+                        $model->getAddressFieldSedeLegaleForView(),
+                        ['class' => 'col-xs-12 col-sm-8 nop info-value']),
+                    ['class' => 'col-xs-12 nop']);
+                
+                $slEmail = Html::tag('div',
+                    Html::tag('div',
+                        $legalHeadquarter->getAttributeLabel('email'),
+                        ['class' => 'col-xs-12 col-sm-4 nop info-label']) .
+                    Html::tag('div',
+                        $legalHeadquarter->email,
+                        ['class' => 'col-xs-12 col-sm-8 nop info-value']),
+                    ['class' => 'col-xs-12 nop']);
+                
+                $slPec = Html::tag('div',
+                    Html::tag('div',
+                        $legalHeadquarter->getAttributeLabel('pec'),
+                        ['class' => 'col-xs-12 col-sm-4 nop info-label']) .
+                    Html::tag('div',
+                        $legalHeadquarter->pec,
+                        ['class' => 'col-xs-12 col-sm-8 nop info-value']),
+                    ['class' => 'col-xs-12 nop']);
+                
+                $slTelefono = Html::tag('div',
+                    Html::tag('div',
+                        $legalHeadquarter->getAttributeLabel('phone'),
+                        ['class' => 'col-xs-12 col-sm-4 nop info-label']) .
+                    Html::tag('div',
+                        $legalHeadquarter->phone,
+                        ['class' => 'col-xs-12 col-sm-8 nop info-value']),
+                    ['class' => 'col-xs-12 nop']);
+                
+                $slFax = Html::tag('div',
+                    Html::tag('div',
+                        $legalHeadquarter->getAttributeLabel('fax'),
+                        ['class' => 'col-xs-12 col-sm-4 nop info-label']) .
+                    Html::tag('div',
+                        $legalHeadquarter->fax,
+                        ['class' => 'col-xs-12 col-sm-8 nop info-value']),
+                    ['class' => 'col-xs-12 nop']);
+                
+                $accordionSedeLegale .= Html::tag('div',
+                    $slIndirizzo . $slEmail . $slPec . $slTelefono . $slFax,
+                    ['class' => 'col-md-7 col-xs-6']
+                );
+            }
+            
+            ?>
+            <?= AccordionWidget::widget([
+                'items' => [
+                    [
+                        'header' => Module::t('amosorganizzazioni', '#view_accordion_sede_legale'),
+                        'content' => $accordionSedeLegale,
+                    ]
+                ],
+                'headerOptions' => ['tag' => 'h2'],
+                'clientOptions' => [
+                    'collapsible' => true,
+                    'active' => false,
+                    'icons' => [
+                        'header' => 'ui-icon-amos am am-plus-square',
+                        'activeHeader' => 'ui-icon-amos am am-minus-square',
+                    ]
+                ],
+                'options' => [
+                    'class' => 'sede-accordion'
                 ]
-            ],
-            'headerOptions' => ['tag' => 'h2'],
-            'clientOptions' => [
-                'collapsible' => true,
-                'active' => false,
-                'icons' => [
-                    'header' => 'ui-icon-amos am am-plus-square',
-                    'activeHeader' => 'ui-icon-amos am am-minus-square',
-                ]
-            ],
-            'options' => [
-                'class' => 'sede-accordion'
-            ]
-        ]);
-        ?>
+            ]);
+            ?>
+        <?php endif; ?>
         
         <?php if ($organizzazioniModule->enableSocial): ?>
             <?php
@@ -434,9 +451,6 @@ if ($organizzazioniModule->enableCommunityCreation) {
                 ['class' => 'col-sm-6 col-xs-12']);
             $accordionSocial .= Html::tag('div',
                 AmosIcons::show('twitter-box') . Html::tag('span', $model->twitter),
-                ['class' => 'col-sm-6 col-xs-12']);
-            $accordionSocial .= Html::tag('div',
-                AmosIcons::show('google-plus-box') . Html::tag('span', $model->google),
                 ['class' => 'col-sm-6 col-xs-12']);
             $accordionSocial .= Html::tag('div',
                 AmosIcons::show('linkedin-box') . Html::tag('span', $model->linkedin),
@@ -554,17 +568,19 @@ if ($organizzazioniModule->enableCommunityCreation) {
                 </div>
             </div>
         <?php endif; ?>
-        <div class="col-xs-12 attachment-section-sidebar nop">
-            <?= Html::tag('h2', AmosIcons::show('paperclip', [], 'dash') . Module::t('amosorganizzazioni', '#attachments_title')) ?>
-            <div class="col-xs-12">
-                <?= AttachmentsList::widget([
-                    'model' => $model,
-                    'attribute' => 'allegati',
-                    'viewDeleteBtn' => false,
-                    'viewDownloadBtn' => true,
-                    'viewFilesCounter' => true,
-                ]) ?>
+        <?php if ($organizzazioniModule->enableOrganizationAttachments): ?>
+            <div class="col-xs-12 attachment-section-sidebar nop">
+                <?= Html::tag('h2', AmosIcons::show('paperclip', [], 'dash') . Module::t('amosorganizzazioni', '#attachments_title')) ?>
+                <div class="col-xs-12">
+                    <?= AttachmentsList::widget([
+                        'model' => $model,
+                        'attribute' => 'allegati',
+                        'viewDeleteBtn' => false,
+                        'viewDownloadBtn' => true,
+                        'viewFilesCounter' => true,
+                    ]) ?>
+                </div>
             </div>
-        </div>
+        <?php endif; ?>
     </div>
 </div>

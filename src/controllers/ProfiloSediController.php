@@ -77,7 +77,7 @@ class ProfiloSediController extends \open20\amos\organizzazioni\controllers\base
         $id = \Yii::$app->request->get('id');
         
         if (strstr($urlPrevious, 'associate-headquarter-m2m')) {
-            $this->setRedirectArray('/admin/user-profile/update?id=' . $id);
+            $this->setRedirectArray('/' . AmosAdmin::getModuleName() . '/user-profile/update?id=' . $id);
         }
     }
     
@@ -203,7 +203,7 @@ class ProfiloSediController extends \open20\amos\organizzazioni\controllers\base
         $this->setTargetUrl('associate-headquarter-m2m');
         $this->setCustomQuery(true);
         $userProfileId = User::findOne($userId)->getProfile()->id;
-        $this->setRedirectArray('/admin/user-profile/update?id=' . $userProfileId . '#tab-network');
+        $this->setRedirectArray('/' . AmosAdmin::getModuleName() . '/user-profile/update?id=' . $userProfileId . '#tab-network');
         return $this->actionAssociaM2m($userId);
         
     }
@@ -320,7 +320,7 @@ class ProfiloSediController extends \open20\amos\organizzazioni\controllers\base
             if ($ok) {
                 Yii::$app->getSession()->addFlash('success', $message);
                 if (strpos($redirectAction, 'associate-headquarter-m2m') && !Yii::$app->user->can('ASSOCIATE_ORGANIZZAZIONI_TO_USER', ['model' => $userProfile])) {
-                    $redirectAction = '/admin/user-profile/update?id=' . $userProfile->id . '#tab-network';
+                    $redirectAction = '/' . AmosAdmin::getModuleName() . '/user-profile/update?id=' . $userProfile->id . '#tab-network';
                 }
                 $action = (isset($redirectAction) ? $redirectAction : $defaultAction);
                 return $this->redirect($action);

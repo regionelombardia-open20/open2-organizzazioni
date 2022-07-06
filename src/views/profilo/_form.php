@@ -189,6 +189,17 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
         <div class="col-xs-12"><?= Html::tag('h2', Module::t('amosorganizzazioni', '#settings_general_title'), ['class' => 'subtitle-form']) ?></div>
         <div class="col-md-8 col-xs-12">
             <?= $form->field($model, 'name')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#name_field_placeholder')])->hint(Module::t('amosorganizzazioni', '#name_field_hint')) ?>
+            <?php if ($organizzazioniModule->enableUniqueSecretCodeForInvitation && !$model->isNewRecord): ?>
+                <div class="col-xs-12">
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <label class="control-label"><?= $model->getAttributeLabel('unique_secret_code') ?>:</label> <?= $model->unique_secret_code ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
             <?php if ($organizzazioniModule->enableProfiloTipologiaStruttura === true): ?>
                 <div class="col-xs-12">
                     <?= $form->field($model, 'tipologia_struttura_id')->widget(Select::classname(), [
@@ -257,10 +268,10 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
             <?php endif; ?>
             <!--            <div class="clearfix"></div>-->
             <div class="col-md-6 col-xs-12">
-                <?php echo $form->field($model, 'partita_iva')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#partita_iva_field_placeholder')]) ?>
+                <?= $form->field($model, 'partita_iva')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#partita_iva_field_placeholder')]) ?>
             </div>
             <div class="col-md-6 col-xs-12">
-                <?php echo $form->field($model, 'codice_fiscale')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#codice_fiscale_field_placeholder')]) ?>
+                <?= $form->field($model, 'codice_fiscale')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#codice_fiscale_field_placeholder')]) ?>
             </div>
             
             <?= $form->field($model, 'presentazione_della_organizzaz')->widget(TextEditorWidget::className(), [
@@ -466,26 +477,28 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                     'jcropOptions' => ['aspectRatio' => '1.7']
                 ])->label(Module::t('amosorganizzazioni', '#image_field'))->hint(Module::t('amosorganizzazioni', '#image_field_hint')) ?>
             </div>
-            <div class="col-xs-12 attachment-section nop">
-                <div class="col-xs-12">
-                    <?= Html::tag('h2', Module::t('amosorganizzazioni', '#attachments_title')) ?>
-                    <?= $form->field($model,
-                        'allegati')->widget(AttachmentsInput::classname(), [
-                        'options' => [ // Options of the Kartik's FileInput widget
-                            'multiple' => true, // If you want to allow multiple upload, default to false
-                        ],
-                        'pluginOptions' => [ // Plugin options of the Kartik's FileInput widget
-                            'maxFileCount' => 100,// Client max files
-                            'showPreview' => false
-                        ]
-                    ])->label(Module::t('amosorganizzazioni', '#attachments_field'))->hint(Module::t('amosorganizzazioni', '#attachments_field_hint')) ?>
-                    
-                    <?= AttachmentsList::widget([
-                        'model' => $model,
-                        'attribute' => 'allegati'
-                    ]) ?>
+            <?php if ($organizzazioniModule->enableOrganizationAttachments): ?>
+                <div class="col-xs-12 attachment-section nop">
+                    <div class="col-xs-12">
+                        <?= Html::tag('h2', Module::t('amosorganizzazioni', '#attachments_title')) ?>
+                        <?= $form->field($model,
+                            'allegati')->widget(AttachmentsInput::classname(), [
+                            'options' => [ // Options of the Kartik's FileInput widget
+                                'multiple' => true, // If you want to allow multiple upload, default to false
+                            ],
+                            'pluginOptions' => [ // Plugin options of the Kartik's FileInput widget
+                                'maxFileCount' => 100,// Client max files
+                                'showPreview' => false
+                            ]
+                        ])->label(Module::t('amosorganizzazioni', '#attachments_field'))->hint(Module::t('amosorganizzazioni', '#attachments_field_hint')) ?>
+                        
+                        <?= AttachmentsList::widget([
+                            'model' => $model,
+                            'attribute' => 'allegati'
+                        ]) ?>
+                    </div>
                 </div>
-            </div>
+            <?php endif; ?>
             
             <?php if ($organizzazioniModule->enableSocial): ?>
                 <div class="col-xs-12 social-section nop">
@@ -508,12 +521,6 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                         </div>
                         <div class="col-xs-10 nop">
                             <?= $form->field($model, 'linkedin')->textInput(['maxlength' => true])->label(false) ?>
-                        </div>
-                        <div class="col-xs-2 nop">
-                            <?= AmosIcons::show('google-plus-box'); ?>
-                        </div>
-                        <div class="col-xs-10 nop">
-                            <?= $form->field($model, 'google')->textInput(['maxlength' => true])->label(false) ?>
                         </div>
                     </div>
                 </div>

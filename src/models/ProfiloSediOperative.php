@@ -28,4 +28,18 @@ class ProfiloSediOperative extends ProfiloSedi
             $this->profilo_sedi_type_id = ProfiloSediTypes::TYPE_OPERATIVE_HEADQUARTER;
         }
     }
+    
+    /**
+     * @inheritdoc
+     */
+    public function rules()
+    {
+        $rules = parent::rules();
+    
+        if (!empty($this->organizzazioniModule->addRequired) && isset($this->organizzazioniModule->addRequired['ProfiloSediOperative'])) {
+            $rules[] = [$this->organizzazioniModule->addRequired['ProfiloSediOperative'], 'required'];
+        }
+        
+        return $rules;
+    }
 }

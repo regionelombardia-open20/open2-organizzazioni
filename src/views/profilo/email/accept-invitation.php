@@ -48,7 +48,7 @@ if (!empty($profile)) {
                 <div style="width:100%;margin-top:30px">
                     <p>
                         <?= $util->userName . " " . Module::t('amosorganizzazioni', "has role:") ?>
-                        <span style="font-weight: 900"><?= $util->role . "." ?></span>
+                        <span style="font-weight: 900"><?= Module::t('amosorganizzazioni', $util->role) . "." ?></span>
                     </p>
                 </div>
             <?php endif; ?>

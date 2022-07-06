@@ -30,10 +30,12 @@ use yii\data\ActiveDataProvider;
 /** @var ProfiloController $appController */
 $appController = Yii::$app->controller;
 
+/** @var Module $organizzazioniModule */
+$organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
+
 /** @var UserProfile $emptyUserProfile */
 $emptyUserProfile = AmosAdmin::instance()->createModel('UserProfile');
 $emptyUser = new User();
-$statusLabel = Module::t('amosorganizzazioni', '#profilo_user_mm_status_label');
 $isUpdate = (isset($isUpdate) ? $isUpdate : false);
 
 ?>
@@ -46,40 +48,63 @@ $isUpdate = (isset($isUpdate) ? $isUpdate : false);
     ]); ?>
 <?php else: ?>
     <?php if (!$isUpdate): ?>
+        <?php
+        $columns = [
+            [
+                'label' => $emptyUserProfile->getAttributeLabel('userProfileImage'),
+                'format' => 'raw',
+                'value' => function ($model) {
+                    /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
+                    return UserCardWidget::widget(['model' => $model->user->userProfile]);
+                }
+            ],
+            'user.userProfile.surnameName',
+            [
+                'attribute' => 'user.email',
+                'label' => $emptyUser->getAttributeLabel('email')
+            ],
+        ];
+        if ($organizzazioniModule->viewStatusEmployees) {
+            $statusLabel = Module::t('amosorganizzazioni', '#profilo_user_mm_status_label');
+            $columns['status'] = [
+                'attribute' => 'status',
+                'label' => $statusLabel,
+                'headerOptions' => [
+                    'id' => $statusLabel,
+                ],
+                'contentOptions' => [
+                    'headers' => $statusLabel,
+                ],
+                'value' => function ($model) {
+                    /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
+                    return Module::t('amosorganizzazioni', $model->status);
+                }
+            ];
+        }
+        if ($organizzazioniModule->viewRoleEmployees) {
+            $roleLabel = Module::t('amosorganizzazioni', '#profilo_user_mm_role_label');
+            $columns['role'] = [
+                'attribute' => 'role',
+                'label' => $roleLabel,
+                'headerOptions' => [
+                    'id' => $roleLabel,
+                ],
+                'contentOptions' => [
+                    'headers' => $roleLabel,
+                ],
+                'value' => function ($model) {
+                    /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
+                    return Module::t('amosorganizzazioni', $model->role);
+                }
+            ];
+        }
+        ?>
         <div class="col-xs-12">
             <?= AmosGridView::widget([
                 'dataProvider' => new ActiveDataProvider([
                     'query' => $appController->getOrganizationEmployeesQuery($model, false)
                 ]),
-                'columns' => [
-                    [
-                        'label' => $emptyUserProfile->getAttributeLabel('userProfileImage'),
-                        'format' => 'raw',
-                        'value' => function ($model) {
-                            /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
-                            return UserCardWidget::widget(['model' => $model->user->userProfile]);
-                        }
-                    ],
-                    'user.userProfile.surnameName',
-                    [
-                        'attribute' => 'user.email',
-                        'label' => $emptyUser->getAttributeLabel('email')
-                    ],
-                    'status' => [
-                        'attribute' => 'status',
-                        'label' => $statusLabel,
-                        'headerOptions' => [
-                            'id' => $statusLabel,
-                        ],
-                        'contentOptions' => [
-                            'headers' => $statusLabel,
-                        ],
-                        'value' => function ($model) {
-                            /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
-                            return Module::t('amosorganizzazioni', $model->status);
-                        }
-                    ],
-                ]
+                'columns' => $columns
             ]); ?>
         </div>
     <?php else: ?>

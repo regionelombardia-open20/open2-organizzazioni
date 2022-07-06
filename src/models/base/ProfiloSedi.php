@@ -14,6 +14,7 @@ namespace open20\amos\organizzazioni\models\base;
 use open20\amos\admin\AmosAdmin;
 use open20\amos\core\record\Record;
 use open20\amos\organizzazioni\Module;
+use yii\helpers\ArrayHelper;
 
 /**
  * Class ProfiloSedi
@@ -101,6 +102,11 @@ abstract class ProfiloSedi extends Record
             } else {
                 $requiredFields[] = 'address';
             }
+        }
+    
+        if (!empty($this->organizzazioniModule->addRequired) && isset($this->organizzazioniModule->addRequired['ProfiloSedi'])) {
+            $requiredFields = ArrayHelper::merge($requiredFields, $this->organizzazioniModule->addRequired['ProfiloSedi']);
+            $requiredFields = array_unique($requiredFields);
         }
 
         return [

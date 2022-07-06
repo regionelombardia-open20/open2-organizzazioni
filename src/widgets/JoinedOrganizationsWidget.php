@@ -11,6 +11,7 @@
 
 namespace open20\amos\organizzazioni\widgets;
 
+use open20\amos\admin\AmosAdmin;
 use open20\amos\core\forms\editors\m2mWidget\M2MWidget;
 use open20\amos\core\helpers\Html;
 use open20\amos\projectmanagement\models\Projects;
@@ -75,7 +76,7 @@ class JoinedOrganizationsWidget extends Widget
             'targetUrlParams' => [
                 'viewM2MWidgetGenericSearch' => true
             ],
-            'createNewTargetUrl' => '/admin/user-profile/create',
+            'createNewTargetUrl' => '/' . AmosAdmin::getModuleName() . '/user-profile/create',
             'moduleClassName' => Module::className(),
             'targetUrlController' => 'projects',
             'deleteActionName' => 'delete-joined-organization-m2m',

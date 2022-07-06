@@ -12,6 +12,7 @@
 namespace open20\amos\organizzazioni\models;
 
 use open20\amos\admin\AmosAdmin;
+use open20\amos\admin\models\UserProfile;
 use open20\amos\attachments\behaviors\FileBehavior;
 use open20\amos\community\models\Community;
 use open20\amos\community\models\CommunityContextInterface;
@@ -20,6 +21,7 @@ use open20\amos\core\exceptions\AmosException;
 use open20\amos\core\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
 use open20\amos\core\interfaces\OrganizationsModelInterface;
+use open20\amos\core\user\AmosUser;
 use open20\amos\core\user\User;
 use open20\amos\core\validators\CfPivaValidator;
 use open20\amos\core\validators\PIVAValidator;
@@ -60,7 +62,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
 {
     const ORGANIZZAZIONI_MANAGER = 'ORGANIZZAZIONI_MANAGER';
     const ORGANIZZAZIONI_PARTICIPANT = 'ORGANIZZAZIONI_PARTICIPANT';
-    
+
     // Workflow ID
     const PROFILO_WORKFLOW = 'ProfiloWorkflow';
 
@@ -68,7 +70,9 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     const PROFILO_WORKFLOW_STATUS_DRAFT = 'ProfiloWorkflow/DRAFT';
     const PROFILO_WORKFLOW_STATUS_TOVALIDATE = 'ProfiloWorkflow/TOVALIDATE';
     const PROFILO_WORKFLOW_STATUS_VALIDATED = 'ProfiloWorkflow/VALIDATED';
-    
+
+    const UNIQUE_SECRET_CODE_LEN = 16;
+
     private $allegati;
 
     /**
@@ -151,7 +155,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
                 'class' => FileBehavior::className()
             ],
         ];
-        
+
         if ($this->organizzazioniModule->enableWorkflow) {
             $behaviors['workflow'] = [
                 'class' => SimpleWorkflowBehavior::className(),
@@ -162,21 +166,8 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
                 'class' => WorkflowLogFunctionsBehavior::className(),
             ];
         }
-        
+
         return ArrayHelper::merge(parent::behaviors(), $behaviors);
-    }
-
-    /**
-     * @return boolean
-     */
-    public function sendNotification()
-    {
-        $organizzazioniModule = Module::instance();
-        if (empty($organizzazioniModule)) {
-            return false;
-        }
-
-        return $organizzazioniModule->sendNotificationOnValidate;
     }
 
     /**
@@ -200,7 +191,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
                 $this->mainLegalHeadquarterAddress = $mainLegalHeadquarter->address;
             }
         }
-        
+
         if ($this->isNewRecord) {
             if ($this->organizzazioniModule->enableWorkflow) {
                 $this->setInitialStatus();
@@ -222,9 +213,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
         $rules = ArrayHelper::merge(parent::rules(),
             [
                 [['partita_iva'], PIVAValidator::className()],
-//                [['partita_iva'], 'string', 'length' => 11],
                 [['codice_fiscale'], CfPivaValidator::className()],
-//                [['codice_fiscale'], 'string', 'length' => 11],
                 [['email'], 'email'],
                 [['pec'], 'email'],
                 [['sede_legale_email'], 'email'],
@@ -247,9 +236,10 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
                 }"],
             ]);
         }
+
         return $rules;
     }
-    
+
     /**
      * This method set the initial workflow status in the model.
      * @throws \raoul2000\workflow\base\WorkflowException
@@ -269,6 +259,17 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
                 OrganizationsPlacesComponents::checkPlace($place_id);
             }
         }
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function beforeSave($insert)
+    {
+        if ($insert) {
+            $this->unique_secret_code = $this->generateUniqueSecretCode();
+        }
+        return parent::beforeSave($insert);
     }
 
     /**
@@ -323,8 +324,8 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     public function attributeLabels()
     {
         return ArrayHelper::merge(parent::attributeLabels(), [
-            'mainOperativeHeadquarterAddress' => Module::t('amosorganizzazioni', 'Address'),
-            'mainLegalHeadquarterAddress' => Module::t('amosorganizzazioni', 'Address'),
+            'mainOperativeHeadquarterAddress' => Module::t('amosorganizzazioni', '#mainOperativeHeadquarterAddress'),
+            'mainLegalHeadquarterAddress' => Module::t('amosorganizzazioni', '#mainLegalHeadquarterAddress'),
         ]);
     }
 
@@ -585,7 +586,9 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
             ];
         }
         $columns[] = 'name';
-        $columns[] = 'formaLegale.name';
+        if ($this->organizzazioniModule->enableFormaLegale === true) {
+            $columns[] = 'formaLegale.name';
+        }
         if ($this->organizzazioniModule->enableProfiloTipologiaStruttura === true) {
             $columns[] = 'tipologiaStruttura.name';
         }
@@ -709,6 +712,53 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
         ];
 
         return $columns;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUserNetworkWidgetActionColumnsTemplate()
+    {
+        return  '';
+    }
+
+    /**
+     * @param UserProfile $model The user profile in update
+     * @param int $widgetUserId
+     * @param AmosUser $loggedUser
+     * @param int $loggedUserId
+     * @return array
+     */
+    public function getUserNetworkWidgetActionColumns($model, $widgetUserId, $loggedUser, $loggedUserId)
+    {
+        return  [
+            'deleteRelation' => function ($url, $model_mm) use ($loggedUser, $loggedUserId, $model, $widgetUserId) {
+                /** @var ProfiloUserMm $model_mm */
+                $url = '/' . Module::getModuleName() . '/profilo/elimina-m2m';
+                $organizationId = $model_mm->profilo_id;
+                $targetId = $widgetUserId;
+                $urlDelete = Yii::$app->urlManager->createUrl([
+                    $url,
+                    'id' => $organizationId,
+                    'targetId' => $targetId,
+                    'redirectAction' => \yii\helpers\Url::current()
+                ]);
+                $btnDelete = '';
+                if (
+                    (($loggedUserId == $widgetUserId) && \Yii::$app->user->can('REMOVE_ORGANIZZAZIONI_FROM_USER', ['model' => $model]) && (($model_mm->profilo->created_by != $loggedUserId) || $loggedUser->can('AMMINISTRATORE_ORGANIZZAZIONI'))) ||
+                    $loggedUser->can('AMMINISTRATORE_ORGANIZZAZIONI')
+                ) {
+                    $btnDelete = Html::a(AmosIcons::show('close', ['class' => 'btn-delete-relation']),
+                        $urlDelete,
+                        [
+                            'title' => Module::t('amosorganizzazioni', '#delete'),
+                            'data-url-confirm' => Module::t('amosorganizzazioni', '#are_you_sure_cancel'),
+                        ]
+                    );
+                }
+                return $btnDelete;
+            }
+        ];
     }
 
     /**
@@ -853,7 +903,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
         }
         return UserNetworkWidget::widget(['userId' => $userId, 'isUpdate' => $isUpdate]);
     }
-    
+
     /**
      * @return string
      */
@@ -1207,9 +1257,36 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
         $headquarterAddress = "-";
         $addressFieldAsArray = $addressArray;
         if (!empty($addressFieldAsArray) && is_array($addressFieldAsArray)) {
-            $headquarterAddress = $addressFieldAsArray['address'] . ', ' . $addressFieldAsArray['street_number'] . '<br />' .
-                $addressFieldAsArray['postal_code'] . ' ' . $addressFieldAsArray['city'] . '<br />' .
-                $addressFieldAsArray['region'];
+            $headquarterAddress = '';
+            if (!empty($addressFieldAsArray['address'])) {
+                $headquarterAddress .= $addressFieldAsArray['address'];
+                if (!empty($addressFieldAsArray['street_number'])) {
+                    $headquarterAddress .= ', ' . $addressFieldAsArray['street_number'];
+                }
+            }
+            if (strlen($headquarterAddress) > 0) {
+                $headquarterAddress .= '<br />';
+            }
+            $postalCode = false;
+            if (!empty($addressFieldAsArray['postal_code'])) {
+                $headquarterAddress .= $addressFieldAsArray['postal_code'];
+                $postalCode = true;
+            }
+            $city = false;
+            if (!empty($addressFieldAsArray['city'])) {
+                $city = true;
+                if ($postalCode) {
+                    $headquarterAddress .= ' ';
+                }
+                $headquarterAddress .= $addressFieldAsArray['city'];
+            }
+            if ($postalCode || $city) {
+                $headquarterAddress .= '<br />';
+            }
+            $headquarterAddress .= $addressFieldAsArray['region'];
+            if (empty($headquarterAddress)) {
+                $headquarterAddress = "-";
+            }
         }
         return $headquarterAddress;
     }
@@ -1384,7 +1461,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
 
         return ($profiloUsersCount > 0);
     }
-	
+
 	 /**
      * @return array
      */
@@ -1400,7 +1477,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
                 $isCommunityManager = true;
             }
         }
-		
+
         // if you are a community manager a validator/facilitator or ADMIN you Can publish directly
         if (\Yii::$app->user->can('ProfiloValidate', ['model' => $this]) || \Yii::$app->user->can('ADMIN') || $isCommunityManager) {
             $statusToRender = ArrayHelper::merge($statusToRender, [self::PROFILO_WORKFLOW_STATUS_VALIDATED => Module::t('amosorganizzazioni', 'Pubblicata')]);
@@ -1410,7 +1487,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
                 self::PROFILO_WORKFLOW_STATUS_TOVALIDATE => Module::t('amosorganizzazioni', 'Richiedi pubblicazione'),
             ]);
             $hideDraftStatus[] = self::PROFILO_WORKFLOW_STATUS_VALIDATED;
-			
+
         }
         return ['statusToRender' => $statusToRender, 'hideDraftStatus' => $hideDraftStatus];
     }
@@ -1422,7 +1499,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     {
         return true;
     }
-    
+
     /**
      * @inheritdoc
      */
@@ -1431,7 +1508,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
         $status = parent::getWorkflowBaseStatusLabel();
         return ((strlen($status) > 0) ? Module::t('amosorganizzazioni', $status) : '-');
     }
-    
+
     /**
      * @inheritdoc
      */
@@ -1439,5 +1516,45 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     {
         $status = parent::getWorkflowStatusLabel();
         return ((strlen($status) > 0) ? Module::t('amosorganizzazioni', $status) : '-');
+    }
+
+    /**
+     * This method returns the organization that match the provided secret code. If nothing match it returns null.
+     * @param string $uniqueSecretCode
+     * @return Profilo|null
+     */
+    public static function findBySecretCode($uniqueSecretCode)
+    {
+        return static::findOne(['unique_secret_code' => $uniqueSecretCode]);
+    }
+
+    /**
+     * This method generates the unique secret code useful i the external user invitation to join an organization when he register.
+     * @return string
+     * @throws \yii\base\Exception
+     */
+    public function generateUniqueSecretCode()
+    {
+        do {
+            $uniqueSecretCode = 'org-' . Yii::$app->security->generateRandomString(self::UNIQUE_SECRET_CODE_LEN);
+            $uniqueSecretCodeExists = static::findBySecretCode($uniqueSecretCode);
+        } while (!is_null($uniqueSecretCodeExists));
+        return $uniqueSecretCode;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getModelModuleName()
+    {
+        return 'organizzazioni';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getModelControllerName()
+    {
+        return 'profilo';
     }
 }

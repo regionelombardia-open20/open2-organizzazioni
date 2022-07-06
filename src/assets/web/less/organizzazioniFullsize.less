@@ -7,6 +7,7 @@ IMPORT AMOS-LAYOUT VARIABLES
 IMPORT STYLE-CUSTOM
  */
 @import (optional) "../../backend/web/less/style_custom.less";
+@import (optional) "../../frontend/web/less/style_custom.less";
 
 @background-color-info-organizzazioni-view: lighten(desaturate(spin(@primary-color, -0.3750), 80.7692), 70.9804);
 
@@ -47,7 +48,7 @@ PROFILO VIEW
 
   .info-view-header {
     background-color: @background-color-info-organizzazioni-view;
-    padding: 0 @padding-default 0 0;
+    padding: 0;
     margin-bottom: @margin-default;
     > div:not(.father-organization-container) {
       min-height: 250px;
@@ -56,9 +57,10 @@ PROFILO VIEW
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
+      margin-top: 20px;
     }
     .img-responsive { /* bootstrap override */
-      max-width: 80%;
+      //max-width: 80%;
       margin: 0 auto;
     }
     .subsection-info-view-header {
@@ -81,6 +83,15 @@ PROFILO VIEW
         font-weight: bold;
         text-align: right;
         padding-right: @padding-medium;
+        white-space: normal;
+        @media (max-width: 767px) {
+          text-align: center;
+        }
+      }
+      .info-value{
+        @media (max-width: 767px) {
+          text-align: center;
+        }
       }
     }
     .manage { /* override */
@@ -95,11 +106,13 @@ PROFILO VIEW
   }
 
   .info-view-body {
+    margin: 20px 0;
     > div {
       margin-bottom: @margin-default;
     }
     .info-label {
       font-weight: bold;
+      white-space: nowrap;
       &.description-label {
         margin: @margin-min auto; /* for description tag p */
       }
@@ -226,65 +239,173 @@ ORGANIZATION CARD VIEW
 @organization-card-background-header: linear-gradient(lighten(@secondary-color, 20%), lighten(@secondary-color, 70%));
 @organization-card-background-footer: @primary-color;
 
-.card-container.organization-card-container {
-  .icon-header {
-    max-height: 200px;
-    overflow: hidden;
-    background: @organization-card-background-header;
-    text-align: center;
-    .dash {
-      font-size: 8em;
-      display: inline-block;
-      margin-top: @margin-min;
-      background: linear-gradient(@secondary-color, @white-color);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    .manage {
-      background-color: @white-color;
-      margin-top: 1px;
-      .manage-menu {
-        color: @secondary-color;
-        &:hover {
-          border-radius: 0;
-          color: @white-color;
-        }
-      }
-    }
+.organizzazioni-wrapper {
+  /*@media (max-width: 767px) {
+      margin: 20px 0;
+  }*/
+  width: 100%;
+  @media (max-width: 575px) {   
+      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+      padding-bottom: 20px;
   }
-  .icon-body {
-    padding: 0 @padding-medium;
-    h3 { /* override */
-      -webkit-box-orient: initial;
-    }
-    .title a {
-      color: @secondary-color;
-      text-transform: uppercase;
-    }
-  }
-  .icon-footer {
-    background-color: @organization-card-background-footer;
-    position: absolute;
-    bottom: 0;
-    min-height: 32px;
-    .amos-tooltip {
-      position: absolute;
-      top: 5px;
-      left: 5px;
-      color: contrast(@organization-card-background-footer);
-    }
-    .icon-footer-link {
-      color: contrast(@organization-card-background-footer);
-      float: right;
-      text-transform: uppercase;
-      font-size: 1.2em;
-      vertical-align: middle;
-      position: relative;
-      top: 5px;
-      .am {
-        margin: 0 @margin-min;
+  .organizzazioni-container {
+      @media (max-width: 767px) {
+          flex-direction: column;
       }
-    }
+      .organizzazioni-containter-img {
+          flex-grow: 1;
+          padding: 0 @padding-medium;
+      }
+      .manage {
+          .dropdown-menu {
+              top: 30px;
+          }
+          &+.new-badge.badge {
+              right: 50px;
+          }
+          .manage-menu{
+              position: absolute;
+              top: 5px;
+              right: 5px;
+              //background-color: @white-color;
+              z-index:1;
+              width: auto;
+              border-radius: 4px;
+              //border: 1px solid @black-color;
+              padding: 3px 8px;
+              margin-right: 0;
+              font-size: 20px;
+              .am-chevron-down{
+                  display: none;
+              }
+              span.pull-left{
+                  margin: 0;
+                  color: inherit;
+              }
+              /*&:hover{
+                  background-color: @main-background-color;
+                  color: @white-color;
+                  opacity: 1;
+              }*/
+          }
+      }
+  }
+  .row {
+      display: flex;
+      flex-wrap: wrap;
+      margin-right: -6px;
+      margin-left: -6px;
+  }
+  .h-100 {
+      height: 100%;
+  }
+  .flex-sm-nowrap {
+      @media (min-width: 768px) {
+          flex-wrap: nowrap !important;
+      }
+  }
+  .img-link-organizzazioni {
+      display: block; 
+      img {
+          object-fit: cover;
+          width: 100%;
+          height: 100%;
+      }
+      .icona-organizzazioni {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 4em;
+          background: #bbbaba;
+          color: #595959;
+          padding: 10px;
+      }
+  }
+
+  .info-organizzazioni {
+      margin-left: 0;
+      margin-top: @margin-medium;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 0 10px;
+      @media (min-width: 768px) {
+          margin-top: 0;
+      }
+      .title-one-line {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          font-size: 22px;
+          /*@media (min-width: 1200px) {
+              -webkit-line-clamp: 1;
+          }*/
+          h5 {
+              //margin: 0;
+              word-break: break-word;
+              hyphens: auto;
+          }
+      }
+      .link-list-title {
+          text-decoration: none;
+          color: @text-main-color !important;
+          /*@media (min-width: 768px) and (max-width: 1199px) {
+              margin-bottom: @margin-medium;
+          }*/
+          @media (min-width: 768px) {
+              margin-bottom: @margin-medium;
+          }
+          @media (min-width: 1200px) {
+              margin-bottom: @margin-min;
+          }
+          &:hover {
+              text-decoration: underline;
+          }
+      }
+      .cta-organizzazioni {
+          padding-top: @padding-min;
+          padding-bottom: @padding-min;
+          margin-top: auto;
+          @media (max-width: 767px) {
+              margin-top: @margin-medium;
+          }
+          &.btn {
+              display: inline-block;
+              font-weight: 600;
+              text-align: center;
+              vertical-align: middle;
+              user-select: none;
+              transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+          }
+          &.btn-xs {
+              padding: 5px 8px;
+              font-size: 14px;
+              line-height: 1.45;
+              border-radius: 4px;
+          }
+          &.btn-primary {
+              color: contrast(@primary-color);
+              background-color: @primary-color;
+              border-color: @primary-color;
+          }
+      }
+  }
+}
+
+//Parte view
+.organizzazioni-view{
+  .info-view-header {
+      .img-organizzazione {
+          margin-top: @margin-default;
+          margin-bottom: @margin-default;
+      }
+      .subsection-info-view-header {
+          background-color: @brand-primary-color;
+          color: contrast(@brand-primary-color);
+      }
   }
 }
 

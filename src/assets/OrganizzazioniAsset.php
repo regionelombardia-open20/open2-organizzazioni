@@ -19,15 +19,12 @@ class OrganizzazioniAsset extends AssetBundle
 {
     public $sourcePath = '@vendor/open20/amos-organizzazioni/src/assets/web';
 
-    public $js = [
-    ];
+    public $js = [];
     public $css = [
         'less/organizzazioni.less',
     ];
 
     public $depends = [
-        'yii\web\JqueryAsset',
-        'yii\jui\JuiAsset'
     ];
 
     /**
@@ -35,10 +32,16 @@ class OrganizzazioniAsset extends AssetBundle
      */
     public function init()
     {
-        if(!empty(\Yii::$app->params['dashboardEngine']) && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS){
+        $moduleL = \Yii::$app->getModule('layout');
+
+        if (!empty(\Yii::$app->params['dashboardEngine']) && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
             $this->css = ['less/organizzazioniFullsize.less'];
         }
+
+        if (!empty($moduleL)) {
+            $this->depends[] = 'open20\amos\layout\assets\BaseAsset';
+        }
+        
         parent::init();
     }
-
 }

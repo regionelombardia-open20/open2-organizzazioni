@@ -40,7 +40,7 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
     <?= Html::hiddenInput("enableSearch", $enableAutoOpenSearchPanel); ?>
     <?= Html::hiddenInput("currentView", Yii::$app->request->getQueryParam('currentView')); ?>
 
-    <div class="col-xs-12">
+    <div class="col-xs-12 m-t-20 m-b-10">
         <h2 class="title">
             <?= Module::tHtml('amosorganizzazioni', 'Search by'); ?>:
         </h2>
@@ -59,7 +59,7 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
     </div>
 
     <?php if (isset($moduleTag) && in_array(Module::instance()->model('Profilo'), $moduleTag->modelsEnabled) && $moduleTag->behaviors): ?>
-        <div class="col-xs-12">
+        <div class="col-xs-12 m-t-10 m-b-20">
             <?php
             $params = \Yii::$app->request->getQueryParams();
             echo TagWidget::widget([
@@ -73,7 +73,7 @@ $enableAutoOpenSearchPanel = !isset(\Yii::$app->params['enableAutoOpenSearchPane
         </div>
     <?php endif; ?>
 
-    <div class="col-xs-12">
+    <div class="col-xs-12 m-b-20">
         <div class="pull-right">
             <?= Html::resetButton(Module::tHtml('amosorganizzazioni', 'Reset'), ['class' => 'btn btn-secondary']) ?>
             <?= Html::submitButton(Module::tHtml('amosorganizzazioni', 'Search'), ['class' => 'btn btn-navigation-primary']) ?>

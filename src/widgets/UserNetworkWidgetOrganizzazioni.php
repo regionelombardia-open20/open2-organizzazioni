@@ -18,8 +18,7 @@ use open20\amos\admin\models\UserProfileRole;
 use open20\amos\core\forms\editors\m2mWidget\M2MWidget;
 use open20\amos\core\forms\editors\Select;
 use open20\amos\core\helpers\Html;
-use open20\amos\core\icons\AmosIcons;
-use open20\amos\core\user\User;
+use open20\amos\core\user\AmosUser;
 use open20\amos\core\utilities\JsUtility;
 use open20\amos\organizzazioni\models\Profilo;
 use open20\amos\organizzazioni\models\ProfiloUserMm;
@@ -108,6 +107,7 @@ class UserNetworkWidgetOrganizzazioni extends Widget
         $userProfileModel = AmosAdmin::instance()->createModel('UserProfile');
         /** @var UserProfile $model */
         $model = $userProfileModel::findOne(['user_id' => $this->userId]);
+        /** @var AmosUser $loggedUser */
         $loggedUser = Yii::$app->getUser();
         $loggedUserId = $loggedUser->id;
         $this->isUpdate = $this->isUpdate && (($loggedUserId == $model->user_id) || Yii::$app->user->can('AMMINISTRATORE_ORGANIZZAZIONI'));
@@ -116,35 +116,8 @@ class UserNetworkWidgetOrganizzazioni extends Widget
         $profilo = $this->organizationsModule->createModel('Profilo');
         $itemsMittente = $profilo->getUserNetworkWidgetColumns();
 
-        $actionColumnsButtons = [
-            'deleteRelation' => function ($url, $model) use ($loggedUser, $loggedUserId) {
-                /** @var ProfiloUserMm $model */
-                $url = '/' . Module::getModuleName() . '/profilo/elimina-m2m';
-                $organizationId = $model->profilo_id;
-                $targetId = $this->userId;
-                $urlDelete = Yii::$app->urlManager->createUrl([
-                    $url,
-                    'id' => $organizationId,
-                    'targetId' => $targetId
-                ]);
-                $btnDelete = '';
-                if (
-                    (($loggedUserId == $this->userId) && (($model->profilo->created_by != $loggedUserId) || $loggedUser->can('AMMINISTRATORE_ORGANIZZAZIONI'))) ||
-                    $loggedUser->can('AMMINISTRATORE_ORGANIZZAZIONI')
-                ) {
-                    $btnDelete = Html::a(AmosIcons::show('close', ['class' => 'btn-delete-relation']),
-                        $urlDelete,
-                        [
-                            'title' => Module::t('amosorganizzazioni', '#delete'),
-                            'data-confirm' => Module::t('amosorganizzazioni', '#are_you_sure_cancel'),
-                        ]
-                    );
-                }
-                return $btnDelete;
-            }
-        ];
-
-        $defaultActionColumnsTemplate = '';
+        $actionColumnsButtons = $profilo->getUserNetworkWidgetActionColumns($model, $this->userId, $loggedUser, $loggedUserId);
+        $defaultActionColumnsTemplate = $profilo->getUserNetworkWidgetActionColumnsTemplate();
 
         if ($this->adminModule->roleAndAreaOnOrganizations) {
             $defaultActionColumnsTemplate .= '{relationAttributeManage}';
@@ -287,7 +260,7 @@ class UserNetworkWidgetOrganizzazioni extends Widget
                 'viewM2MWidgetGenericSearch' => true
             ],
             'gridId' => $gridId,
-            'firstGridSearch' => true,
+            'firstGridSearch' => $this->organizationsModule->userNetworkWidgetSearchOrganization,
             'itemsSenderPageSize' => 10,
             'pageParam' => 'page-organizations',
             'disableCreateButton' => true,
@@ -296,7 +269,7 @@ class UserNetworkWidgetOrganizzazioni extends Widget
             'actionColumnsTemplate' => $this->isUpdate ? $defaultActionColumnsTemplate : '',
             'deleteRelationTargetIdField' => 'user_id',
             'targetUrl' => '/' . Module::getModuleName() . '/profilo/associate-organization-m2m',
-            'createNewTargetUrl' => '/admin/user-profile/create',
+            'createNewTargetUrl' => '/' . AmosAdmin::getModuleName() . '/user-profile/create',
             'moduleClassName' => Module::className(),
             'targetUrlController' => 'organizzazioni',
             'postName' => 'User',
@@ -310,7 +283,7 @@ class UserNetworkWidgetOrganizzazioni extends Widget
         ]);
 
         return "<div id='" . $gridId . "' data-pjax-container='" . $gridId . "-pjax' data-pjax-timeout=\"1000\">"
-            . "<h3>" . Module::tHtml('amosorganizzazioni', '#organization') . "</h3>"
+            . "<h3>" . Module::tHtml('amosorganizzazioni', '#user_network_widget_organization') . "</h3>"
             . $widget . "</div>";
     }
 

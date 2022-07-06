@@ -15,7 +15,6 @@ use open20\amos\admin\AmosAdmin;
 use open20\amos\admin\models\UserProfile;
 use open20\amos\admin\utility\UserProfileUtility;
 use open20\amos\community\AmosCommunity;
-use open20\amos\community\models\Community;
 use open20\amos\community\models\CommunityUserMm;
 use open20\amos\core\helpers\Html;
 use open20\amos\core\record\NetworkModel;
@@ -30,6 +29,7 @@ use yii\helpers\ArrayHelper;
  * @property integer $id
  * @property string $status
  * @property string $name
+ * @property string $unique_secret_code
  * @property string $partita_iva
  * @property string $codice_fiscale
  * @property string $istat_code
@@ -59,6 +59,7 @@ use yii\helpers\ArrayHelper;
  * @property string $rappresentante_legale_text
  * @property string $referente_operativo
  * @property string $contatto_referente_operativo
+ * @property string $imported_at
  * @property string $parent_id
  * @property string $profilo_enti_type_id
  * @property integer $tipologia_struttura_id
@@ -85,6 +86,8 @@ use yii\helpers\ArrayHelper;
  * @property \open20\amos\organizzazioni\models\ProfiloUserMm[] $employeesMms
  * @property \open20\amos\core\user\User[] $employees
  * @property \open20\amos\organizzazioni\models\ProfiloTipoStruttura $tipologiaStruttura
+ * @property \open20\amos\organizzazioni\models\ProfiloGroupsMm[] $profiloGroupsMms
+ * @property \open20\amos\organizzazioni\models\ProfiloGroups[] $profiloGroups
  *
  * @package open20\amos\organizzazioni\models\base
  */
@@ -121,12 +124,19 @@ abstract class Profilo extends NetworkModel
         $profiloEntiTypeModel = $this->organizzazioniModule->model('ProfiloEntiType');
         $typeMunicipalityId = $profiloEntiTypeModel::TYPE_MUNICIPALITY;
         $disableFieldChecks = isset($organizzazioniModule->disableFieldChecks) ? $this->organizzazioniModule->disableFieldChecks : false;
+    
+        $requiredFields = [
+            'name',
+        ];
+        
+        if (!empty($this->organizzazioniModule->addRequired) && isset($this->organizzazioniModule->addRequired['Profilo'])) {
+            $requiredFields = ArrayHelper::merge($requiredFields, $this->organizzazioniModule->addRequired['Profilo']);
+            $requiredFields = array_unique($requiredFields);
+        }
 
         $rules = [
-            [[
-                'name',
-            ], 'required'],
-            [['created_at', 'updated_at', 'deleted_at', 'rappresentante_legale'], 'safe'],
+            [$requiredFields, 'required'],
+            [['imported_at', 'created_at', 'updated_at', 'deleted_at', 'rappresentante_legale'], 'safe'],
             [[
                 'created_by',
                 'updated_by',
@@ -168,6 +178,7 @@ abstract class Profilo extends NetworkModel
                 'status'
             ], 'string', 'max' => 255],
             [['istat_code'], 'string', 'max' => 10],
+            [['unique_secret_code'], 'string', 'max' => 50],
             [['logoOrganization'], 'file', 'extensions' => 'jpeg, jpg, png, gif', 'maxFiles' => 1],
             [['allegati'], 'file', 'maxFiles' => 0]
         ];
@@ -202,6 +213,7 @@ abstract class Profilo extends NetworkModel
             'id' => Module::t('amosorganizzazioni', 'ID'),
             'status' => AmosCommunity::t('amosorganizzazioni', 'Status'),
             'name' => Module::t('amosorganizzazioni', 'Denominazione'),
+            'unique_secret_code' => Module::t('amosorganizzazioni', '#unique_secret_code'),
             'partita_iva' => Module::t('amosorganizzazioni', 'Partita Iva'),
             'codice_fiscale' => Module::t('amosorganizzazioni', 'Codice Fiscale'),
             'istat_code' => Module::t('amosorganizzazioni', 'Istat Code'),
@@ -220,11 +232,11 @@ abstract class Profilo extends NetworkModel
             'email' => Module::t('amosorganizzazioni', 'Email'),
             'pec' => Module::t('amosorganizzazioni', 'PEC'),
             'la_sede_legale_e_la_stessa_del' => Module::t('amosorganizzazioni', 'La sede legale è la stessa della sede operativa'),
-            'sede_legale_indirizzo' => Module::t('amosorganizzazioni', 'Sede legale indirizzo'),
-            'sede_legale_telefono' => Module::t('amosorganizzazioni', 'Sede legale telefono'),
-            'sede_legale_fax' => Module::t('amosorganizzazioni', 'Sede legale fax'),
-            'sede_legale_email' => Module::t('amosorganizzazioni', 'Sede legale email'),
-            'sede_legale_pec' => Module::t('amosorganizzazioni', 'Sede legale PEC'),
+            'sede_legale_indirizzo' => Module::t('amosorganizzazioni', '#sede_legale_indirizzo'),
+            'sede_legale_telefono' => Module::t('amosorganizzazioni', '#sede_legale_telefono'),
+            'sede_legale_fax' => Module::t('amosorganizzazioni', '#sede_legale_fax'),
+            'sede_legale_email' => Module::t('amosorganizzazioni', '#sede_legale_email'),
+            'sede_legale_pec' => Module::t('amosorganizzazioni', '#sede_legale_pec'),
             'responsabile' => Module::t('amosorganizzazioni', 'Responsabile'),
             'rappresentante_legale' => Module::t('amosorganizzazioni', 'Rappresentante legale'),
             'rappresentante_legale_text' => Module::t('amosorganizzazioni', 'Rappresentante legale'),
@@ -257,6 +269,44 @@ abstract class Profilo extends NetworkModel
     public function getReferenteOperativo()
     {
         return $this->hasOne(AmosAdmin::instance()->model('UserProfile'), ['user_id' => 'referente_operativo']);
+    }
+
+    /**
+     * This method returns the organization referees user profiles.
+     * @return array
+     */
+    public function getReferees()
+    {
+        $referees = [];
+        if ($this->rappresentante_legale) {
+            $rapprLeg = $this->rappresentanteLegale;
+            if (!is_null($rapprLeg)) {
+                $referees[] = $rapprLeg;
+            }
+        }
+        if ($this->referente_operativo) {
+            $refOp = $this->referenteOperativo;
+            if (!is_null($refOp)) {
+                $referees[] = $refOp;
+            }
+        }
+        return $referees;
+    }
+
+    /**
+     * This method returns the organization referees user ids.
+     * @return array
+     */
+    public function getRefereesUserIds()
+    {
+        $referees = [];
+        if ($this->rappresentante_legale) {
+            $referees[] = $this->rappresentante_legale;
+        }
+        if ($this->referente_operativo) {
+            $referees[] = $this->referente_operativo;
+        }
+        return $referees;
     }
 
     /**
@@ -421,5 +471,21 @@ abstract class Profilo extends NetworkModel
     public function getTipologiaStruttura()
     {
         return $this->hasOne($this->organizzazioniModule->model('ProfiloTipoStruttura'), ['id' => 'tipologia_struttura_id']);
+    }
+    
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProfiloGroupsMms()
+    {
+        return $this->hasMany($this->organizzazioniModule->model('ProfiloGroupsMm'), ['profilo_id' => 'id']);
+    }
+    
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getProfiloGroups()
+    {
+        return $this->hasMany($this->organizzazioniModule->model('ProfiloGroups'), ['id' => 'profilo_group_id'])->via('profiloGroupsMms');
     }
 }

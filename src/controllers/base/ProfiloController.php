@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Aria S.p.A.
  * OPEN 2.0
@@ -18,6 +17,7 @@ use open20\amos\core\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
 use open20\amos\core\record\Record;
 use open20\amos\dashboard\controllers\TabDashboardControllerTrait;
+use open20\amos\organizzazioni\i18n\grammar\ProfiloGrammar;
 use open20\amos\organizzazioni\models\Profilo;
 use open20\amos\organizzazioni\models\ProfiloSedi;
 use open20\amos\organizzazioni\models\ProfiloSediLegal;
@@ -61,6 +61,8 @@ class ProfiloController extends CrudController
      */
     use TabDashboardControllerTrait;
     
+    public $specialFields = ['tags', 'indirizzo'];
+    
     /**
      * @inheritdoc
      */
@@ -83,13 +85,13 @@ class ProfiloController extends CrudController
         
         $this->viewGrid = [
             'name' => 'grid',
-            'label' => AmosIcons::show('view-list-alt') . Html::tag('p', Module::t('amoscore', 'Table')),
+            'label' => AmosIcons::show('view-list-alt') . Html::tag('p', Module::t('amoscore', '#view_type_table')),
             'url' => '?currentView=grid'
         ];
         
         $this->viewIcon = [
             'name' => 'icon',
-            'label' => AmosIcons::show('grid') . Html::tag('p', Module::tHtml('amoscore', 'Icon')),
+            'label' => AmosIcons::show('grid') . Html::tag('p', Module::tHtml('amoscore', '#view_type_icon')),
             'url' => '?currentView=icon'
         ];
         
@@ -107,6 +109,75 @@ class ProfiloController extends CrudController
         $this->setAvailableViews($availableViews);
         
         parent::init();
+    }
+    
+    /**
+     * @inheritdoc
+     */
+    public function beforeAction($action)
+    {
+        // TODO da pensare come rimuovere tutta sta roba facendo una classe o interfaccia fatta bene contanto di adeguamento delle viste nei layout.
+        
+        /** @var ProfiloGrammar $grammar */
+        $grammar = $this->model->getGrammar();
+        
+        if (\Yii::$app->user->isGuest) {
+            $titleSection = ucfirst($grammar->getModelLabel());
+            $urlLinkAll = '';
+            $url = isset(\Yii::$app->params['linkConfigurations']['loginLinkCommon']) ?
+                \Yii::$app->params['linkConfigurations']['loginLinkCommon'] :
+                \Yii::$app->params['platform']['backendUrl'] . '/' . AmosAdmin::getModuleName() . '/security/login';
+            $ctaLoginRegister = Html::a(
+                Module::t('amosorganizzazioni', '#beforeActionCtaLoginRegister'), $url,
+                [
+                    'title' => Module::t('amosorganizzazioni', '#click_to_access_or_register',
+                        ['platformName' => \Yii::$app->name])
+                ]
+            );
+            $subTitleSection = Html::tag('p',
+                Module::t('amosorganizzazioni', '#beforeActionSubtitleSectionGuest',
+                    [
+                        'ctaLoginRegister' => $ctaLoginRegister
+                    ])
+            );
+        } else {
+            $titleSection = ucfirst($grammar->getModelLabel());
+            $labelLinkAll = Module::t('amosorganizzazioni', '#all_organizations');
+            $urlLinkAll = '/organizzazioni/profilo/index';
+            $titleLinkAll = Module::t('amosorganizzazioni', '#view_organizations_list');
+            $subTitleSection = Html::tag('p', Module::t('amosorganizzazioni', '#beforeActionSubtitleSectionLogged'));
+        }
+        
+        $labelCreate = Module::t('amosorganizzazioni', '#createLabel');
+        $titleCreate = Module::t('amosorganizzazioni', '#createTitle');
+        $labelManage = Module::t('amosorganizzazioni', '#manage');
+
+        $titleManage = Module::t('amosorganizzazioni', '#manage').' '.$grammar->getArticlePlural().' '.strtolower($grammar->getModelLabel());
+        $urlCreate   = '/'.$this->model->getCreateUrl();
+        $urlManage   = null;
+
+        $viewParams = [
+            'isGuest' => \Yii::$app->user->isGuest,
+            'modelLabel' => 'organizzazioni',
+            'titleSection' => $titleSection,
+            'subTitleSection' => $subTitleSection,
+            'labelCreate' => $labelCreate,
+            'titleCreate' => $titleCreate,
+            'labelManage' => $labelManage,
+            'titleManage' => $titleManage,
+            'urlCreate' => $urlCreate,
+//            'hideCreate' => $hideCreateNewButton,
+            'urlManage' => $urlManage,
+        ];
+        if (Yii::$app->controller->action->id == 'profilo-to-publish') {
+            $viewParams['urlLinkAll'] = $urlLinkAll;
+            $viewParams['labelLinkAll'] = $labelLinkAll;
+            $viewParams['titleLinkAll'] = $titleLinkAll;
+        }
+
+        $this->view->params = $viewParams;
+        
+        return parent::beforeAction($action);
     }
     
     /**
@@ -143,7 +214,47 @@ class ProfiloController extends CrudController
         }
         $this->view->params['currentDashboard'] = $this->getCurrentDashboard();
         $this->child_of = WidgetIconProfilo::className();
+        
+        if ($this->organizzazioniModule->importManager->isImporterEnabled() && \Yii::$app->user->can('IMPORT_ORGANIZATIONS')) {
+            
+            $this->organizzazioniModule->importManager->importOrganizationsFromExcel();
+            
+            $btnTitle = Module::t('amosorganizzazioni', '#import_organizations');
+            $import = Html::button($btnTitle, [
+                'class' => 'btn btn-outline-secondary',
+                'data-toggle' => 'modal',
+                'data-target' => '#modalImport',
+                'title' => $btnTitle
+            ]);
+            $additionalButtons[] = $import;
+            
+            Yii::$app->view->params['additionalButtons'] = [
+                'htmlButtons' => $additionalButtons
+            ];
+        }
+        
         return parent::actionIndex();
+    }
+    
+    /**
+     * @return \yii\console\Response|\yii\web\Response
+     * @throws \PHPExcel_Exception
+     * @throws \PHPExcel_Writer_Exception
+     * @throws \yii\base\Exception
+     */
+    public function actionDownloadImportTemplate()
+    {
+        if (!$this->organizzazioniModule->importManager->isImporterEnabled()) {
+            Yii::$app->getSession()->addFlash('danger', Module::t('amosorganizzazioni', '#importer_disabled'));
+            $urlPrevious = Url::previous();
+            $redirectUrl = (!is_null($urlPrevious) ? $urlPrevious : ['index']);
+            return $this->redirect($redirectUrl);
+        }
+        
+        $this->organizzazioniModule->importManager->createImportTemplate();
+        $path = $this->organizzazioniModule->importManager->getImportTemplatePath();
+        
+        return \Yii::$app->response->sendFile($path);
     }
     
     /**
@@ -188,7 +299,7 @@ class ProfiloController extends CrudController
         // Load and validate all form models
         $post = Yii::$app->request->post();
         $modelLoadValidate = $this->model->load($post) && $this->model->validate();
-		
+        
         if ($post && !$this->organizzazioniModule->oldStyleAddressEnabled) {
             // Copy Profilo model address values into respective operative and legal headquarter address fields.
             $mainOperativeHeadquarter->address = $this->model->mainOperativeHeadquarterAddress;
@@ -242,18 +353,24 @@ class ProfiloController extends CrudController
                 if ($ok) {
                     
                     // Save operative headquarter
-                    $okMainSedeOperativa = $this->saveMainSede($mainOperativeHeadquarter, Module::t('amosorganizzazioni', 'Error while saving operative headquarter'));
+                    $okMainSedeOperativa = $this->saveMainSede($mainOperativeHeadquarter,
+                        Module::t('amosorganizzazioni', 'Error while saving operative headquarter'));
                     
                     // Save legal headquarter
-                    $okMainSedeLegale = $this->saveMainSede($mainLegalHeadquarter, Module::t('amosorganizzazioni', 'Error while saving legal headquarter'));
+                    $okMainSedeLegale = $this->saveMainSede($mainLegalHeadquarter,
+                        Module::t('amosorganizzazioni', 'Error while saving legal headquarter'));
                     
                     // Rappresentante Legale / Referente Operativo presente?
-                    $this->addOrganizationToLegalOrOperative($this->model->rappresentante_legale, $this->model->id);
-                    $this->addOrganizationToLegalOrOperative($this->model->referente_operativo, $this->model->id);
+                    $okLegalRepresentative = $this->addOrganizationToLegalOrOperative($this->model->rappresentante_legale,
+                        $this->model->id);
+                    $okOperativeReferent = $this->addOrganizationToLegalOrOperative($this->model->referente_operativo,
+                        $this->model->id);
                     
                     if (
                         $okMainSedeOperativa &&
-                        $okMainSedeLegale
+                        $okMainSedeLegale &&
+                        $okLegalRepresentative &&
+                        $okOperativeReferent
                     ) {
                         $transaction->commit();
                         $this->afterSaveOperations();
@@ -272,16 +389,17 @@ class ProfiloController extends CrudController
             }
         }
         
-        return $this->render('create', [
-            'model' => $this->model,
-            'mainLegalHeadquarter' => $mainLegalHeadquarter,
-            'mainOperativeHeadquarter' => $mainOperativeHeadquarter,
-            'fid' => null,
-            'dataField' => null,
-            'dataEntity' => null,
-            'moduleCwh' => $this->moduleCwh,
-            'scope' => $this->scope
-        ]);
+        return $this->render('create',
+            [
+                'model' => $this->model,
+                'mainLegalHeadquarter' => $mainLegalHeadquarter,
+                'mainOperativeHeadquarter' => $mainOperativeHeadquarter,
+                'fid' => null,
+                'dataField' => null,
+                'dataEntity' => null,
+                'moduleCwh' => $this->moduleCwh,
+                'scope' => $this->scope
+            ]);
     }
     
     /**
@@ -305,13 +423,14 @@ class ProfiloController extends CrudController
             }
         }
         
-        return $this->renderAjax('_formAjax', [
-            'model' => $this->model,
-            'fid' => $fid,
-            'dataField' => $dataField,
-            'moduleCwh' => $this->moduleCwh,
-            'scope' => $this->scope
-        ]);
+        return $this->renderAjax('_formAjax',
+            [
+                'model' => $this->model,
+                'fid' => $fid,
+                'dataField' => $dataField,
+                'moduleCwh' => $this->moduleCwh,
+                'scope' => $this->scope
+            ]);
     }
     
     /**
@@ -365,7 +484,8 @@ class ProfiloController extends CrudController
         $mainOperativeHeadquarterLoadValidate = $mainOperativeHeadquarter->load($post) && $mainOperativeHeadquarter->validate();
         if ($this->model->la_sede_legale_e_la_stessa_del) {
             $skipColumns = ['profilo_sedi_type_id', 'profilo_id', 'id'];
-            $mainLegalHeadquarter = OrganizzazioniUtility::copyOperativeToLegalHeadquarterValues($mainOperativeHeadquarter, $mainLegalHeadquarter, $skipColumns);
+            $mainLegalHeadquarter = OrganizzazioniUtility::copyOperativeToLegalHeadquarterValues($mainOperativeHeadquarter,
+                $mainLegalHeadquarter, $skipColumns);
             $mainLegalHeadquarterLoadValidate = $mainLegalHeadquarter->validate();
         } else {
             $mainLegalHeadquarterLoadValidate = $mainLegalHeadquarter->load($post) && $mainLegalHeadquarter->validate();
@@ -383,23 +503,30 @@ class ProfiloController extends CrudController
                 if ($ok) {
                     
                     // Save operative headquarter
-                    $okMainSedeOperativa = $this->saveMainSede($mainOperativeHeadquarter, Module::t('amosorganizzazioni', 'Error while saving operative headquarter'));
+                    $okMainSedeOperativa = $this->saveMainSede($mainOperativeHeadquarter,
+                        Module::t('amosorganizzazioni', 'Error while saving operative headquarter'));
                     
                     // Save legal headquarter
-                    $okMainSedeLegale = $this->saveMainSede($mainLegalHeadquarter, Module::t('amosorganizzazioni', 'Error while saving legal headquarter'));
+                    $okMainSedeLegale = $this->saveMainSede($mainLegalHeadquarter,
+                        Module::t('amosorganizzazioni', 'Error while saving legal headquarter'));
                     
                     // Rappresentante Legale / Referente Operativo presente?
-                    $this->addOrganizationToLegalOrOperative($this->model->rappresentante_legale, $this->model->id);
-                    $this->addOrganizationToLegalOrOperative($this->model->referente_operativo, $this->model->id);
+                    $okLegalRepresentative = $this->addOrganizationToLegalOrOperative($this->model->rappresentante_legale,
+                        $this->model->id);
+                    $okOperativeReferent = $this->addOrganizationToLegalOrOperative($this->model->referente_operativo,
+                        $this->model->id);
                     
                     // There is a community?
                     if (($this->model->community_id) && (!empty($this->organizzazioniModule->communityModule))) {
-                        OrganizzazioniUtility::updateCommunity($this->model, $this->organizzazioniModule->communityModule);
+                        OrganizzazioniUtility::updateCommunity($this->model,
+                            $this->organizzazioniModule->communityModule);
                     }
                     
                     if (
                         $okMainSedeOperativa &&
-                        $okMainSedeLegale
+                        $okMainSedeLegale &&
+                        $okLegalRepresentative &&
+                        $okOperativeReferent
                     ) {
                         $transaction->commit();
                         $this->afterSaveOperations();
@@ -418,16 +545,17 @@ class ProfiloController extends CrudController
             }
         }
         
-        return $this->render('update', [
-            'model' => $this->model,
-            'mainLegalHeadquarter' => $mainLegalHeadquarter,
-            'mainOperativeHeadquarter' => $mainOperativeHeadquarter,
-            'fid' => null,
-            'dataField' => null,
-            'dataEntity' => null,
-            'moduleCwh' => $this->moduleCwh,
-            'scope' => $this->scope
-        ]);
+        return $this->render('update',
+            [
+                'model' => $this->model,
+                'mainLegalHeadquarter' => $mainLegalHeadquarter,
+                'mainOperativeHeadquarter' => $mainOperativeHeadquarter,
+                'fid' => null,
+                'dataField' => null,
+                'dataEntity' => null,
+                'moduleCwh' => $this->moduleCwh,
+                'scope' => $this->scope
+            ]);
     }
     
     /**
@@ -471,7 +599,8 @@ class ProfiloController extends CrudController
                 $headquarter->delete();
                 if ($headquarter->hasErrors()) {
                     $headquartersDeleteOk = false;
-                    Yii::$app->getSession()->addFlash('danger', Module::t('amoscore', 'Error while deleting organization headquarter.'));
+                    Yii::$app->getSession()->addFlash('danger',
+                        Module::t('amoscore', 'Error while deleting organization headquarter.'));
                     $transaction->rollBack();
                     break;
                 }
@@ -482,7 +611,8 @@ class ProfiloController extends CrudController
                     $transaction->commit();
                     Yii::$app->getSession()->addFlash('success', Module::t('amoscore', 'Item deleted'));
                 } else {
-                    Yii::$app->getSession()->addFlash('danger', Module::t('amoscore', 'You are not authorized to delete this element.'));
+                    Yii::$app->getSession()->addFlash('danger',
+                        Module::t('amoscore', 'You are not authorized to delete this element.'));
                     $transaction->rollBack();
                 }
             }
@@ -495,6 +625,7 @@ class ProfiloController extends CrudController
     /**
      * @param int|null $user_id
      * @param int|null $organization_id
+     * @return bool
      * @throws \yii\base\InvalidConfigException
      */
     public function addOrganizationToLegalOrOperative($user_id = null, $organization_id = null)
@@ -507,6 +638,8 @@ class ProfiloController extends CrudController
         $userProfileModel = AmosAdmin::instance()->createModel('UserProfile');
         $userProfile = $userProfileModel::findOne(['user_id' => $user_id]);
         
+        $ok = true;
+        
         if (!is_null($userProfile) && !is_null($organization)) {
             /** @var ProfiloUserMm $profiloUserMmModel */
             $profiloUserMmModel = $this->organizzazioniModule->createModel('ProfiloUserMm');
@@ -518,8 +651,10 @@ class ProfiloController extends CrudController
                 $orgUserMm->user_id = $userProfile->user_id;
                 $orgUserMm->profilo_id = $organization->id;
                 $orgUserMm->status = ProfiloUserMm::STATUS_ACTIVE;
-                $orgUserMm->save();
+                $ok = $orgUserMm->save();
             }
         }
+        
+        return $ok;
     }
 }

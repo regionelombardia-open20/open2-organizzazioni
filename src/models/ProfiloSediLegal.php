@@ -28,4 +28,18 @@ class ProfiloSediLegal extends ProfiloSedi
             $this->profilo_sedi_type_id = ProfiloSediTypes::TYPE_LEGAL_HEADQUARTER;
         }
     }
+    
+    /**
+     * @inheritdoc
+     */
+    public function rules()
+    {
+        $rules = parent::rules();
+        
+        if (!empty($this->organizzazioniModule->addRequired) && isset($this->organizzazioniModule->addRequired['ProfiloSediLegal'])) {
+            $rules[] = [$this->organizzazioniModule->addRequired['ProfiloSediLegal'], 'required'];
+        }
+        
+        return $rules;
+    }
 }

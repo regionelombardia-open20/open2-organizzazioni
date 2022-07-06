@@ -22,6 +22,7 @@ use yii\helpers\ArrayHelper;
  *
  * @property integer $id
  * @property string $name
+ * @property string $code
  * @property string $created_at
  * @property string $updated_at
  * @property string $deleted_at
@@ -51,6 +52,7 @@ abstract class ProfiloTypesPmi extends Record
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
             [['type_cat','created_by', 'updated_by', 'deleted_by'], 'integer'],
             [['name'], 'string', 'max' => 255],
+            [['code'], 'string', 'max' => 20],
         ];
     }
 
@@ -62,7 +64,8 @@ abstract class ProfiloTypesPmi extends Record
         return ArrayHelper::merge(parent::attributeLabels(), [
             'id' => Module::t('amosorganizzazioni', 'ID'),
             'name' => Module::t('amosorganizzazioni', 'Tipo PMI'),
-            'type_cat' => AmosAdmin::t('amosorganizzazioni', 'Type Cat'),
+            'code' => Module::t('amosorganizzazioni', '#profilotypespmi_code'),
+            'type_cat' => Module::t('amosorganizzazioni', 'Type Cat'),
             'created_at' => Module::t('amosorganizzazioni', 'Creato il'),
             'updated_at' => Module::t('amosorganizzazioni', 'Aggiornato il'),
             'deleted_at' => Module::t('amosorganizzazioni', 'Cancellato il'),

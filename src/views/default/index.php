@@ -12,19 +12,8 @@
 /** @var \open20\amos\dashboard\models\AmosUserDashboards $currentDashboard * */
 
 /** @var \yii\web\View $this * */
-use open20\amos\core\icons\AmosIcons;
-use open20\amos\layout\assets\BaseAsset;
-use open20\amos\dashboard\AmosDashboard;
-use open20\amos\dashboard\assets\ModuleDashboardAsset;
 use open20\amos\admin\AmosAdmin;
 use yii\helpers\Html;
-use yii\web\JsExpression;
-
-BaseAsset::register($this);
-
-ModuleDashboardAsset::register($this);
-
-AmosIcons::map($this);
 
 $this->title = $this->context->module->name;
 
