@@ -195,6 +195,10 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     public $enableWorkflow = false;
     
     /**
+     * @var bool $sendNotificationOnValidate
+     */
+    public $sendNotificationOnValidate = true;
+    /**
      * @inheritdoc
      */
     public function init()

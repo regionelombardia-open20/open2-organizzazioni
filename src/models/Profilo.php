@@ -167,6 +167,19 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     }
 
     /**
+     * @return boolean
+     */
+    public function sendNotification()
+    {
+        $organizzazioniModule = Module::instance();
+        if (empty($organizzazioniModule)) {
+            return false;
+        }
+
+        return $organizzazioniModule->sendNotificationOnValidate;
+    }
+
+    /**
      * @inheritdoc
      */
     public function init()
