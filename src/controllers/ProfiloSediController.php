@@ -126,6 +126,19 @@ class ProfiloSediController extends \open20\amos\organizzazioni\controllers\base
         ]);
     }
     
+    
+    /**
+     * disabled csrf token for send-message
+     */
+    
+    public function beforeAction($action) {
+      if ($action->id == 'user-network') {
+        $this->enableCsrfValidation = false;
+     // Yii::$app->controller->enableCsrfValidation = FALSE;
+      }
+      return true;
+    }
+    
     /**
      * @param int $userId
      * @return ActiveQuery

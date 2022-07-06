@@ -189,6 +189,18 @@ class ProfiloController extends base\ProfiloController
             ]
         ]);
     }
+    
+    /**
+     * disabled csrf token for send-message
+     */
+    
+    public function beforeAction($action) {
+      if ($action->id == 'user-network') {
+        $this->enableCsrfValidation = false;
+     // Yii::$app->controller->enableCsrfValidation = FALSE;
+      }
+      return true;
+    }
 
     /**
      * @param Profilo $model

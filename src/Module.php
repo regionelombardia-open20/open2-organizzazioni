@@ -253,6 +253,11 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     public $excludeRefereesFromEployeesLists = false;
     
     /**
+     * @var bool $directAccessToCommunityOrganization
+     */
+    public $directAccessToCommunityOrganization = false;
+    
+    /**
      * @var array $importOrganizationsConf Configuration array for the organization importer. See README for the array structure.
      */
     public $importOrganizationsConf = [];
