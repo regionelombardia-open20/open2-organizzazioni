@@ -49,7 +49,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     /**
      * @var array $defaultListViews This set the default order for the views in lists
      */
-    public $defaultListViews = ['grid'/*, 'icon'*/];
+    public $defaultListViews = ['grid', 'icon'];
 
     /**
      * @var bool $enableAddOtherLegalHeadquarters If true it's possible to add other legal headquarters. The headquarter type is visible in create headquarter select.

@@ -78,15 +78,15 @@ class ProfiloController extends CrudController
             'url' => '?currentView=grid'
         ];
 
-//        $this->viewIcon = [
-//            'name' => 'icon',
-//            'label' => AmosIcons::show('grid') . Html::tag('p', Module::tHtml('amoscore', 'Icon')),
-//            'url' => '?currentView=icon'
-//        ];
+        $this->viewIcon = [
+            'name' => 'icon',
+            'label' => AmosIcons::show('grid') . Html::tag('p', Module::tHtml('amoscore', 'Icon')),
+            'url' => '?currentView=icon'
+        ];
 
         $defaultViews = [
             'grid' => $this->viewGrid,
-//            'icon' => $this->viewIcon,
+            'icon' => $this->viewIcon,
         ];
         $availableViews = [];
         foreach ($this->organizzazioniModule->defaultListViews as $view) {

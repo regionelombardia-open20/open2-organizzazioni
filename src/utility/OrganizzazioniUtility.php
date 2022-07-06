@@ -11,6 +11,7 @@
 
 namespace open20\amos\organizzazioni\utility;
 
+use open20\amos\admin\AmosAdmin;
 use open20\amos\admin\models\UserProfile;
 use open20\amos\admin\models\UserProfileArea;
 use open20\amos\admin\models\UserProfileRole;
@@ -30,10 +31,14 @@ use open20\amos\organizzazioni\models\ProfiloSediTypes;
 use open20\amos\organizzazioni\models\ProfiloSediUserMm;
 use open20\amos\organizzazioni\models\ProfiloUserMm;
 use open20\amos\organizzazioni\Module;
+use Throwable;
 use Yii;
 use yii\base\BaseObject;
+use yii\base\InvalidConfigException;
 use yii\db\ActiveQuery;
+use yii\db\ActiveRecord;
 use yii\db\Query;
+use yii\db\StaleObjectException;
 use yii\helpers\ArrayHelper;
 use yii\log\Logger;
 
@@ -47,7 +52,7 @@ class OrganizzazioniUtility extends BaseObject
      * This method returns all platform organizations ready for select.
      * @param Profilo $model
      * @return array
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     public static function getMembershipOrganizationsReadyForSelect($model)
     {
@@ -66,7 +71,7 @@ class OrganizzazioniUtility extends BaseObject
     /**
      * This method returns all profilo sedi types ready for select.
      * @return array
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     public static function getProfiloSediTypesReadyForSelect()
     {
@@ -108,11 +113,11 @@ class OrganizzazioniUtility extends BaseObject
     /**
      * @param ProfiloUserMm $profiloUserMm
      * @return UserProfileArea[]
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     public static function getUserProfileAreas($profiloUserMm)
     {
-        $moduleAdmin = \Yii::$app->getModule('admin');
+        $moduleAdmin = AmosAdmin::instance();
         /** @var ActiveQuery $query */
         if ($moduleAdmin) {
             $query = UserProfileArea::find();
@@ -129,11 +134,11 @@ class OrganizzazioniUtility extends BaseObject
     /**
      * @param ProfiloUserMm $profiloUserMm
      * @return UserProfileArea[]
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     public static function getUserProfileRoles($profiloUserMm)
     {
-        $moduleAdmin = \Yii::$app->getModule('admin');
+        $moduleAdmin = AmosAdmin::instance();
         /** @var ActiveQuery $query */
         if ($moduleAdmin) {
             $query = UserProfileRole::find();
@@ -151,7 +156,7 @@ class OrganizzazioniUtility extends BaseObject
      * @param $userId
      * @param bool $onlyIds
      * @param bool $returnQuery
-     * @return array|ActiveQuery|\yii\db\ActiveRecord[]
+     * @return array|ActiveQuery|ActiveRecord[]
      * @throws AmosException
      */
     public static function getOrganizationsRepresentedOrReferredByUserId($userId, $onlyIds = false, $returnQuery = false)
@@ -219,7 +224,7 @@ class OrganizzazioniUtility extends BaseObject
      * @param string $mmModelName
      * @param string $relationName
      * @return OrganizationsModelInterface[]
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     private static function getUserMainModels($userId, $modelName, $mmModelName, $relationName, $mmModelStatus)
     {
@@ -242,7 +247,7 @@ class OrganizzazioniUtility extends BaseObject
      * This method returns all the organizations of an user.
      * @param int $userId
      * @return OrganizationsModelInterface[]
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     public static function getUserOrganizations($userId)
     {
@@ -253,7 +258,7 @@ class OrganizzazioniUtility extends BaseObject
      * This method returns all the headquarters of an user, if the module has headquarters.
      * @param int $userId
      * @return OrganizationsModelInterface[]
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     public static function getUserHeadquarters($userId)
     {
@@ -383,7 +388,7 @@ class OrganizzazioniUtility extends BaseObject
      * @param Profilo $model
      * @param string $status
      * @return array
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     public static function findOrganizzazioneManagers($model, $status = '')
     {
@@ -413,7 +418,7 @@ class OrganizzazioniUtility extends BaseObject
      * @param array $showRoles
      * @param Module|null $organizzazioniModule
      * @return ActiveQuery
-     * @throws \yii\base\InvalidConfigException
+     * @throws InvalidConfigException
      */
     public static function getOrganizationEmployeesQuery($model, $isUpdate, $showRoles = [], $organizzazioniModule = null)
     {
@@ -452,7 +457,7 @@ class OrganizzazioniUtility extends BaseObject
      * @param string $role
      * @param AmosCommunity|null $communityModule
      * @return bool
-     * @throws \open20\amos\community\exceptions\CommunityException
+     * @throws CommunityException
      */
     public static function addOrganizationCommunityUser($organization, $userId, $role, $communityModule = null)
     {
@@ -473,7 +478,7 @@ class OrganizzazioniUtility extends BaseObject
      * @param int $userId
      * @param AmosCommunity|null $communityModule
      * @return bool
-     * @throws \open20\amos\community\exceptions\CommunityException
+     * @throws CommunityException
      */
     public static function addOrganizationCommunityManager($organization, $userId, $communityModule = null)
     {
@@ -491,7 +496,7 @@ class OrganizzazioniUtility extends BaseObject
      * @param int $userId
      * @param AmosCommunity|null $communityModule
      * @return bool
-     * @throws \open20\amos\community\exceptions\CommunityException
+     * @throws CommunityException
      */
     public static function addOrganizationCommunityParticipant($organization, $userId, $communityModule = null)
     {
@@ -509,8 +514,8 @@ class OrganizzazioniUtility extends BaseObject
      * @param int $userId
      * @param AmosCommunity|null $communityModule
      * @return bool
-     * @throws \Throwable
-     * @throws \yii\db\StaleObjectException
+     * @throws Throwable
+     * @throws StaleObjectException
      */
     public static function removeOrganizationCommunityUser($organizationCommunityId, $userId, $communityModule = null)
     {

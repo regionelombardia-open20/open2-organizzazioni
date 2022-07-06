@@ -16,6 +16,8 @@ use open20\amos\organizzazioni\Module;
  * @var open20\amos\organizzazioni\models\Profilo $model
  * @var open20\amos\organizzazioni\models\ProfiloSediLegal $mainLegalHeadquarter
  * @var open20\amos\organizzazioni\models\ProfiloSediOperative $mainOperativeHeadquarter
+ * @var open20\amos\cwh\AmosCwh $moduleCwh
+ * @var array $scope
  */
 
 $this->title = Module::t('amosorganizzazioni', 'Create organization');

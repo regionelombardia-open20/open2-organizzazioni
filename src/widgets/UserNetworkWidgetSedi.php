@@ -66,7 +66,7 @@ class UserNetworkWidgetSedi extends Widget
     {
         parent::init();
 
-        $this->adminModule = Yii::$app->getModule('admin');
+        $this->adminModule = AmosAdmin::instance();
         $this->organizationsModule = Module::instance();
 
         if (is_null($this->userId)) {

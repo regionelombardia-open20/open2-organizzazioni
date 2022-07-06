@@ -22,24 +22,33 @@ use open20\amos\core\forms\RequiredFieldsTipWidget;
 use open20\amos\core\forms\TextEditorWidget;
 use open20\amos\core\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
+use open20\amos\cwh\AmosCwh;
 use open20\amos\cwh\widgets\DestinatariPlusTagWidget;
 use open20\amos\organizzazioni\assets\OrganizzazioniAsset;
+use open20\amos\organizzazioni\models\Profilo;
 use open20\amos\organizzazioni\models\ProfiloEntiType;
 use open20\amos\organizzazioni\models\ProfiloLegalForm;
+use open20\amos\organizzazioni\models\ProfiloSediLegal;
+use open20\amos\organizzazioni\models\ProfiloSediOperative;
 use open20\amos\organizzazioni\models\ProfiloTypesPmi;
 use open20\amos\organizzazioni\Module;
 use open20\amos\organizzazioni\utility\OrganizzazioniUtility;
 use open20\amos\organizzazioni\widgets\maps\PlaceWidget;
+use open20\amos\tag\AmosTag;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\web\JsExpression;
+use yii\web\View;
+use yii\widgets\ActiveForm as ActiveForm2;
 
 /**
- * @var yii\web\View $this
- * @var open20\amos\organizzazioni\models\Profilo $model
- * @var yii\widgets\ActiveForm $form
- * @var open20\amos\organizzazioni\models\ProfiloSediLegal $mainLegalHeadquarter
- * @var open20\amos\organizzazioni\models\ProfiloSediOperative $mainOperativeHeadquarter
+ * @var View $this
+ * @var Profilo $model
+ * @var ActiveForm2 $form
+ * @var ProfiloSediLegal $mainLegalHeadquarter
+ * @var ProfiloSediOperative $mainOperativeHeadquarter
+ * @var AmosCwh $moduleCwh
+ * @var array $scope
  */
 
 $this->registerJs("    
@@ -55,9 +64,9 @@ $this->registerJs("
             $('#same_sede').show();
         }
     }
-    ", \yii\web\View::POS_READY);
+    ", View::POS_READY);
 
-$moduleL = \Yii::$app->getModule('layout');
+$moduleL = Yii::$app->getModule('layout');
 if (!empty($moduleL)) {
     OrganizzazioniAsset::register($this);
 }
@@ -65,7 +74,8 @@ if (!empty($moduleL)) {
 /** @var Module $organizzazioniModule */
 $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
 
-$moduleTag = \Yii::$app->getModule('tag');
+/** @var AmosTag $moduleTag */
+$moduleTag = Yii::$app->getModule('tag');
 
 $profiloEntiTypeElementId = Html::getInputId($model, 'profilo_enti_type_id');
 $istatCodeElementId = Html::getInputId($model, 'istat_code');
@@ -144,16 +154,16 @@ if (!$disableFieldChecks) {
 ]);
 
 /** @var ProfiloEntiType $modelProfiloEntiType */
-$modelProfiloEntiType = Module::instance()->createModel('ProfiloEntiType');
+$modelProfiloEntiType = $organizzazioniModule->createModel('ProfiloEntiType');
 
 /** @var ProfiloEntiType $modelProfiloTipoStruttura */
-$modelProfiloTipoStruttura = Module::instance()->createModel('ProfiloTipoStruttura');
+$modelProfiloTipoStruttura = $organizzazioniModule->createModel('ProfiloTipoStruttura');
 
 /** @var ProfiloTypesPmi $modelProfiloTypesPmi */
-$modelProfiloTypesPmi = Module::instance()->createModel('ProfiloTypesPmi');
+$modelProfiloTypesPmi = $organizzazioniModule->createModel('ProfiloTypesPmi');
 
 /** @var ProfiloLegalForm $modelProfiloLegalForm */
-$modelProfiloLegalForm = Module::instance()->createModel('ProfiloLegalForm');
+$modelProfiloLegalForm = $organizzazioniModule->createModel('ProfiloLegalForm');
 
 /** @var UserProfile $modelUserProfile */
 $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
@@ -180,7 +190,7 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                     ]) ?>
                 </div>
             <?php endif; ?>
-
+            
             <?php if ($organizzazioniModule->enableProfiloEntiType === true): ?>
                 <div class="col-md-6 col-xs-12">
                     <?= $form->field($model, 'profilo_enti_type_id')->widget(Select::classname(), [
@@ -234,7 +244,7 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
             <div class="col-md-6 col-xs-12">
                 <?php echo $form->field($model, 'codice_fiscale')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#codice_fiscale_field_placeholder')]) ?>
             </div>
-
+            
             <?= $form->field($model, 'presentazione_della_organizzaz')->widget(TextEditorWidget::className(), [
                 'options' => [
                     'id' => 'presentazione_della_organizzaz' . $fid,
@@ -244,7 +254,7 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                     'lang' => substr(Yii::$app->language, 0, 2)
                 ]
             ]) ?>
-
+            
             <?php if ($organizzazioniModule->enableMembershipOrganizations): ?>
                 <?= $form->field($model, 'parent_id')->widget(Select::className(), [
                     'data' => OrganizzazioniUtility::getMembershipOrganizationsReadyForSelect($model),
@@ -258,7 +268,7 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                     ]
                 ]) ?>
             <?php endif; ?>
-
+            
             <?php if (!$organizzazioniModule->oldStyleAddressEnabled): ?>
                 <?= $form->field($model, 'mainOperativeHeadquarterAddress')->widget(
                     PlaceWidget::className(), [
@@ -302,11 +312,11 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                     'placeholder' => Module::t('amosorganizzazioni', '#fax_field_placeholder')
                 ]) ?>
             </div>
-
+            
             <?php echo $form->field($model, 'responsabile')->textInput(['maxlength' => true,
                 'placeholder' => Module::t('amosorganizzazioni', '#responsabile_field_placeholder')
             ]) ?>
-
+            
             <?php if ($organizzazioniModule->enableRappresentanteLegaleText): ?>
                 <div class="col-md-6 col-xs-12">
                     <?= $form->field($model, 'rappresentante_legale_text') ?>
@@ -323,7 +333,7 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                             'allowClear' => true,
                             'minimumInputLength' => 3,
                             'ajax' => [
-                                'url' => Url::to(['/admin/user-profile-ajax/ajax-user-list']),
+                                'url' => Url::to(['/' . AmosAdmin::getModuleName(). '/user-profile-ajax/ajax-user-list']),
                                 'dataType' => 'json',
                                 'data' => new JsExpression('function(params) { return {q:params.term}; }')
                             ],
@@ -342,16 +352,18 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                         'allowClear' => true,
                         'minimumInputLength' => 3,
                         'ajax' => [
-                            'url' => Url::to(['/admin/user-profile-ajax/ajax-user-list']),
+                            'url' => Url::to(['/' . AmosAdmin::getModuleName(). '/user-profile-ajax/ajax-user-list']),
                             'dataType' => 'json',
                             'data' => new JsExpression('function(params) { return {q:params.term}; }')
                         ],
                     ],
                 ]); ?>
             </div>
-            <div class="col-xs-12">
-                <?= $form->field($model, 'contatto_referente_operativo')->textInput(['maxlength' => true]); ?>
-            </div>
+            <?php if ($organizzazioniModule->enableContattoReferenteOperativo): ?>
+                <div class="col-xs-12">
+                    <?= $form->field($model, 'contatto_referente_operativo')->textInput(['maxlength' => true]); ?>
+                </div>
+            <?php endif; ?>
             <div class="col-xs-12<?= ($organizzazioniModule->forceSameSede ? ' hidden' : '') ?>">
                 <?= $form->field($model, 'la_sede_legale_e_la_stessa_del', [
                     'options' => [
@@ -367,7 +379,7 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                     <div class="col-xs-12">
                         <?= Html::tag('h2', Module::t('amosorganizzazioni', '#same_sede_title'), ['class' => 'subtitle-form']) ?>
                     </div>
-
+                    
                     <?php if (!$organizzazioniModule->forceSameSede): ?>
                         <?php if (!$organizzazioniModule->oldStyleAddressEnabled): ?>
                             <div class="col-xs-12">
@@ -409,16 +421,14 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                 </div>
             </div>
             <?php if (!is_null($moduleTag)): ?>
-                <div class="row">
-                    <div class="col-xs-12">
-                        <?= Html::tag('h2', Module::t('amosorganizzazioni', '#settings_receiver_title'), ['class' => 'subtitle-form']) ?>
-                        <div class="col-xs-12 receiver-section">
-                            <?= DestinatariPlusTagWidget::widget([
-                                'model' => $model,
-                                'moduleCwh' => $moduleCwh,
-                                'scope' => $scope
-                            ]); ?>
-                        </div>
+                <div class="col-xs-12">
+                    <?= Html::tag('h2', Module::t('amosorganizzazioni', '#settings_receiver_title'), ['class' => 'subtitle-form']) ?>
+                    <div class="col-xs-12 receiver-section">
+                        <?= DestinatariPlusTagWidget::widget([
+                            'model' => $model,
+                            'moduleCwh' => $moduleCwh,
+                            'scope' => $scope
+                        ]); ?>
                     </div>
                 </div>
             <?php endif; ?>
@@ -443,14 +453,14 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                             'showPreview' => false
                         ]
                     ])->label(Module::t('amosorganizzazioni', '#attachments_field'))->hint(Module::t('amosorganizzazioni', '#attachments_field_hint')) ?>
-
+                    
                     <?= AttachmentsList::widget([
                         'model' => $model,
                         'attribute' => 'allegati'
                     ]) ?>
                 </div>
             </div>
-
+            
             <?php if ($organizzazioniModule->enableSocial): ?>
                 <div class="col-xs-12 social-section nop">
                     <div class="col-xs-12">

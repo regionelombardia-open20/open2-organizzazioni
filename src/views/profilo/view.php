@@ -66,52 +66,54 @@ $button = [
     ]
 ];
 
-if (!$communityPresent) {
-    if (in_array($loggedUserId, [$model->rappresentante_legale, $model->referente_operativo])) {
-        $button['title'] = Module::t('amosorganizzazioni', '#create_community_for_organization');
-        $button['url'] = ['/' . Module::getModuleName() . '/profilo/create-community/', 'id' => $model->id];
-        $button['options'] = [
-            'class' => 'btn btn-navigation-secondary',
-            'title' => Module::t('amosorganizzazioni', '#create_community_for_organization_title'),
-            'data-confirm' => Module::t('amosorganizzazioni', '#create_community_for_organization_question')
-        ];
-        $showButton = true;
-    }
-} else {
-    $userInList = false;
-    foreach ($model->communityUserMm as $userCommunity) { // User not yet subscribed to the event
-        if ($userCommunity->user_id == $loggedUserId) {
-            $userInList = true;
-            $userStatus = $userCommunity->status;
-            break;
+if ($organizzazioniModule->enableCommunityCreation) {
+    if (!$communityPresent) {
+        if (in_array($loggedUserId, [$model->rappresentante_legale, $model->referente_operativo])) {
+            $button['title'] = Module::t('amosorganizzazioni', '#create_community_for_organization');
+            $button['url'] = ['/' . Module::getModuleName() . '/profilo/create-community/', 'id' => $model->id];
+            $button['options'] = [
+                'class' => 'btn btn-navigation-secondary',
+                'title' => Module::t('amosorganizzazioni', '#create_community_for_organization_title'),
+                'data-confirm' => Module::t('amosorganizzazioni', '#create_community_for_organization_question')
+            ];
+            $showButton = true;
         }
-    }
-
-    if ($userInList === true) {
-        $showButton = true;
-        switch ($userStatus) {
-            case CommunityUserMm::STATUS_WAITING_OK_COMMUNITY_MANAGER:
-                $button['title'] = Module::t('amosorganizzazioni', '#request_sent');
-                $button['options']['class'] .= ' disabled';
+    } else {
+        $userInList = false;
+        foreach ($model->communityUserMm as $userCommunity) { // User not yet subscribed to the event
+            if ($userCommunity->user_id == $loggedUserId) {
+                $userInList = true;
+                $userStatus = $userCommunity->status;
                 break;
-            case CommunityUserMm::STATUS_WAITING_OK_USER:
-                $waitingOkUser = true;
-                $button['title'] = Module::t('amosorganizzazioni', '#accept_invitation');
-                $button['url'] = [
-                    '/community/community/accept-user',
-                    'communityId' => $model->community_id,
-                    'userId' => $loggedUserId
-                ];
-                $button['options']['data']['confirm'] = Module::t('amosorganizzazioni', '#accept_invitation_question');
-                break;
-            case CommunityUserMm::STATUS_ACTIVE:
-                $createUrlParams = [
-                    '/community/join',
-                    'id' => $model->community_id
-                ];
-                $button['title'] = Module::t('amosorganizzazioni', '#visit_community_btn_title');
-                $button['url'] = \Yii::$app->urlManager->createUrl($createUrlParams);
-                break;
+            }
+        }
+        
+        if ($userInList === true) {
+            $showButton = true;
+            switch ($userStatus) {
+                case CommunityUserMm::STATUS_WAITING_OK_COMMUNITY_MANAGER:
+                    $button['title'] = Module::t('amosorganizzazioni', '#request_sent');
+                    $button['options']['class'] .= ' disabled';
+                    break;
+                case CommunityUserMm::STATUS_WAITING_OK_USER:
+                    $waitingOkUser = true;
+                    $button['title'] = Module::t('amosorganizzazioni', '#accept_invitation');
+                    $button['url'] = [
+                        '/community/community/accept-user',
+                        'communityId' => $model->community_id,
+                        'userId' => $loggedUserId
+                    ];
+                    $button['options']['data']['confirm'] = Module::t('amosorganizzazioni', '#accept_invitation_question');
+                    break;
+                case CommunityUserMm::STATUS_ACTIVE:
+                    $createUrlParams = [
+                        '/community/join',
+                        'id' => $model->community_id
+                    ];
+                    $button['title'] = Module::t('amosorganizzazioni', '#visit_community_btn_title');
+                    $button['url'] = \Yii::$app->urlManager->createUrl($createUrlParams);
+                    break;
+            }
         }
     }
 }

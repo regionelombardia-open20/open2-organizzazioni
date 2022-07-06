@@ -58,7 +58,7 @@ class ProfiloSedi extends \open20\amos\organizzazioni\models\base\ProfiloSedi im
 
         if ($this->isNewRecord) {
             $this->active = 1;
-            if (!(empty($this->country_id))) {
+            if (empty($this->country_id)) {
                 $this->country_id = 1; // TODO COUNTRIES DISABLED inizializzato con id dell'Italia. Rimuovere la riga se viene abilitata la tendina nella form.
             }
         }
