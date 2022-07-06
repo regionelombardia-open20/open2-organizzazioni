@@ -25,6 +25,21 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
 
 $imgTitle = $altText . ' ' . $model->name;
 
+if (!is_null($model->logoOrganization)) {
+    $url = $model->logoOrganization->getUrl('original', [
+        'class' => 'img-responsive'
+    ]);
+    $contentImage = Html::img($url, ['alt' => $imgTitle, 'class' => 'img-responsive']);
+} else {
+    $contentImage = AmosIcons::show('building', ['class' => 'icona-organizzazioni h-100'], 'dash');
+}
+
+if (!empty($model->community_id) && $organizzazioniModule->directAccessToCommunityOrganization) {
+    $viewUrl = ['/community/join/open-join', 'id' => $model->community_id];
+} else {
+    $viewUrl = $model->getFullViewUrl();
+}
+
 ?>
 
 <div class="organizzazioni-wrapper mb-0 ">
@@ -35,19 +50,9 @@ $imgTitle = $altText . ' ' . $model->name;
                 'actionModify' => $model->getFullUpdateUrl(),
                 'actionDelete' => $model->getFullDeleteUrl()
             ]); ?>
-            <?php
-            if (!is_null($model->logoOrganization)) {
-                $url = $model->logoOrganization->getUrl('original', [
-                    'class' => 'img-responsive'
-                ]);
-                $contentImage = Html::img($url, ['alt' => $imgTitle, 'class' => 'img-responsive']);
-            } else {
-                $contentImage = AmosIcons::show('building', ['class' => 'icona-organizzazioni h-100'], 'dash');
-            }
-            ?>
             <?= Html::a(
                 $contentImage,
-                (!empty($model->community_id) && $organizzazioniModule->directAccessToCommunityOrganization) ? ['/community/join/open-join', 'id' => $model->community_id] : $model->getFullViewUrl(),
+                $viewUrl,
                 [
                     'class' => 'img-link-organizzazioni h-100 d-block',
                     'title' => $imgTitle
@@ -58,14 +63,10 @@ $imgTitle = $altText . ' ' . $model->name;
         <div class="col-xs-12 col-sm-8 nop">
             <div class="info-organizzazioni ml-0 ml-sm-2 mt-2 mt-sm-0 d-flex flex-column align-items-start h-100">
                 <?php
-                $communityUrl = $model->getFullViewUrl();
-                if (!empty($model->community_id) && $organizzazioniModule->directAccessToCommunityOrganization) {
-                    $communityUrl = ['/community/join/open-join', 'id' => $model->community_id];
-                }
                 $goToPageOfTitle = Module::t('amosorganizzazioni', '#go_to_page_of') . ' ';
                 ?>
-                <?= Html::a(Html::tag('h5', $model->name, ['class' => 'bold mb-0 mb-sm-3 w-100']), $communityUrl, ['class' => 'title-one-line link-list-title', 'title' => $goToPageOfTitle . $model->name]) ?>
-                <?= Html::a(Module::t('amosorganizzazioni', '#explore'), $communityUrl, ['class' => 'cta-organizzazioni btn btn-xs btn-primary py-1 mt-auto', 'title' => $goToPageOfTitle . $model->name]) ?>
+                <?= Html::a(Html::tag('h5', $model->name, ['class' => 'bold mb-0 mb-sm-3 w-100']), $viewUrl, ['class' => 'title-one-line link-list-title', 'title' => $goToPageOfTitle . $model->name]) ?>
+                <?= Html::a(Module::t('amosorganizzazioni', '#explore'), $viewUrl, ['class' => 'cta-organizzazioni btn btn-xs btn-primary py-1 mt-auto', 'title' => $goToPageOfTitle . $model->name]) ?>
             </div>
         </div>
     </div>

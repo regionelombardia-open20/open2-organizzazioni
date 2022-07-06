@@ -81,7 +81,7 @@ class UserNetworkWidget extends Widget
         $sediWidget = '';
         $sedi_enabled = true;
         
-        if (!$post || ($post && isset($post[$organizzazioniPostName]))) {
+        if (($organizationsModule->enabled_widget_organizzazioni === true) && (!$post || ($post && isset($post[$organizzazioniPostName])))) {
             $organizzazioniWidget = $userNetworkWidgetOrganizzazioniClassName::widget([
                 'userId' => $this->userId,
                 'isUpdate' => $this->isUpdate,

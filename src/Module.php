@@ -138,6 +138,11 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     public $htmlMailContent = [];
     
     /**
+     * @var bool $enabled_widget_organizzazioni
+     */
+    public $enabled_widget_organizzazioni = true;
+    
+    /**
      * @var bool $enabled_widget_sedi
      */
     public $enabled_widget_sedi = true;
@@ -231,6 +236,11 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      * @var bool $enableWorkflow
      */
     public $enableWorkflow = false;
+    
+    /**
+     * @var bool $sendNotificationOnValidate
+     */
+    public $sendNotificationOnValidate = true;
     
     /**
      * @var bool $enableUniqueSecretCodeForInvitation
