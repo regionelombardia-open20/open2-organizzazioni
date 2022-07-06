@@ -13,6 +13,7 @@ namespace open20\amos\organizzazioni\models;
 
 use open20\amos\admin\AmosAdmin;
 use open20\amos\attachments\behaviors\FileBehavior;
+use open20\amos\community\models\Community;
 use open20\amos\community\models\CommunityContextInterface;
 use open20\amos\community\models\CommunityUserMm;
 use open20\amos\core\exceptions\AmosException;
@@ -252,7 +253,6 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
      * Returns the text hint for the specified attribute.
      * @param string $attribute the attribute name
      * @return string the attribute hint
-     * @see attributeHints
      */
     public function getAttributeHint($attribute)
     {

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Aria S.p.A.
  * OPEN 2.0
@@ -16,6 +15,8 @@ use open20\amos\core\widget\WidgetAbstract;
 use open20\amos\core\widget\WidgetIcon;
 use open20\amos\organizzazioni\Module;
 use yii\helpers\ArrayHelper;
+use open20\amos\utility\models\BulletCounters;
+use Yii;
 
 /**
  * Class WidgetIconProfilo
@@ -23,6 +24,7 @@ use yii\helpers\ArrayHelper;
  */
 class WidgetIconProfilo extends WidgetIcon
 {
+
     /**
      * @inheritdoc
      */
@@ -56,9 +58,18 @@ class WidgetIconProfilo extends WidgetIcon
 
         $this->setClassSpan(
             ArrayHelper::merge(
-                $this->getClassSpan(),
-                $paramsClassSpan
+                $this->getClassSpan(), $paramsClassSpan
             )
         );
+
+        // Read and reset counter from bullet_counters table, bacthed calculated!
+        if ($this->disableBulletCounters == false) {
+            $this->setBulletCount(
+                BulletCounters::getAmosWidgetIconCounter(
+                    \Yii::$app->getUser()->getId(), Module::getModuleName(), $this->getNamespace(),
+                    $this->resetBulletCount()
+                )
+            );
+        }
     }
 }

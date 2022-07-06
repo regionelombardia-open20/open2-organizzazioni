@@ -33,6 +33,7 @@ use open20\amos\organizzazioni\Module;
 use Yii;
 use yii\base\BaseObject;
 use yii\db\ActiveQuery;
+use yii\db\Query;
 use yii\helpers\ArrayHelper;
 use yii\log\Logger;
 
@@ -442,5 +443,95 @@ class OrganizzazioniUtility extends BaseObject
         $query->andWhere(['<>', $userProfileTable . '.nome', UserProfileUtility::DELETED_ACCOUNT_NAME]);
 
         return $query;
+    }
+
+    /**
+     * This methods adds a user to the organization community.
+     * @param Profilo $organization
+     * @param int $userId
+     * @param string $role
+     * @param AmosCommunity|null $communityModule
+     * @return bool
+     * @throws \open20\amos\community\exceptions\CommunityException
+     */
+    public static function addOrganizationCommunityUser($organization, $userId, $role, $communityModule = null)
+    {
+        if (is_null($communityModule)) {
+            $communityModule = AmosCommunity::instance();
+        }
+        return $communityModule->createCommunityUser(
+            $organization->community_id,
+            CommunityUserMm::STATUS_ACTIVE,
+            $role,
+            $userId
+        );
+    }
+
+    /**
+     * This methods adds a participant to the organization community.
+     * @param Profilo $organization
+     * @param int $userId
+     * @param AmosCommunity|null $communityModule
+     * @return bool
+     * @throws \open20\amos\community\exceptions\CommunityException
+     */
+    public static function addOrganizationCommunityManager($organization, $userId, $communityModule = null)
+    {
+        return self::addOrganizationCommunityUser(
+            $organization,
+            $userId,
+            $organization->getManagerRole(),
+            $communityModule
+        );
+    }
+
+    /**
+     * This methods adds a participant to the organization community.
+     * @param Profilo $organization
+     * @param int $userId
+     * @param AmosCommunity|null $communityModule
+     * @return bool
+     * @throws \open20\amos\community\exceptions\CommunityException
+     */
+    public static function addOrganizationCommunityParticipant($organization, $userId, $communityModule = null)
+    {
+        return self::addOrganizationCommunityUser(
+            $organization,
+            $userId,
+            $organization->getBaseRole(),
+            $communityModule
+        );
+    }
+
+    /**
+     * This methods removes a user to the organization community.
+     * @param int $organizationCommunityId
+     * @param int $userId
+     * @param AmosCommunity|null $communityModule
+     * @return bool
+     * @throws \Throwable
+     * @throws \yii\db\StaleObjectException
+     */
+    public static function removeOrganizationCommunityUser($organizationCommunityId, $userId, $communityModule = null)
+    {
+        if (is_null($communityModule)) {
+            $communityModule = AmosCommunity::instance();
+        }
+        return $communityModule->deleteCommunityUser($organizationCommunityId, $userId);
+    }
+
+    /**
+     * Checks if the community is an organization community.
+     * @param $communityId
+     * @return bool
+     */
+    public static function isAnOrganizationCommunity($communityId)
+    {
+        $query = new Query();
+        $query->from(Profilo::tableName());
+        $query->andWhere(['deleted_at' => null]);
+        $query->andWhere(['community_id' => $communityId]);
+        $communities = $query->all();
+        return (!empty($communities));
     }
 }

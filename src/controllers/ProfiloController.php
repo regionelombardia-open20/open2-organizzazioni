@@ -45,6 +45,9 @@ class ProfiloController extends base\ProfiloController
      */
     use M2MWidgetControllerTrait;
 
+    const EVENT_BEFORE_CREATE_COMMUNITY = 'beforeCreateCommunity';
+    const EVENT_AFTER_CREATE_COMMUNITY = 'afterCreateCommunity';
+
     protected $defaultAssociaM2mStatus = '';
 
     /**
@@ -863,7 +866,21 @@ class ProfiloController extends base\ProfiloController
 
         if (is_null($model->community_id)) {
             $managerStatus = CommunityUserMm::STATUS_ACTIVE;//$this->getManagerStatus($model, $oldAttributes);
+
+            $eventBefore = new Event();
+            $eventBefore->sender = [
+                'organization' => $model
+            ];
+            $this->trigger(self::EVENT_BEFORE_CREATE_COMMUNITY, $eventBefore);
+
             $ok = OrganizzazioniUtility::createCommunity($model, $managerStatus);
+
+            $eventAfter = new Event();
+            $eventAfter->sender = [
+                'organization' => $model,
+                'creationOk' => $ok
+            ];
+            $this->trigger(self::EVENT_AFTER_CREATE_COMMUNITY, $eventAfter);
 
             if ($ok) {
                 // If it's the first validation, check if the logged user is the same as the manager.

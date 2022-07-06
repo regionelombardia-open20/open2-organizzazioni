@@ -79,6 +79,8 @@ use yii\helpers\ArrayHelper;
  * @property \open20\amos\organizzazioni\models\ProfiloEntiType $profiloEntiType
  * @property \open20\amos\organizzazioni\models\ProfiloUserMm[] $profiloUserMms
  * @property \open20\amos\core\user\User[] $profiloUsers
+ * @property \open20\amos\organizzazioni\models\ProfiloUserMm[] $employeesMms
+ * @property \open20\amos\core\user\User[] $employees
  * @property \open20\amos\organizzazioni\models\ProfiloTipoStruttura $tipologiaStruttura
  *
  * @package open20\amos\organizzazioni\models\base
@@ -241,7 +243,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getRappresentanteLegale()
     {
-        return $this->hasOne(AmosAdmin::instance()->createModel('UserProfile')->className(), ['user_id' => 'rappresentante_legale']);
+        return $this->hasOne(AmosAdmin::instance()->model('UserProfile'), ['user_id' => 'rappresentante_legale']);
     }
 
     /**
@@ -249,7 +251,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getReferenteOperativo()
     {
-        return $this->hasOne(AmosAdmin::instance()->createModel('UserProfile')->className(), ['user_id' => 'referente_operativo']);
+        return $this->hasOne(AmosAdmin::instance()->model('UserProfile'), ['user_id' => 'referente_operativo']);
     }
 
     /**
@@ -257,7 +259,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getTipologiaDiOrganizzazione()
     {
-        return $this->hasOne($this->organizzazioniModule->createModel('ProfiloTypesPmi')->className(), ['id' => 'tipologia_di_organizzazione']);
+        return $this->hasOne($this->organizzazioniModule->model('ProfiloTypesPmi'), ['id' => 'tipologia_di_organizzazione']);
     }
 
     /**
@@ -265,7 +267,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getFormaLegale()
     {
-        return $this->hasOne($this->organizzazioniModule->createModel('ProfiloLegalForm')->className(), ['id' => 'forma_legale']);
+        return $this->hasOne($this->organizzazioniModule->model('ProfiloLegalForm'), ['id' => 'forma_legale']);
     }
 
     /**
@@ -289,7 +291,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getProfiloSedi()
     {
-        return $this->hasMany($this->organizzazioniModule->createModel('ProfiloSedi')->className(), ['profilo_id' => 'id']);
+        return $this->hasMany($this->organizzazioniModule->model('ProfiloSedi'), ['profilo_id' => 'id']);
     }
 
     /**
@@ -313,7 +315,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getProfiloEntiType()
     {
-        return $this->hasOne($this->organizzazioniModule->createModel('ProfiloEntiType')->className(), ['id' => 'profilo_enti_type_id']);
+        return $this->hasOne($this->organizzazioniModule->model('ProfiloEntiType'), ['id' => 'profilo_enti_type_id']);
     }
 
     /**
@@ -321,7 +323,7 @@ abstract class Profilo extends NetworkModel
      */
     public function getProfiloUserMms()
     {
-        return $this->hasMany($this->organizzazioniModule->createModel('ProfiloUserMm')->className(), ['profilo_id' => 'id']);
+        return $this->hasMany($this->organizzazioniModule->model('ProfiloUserMm'), ['profilo_id' => 'id']);
     }
 
     /**
@@ -330,6 +332,33 @@ abstract class Profilo extends NetworkModel
     public function getProfiloUsers()
     {
         return $this->hasMany(\open20\amos\core\user\User::className(), ['id' => 'user_id'])->via('profiloUserMms');
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getEmployeesMms()
+    {
+        $refereesUserIds = [];
+        if ($this->rappresentante_legale) {
+            $refereesUserIds[] = $this->rappresentante_legale;
+        }
+        if ($this->referente_operativo) {
+            $refereesUserIds[] = $this->referente_operativo;
+        }
+        $query = $this->getProfiloUserMms();
+        if (!empty($refereesUserIds)) {
+            $query->andWhere(['not in', \open20\amos\organizzazioni\models\ProfiloUserMm::tableName() . '.user_id', $refereesUserIds]);
+        }
+        return $query;
+    }
+
+    /**
+     * @return \yii\db\ActiveQuery
+     */
+    public function getEmployees()
+    {
+        return $this->hasMany(\open20\amos\core\user\User::className(), ['id' => 'user_id'])->via('employeesMms');
     }
 
     /**
