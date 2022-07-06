@@ -64,7 +64,7 @@ class ProfiloController extends base\ProfiloController
         $this->setMmTableName($this->organizzazioniModule->model('ProfiloUserMm'));
         $this->setStartObjClassName($this->organizzazioniModule->model('Profilo'));
         $this->setMmStartKey('profilo_id');
-        $this->setTargetObjClassName(AmosAdmin::instance()->createModel('UserProfile')->className());
+        $this->setTargetObjClassName(AmosAdmin::instance()->model('User'));
         $this->setMmTargetKey('user_id');
         $this->setRedirectAction('update');
         $this->setModuleClassName(Module::className());
