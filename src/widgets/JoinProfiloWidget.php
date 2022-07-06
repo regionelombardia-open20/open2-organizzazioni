@@ -33,6 +33,11 @@ class JoinProfiloWidget extends Widget
         'data-dismiss' => 'modal'
     ];
     const BTN_CLASS_DFL = 'btn btn-navigation-primary';
+    
+    /**
+     * @var Module $organizzazioniModule
+     */
+    protected $organizzazioniModule = null;
 
     /**
      * @var Profilo $model
@@ -68,6 +73,8 @@ class JoinProfiloWidget extends Widget
      */
     public function init()
     {
+        $this->organizzazioniModule = Module::instance();
+        
         parent::init();
 
         if (is_null($this->model)) {
@@ -136,11 +143,11 @@ class JoinProfiloWidget extends Widget
             $userOrganization = $model;
 
             /** @var Profilo $modelProfilo */
-            $modelProfilo = Module::instance()->createModel('Profilo');
+            $modelProfilo = $this->organizzazioniModule->createModel('Profilo');
             $model = $modelProfilo::findOne($userOrganization->profilo_id);
         } else {
             /** @var ProfiloUserMm $modelProfiloUserMm */
-            $modelProfiloUserMm = Module::instance()->createModel('ProfiloUserMm');
+            $modelProfiloUserMm = $this->organizzazioniModule->createModel('ProfiloUserMm');
             $userOrganization = $modelProfiloUserMm::findOne(['profilo_id' => $model->id, 'user_id' => $userId]);
         }
 

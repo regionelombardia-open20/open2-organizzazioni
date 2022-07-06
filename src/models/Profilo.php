@@ -32,6 +32,7 @@ use open20\amos\organizzazioni\Module;
 use open20\amos\organizzazioni\widgets\icons\WidgetIconProfilo;
 use open20\amos\organizzazioni\widgets\ProfiloCardWidget;
 use open20\amos\organizzazioni\widgets\UserNetworkWidget;
+use open20\amos\organizzazioni\widgets\UserNetworkWidgetOrganizzazioni;
 use Yii;
 use yii\db\ActiveQuery;
 use yii\db\Query;
@@ -784,6 +785,14 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
             return '';
         }
         return UserNetworkWidget::widget(['userId' => $userId, 'isUpdate' => $isUpdate]);
+    }
+    
+    /**
+     * @return string
+     */
+    public static function getUserNetworkWidgetOrganizzazioniClassName()
+    {
+        return UserNetworkWidgetOrganizzazioni::className();
     }
 
     /**

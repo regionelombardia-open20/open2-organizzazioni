@@ -42,6 +42,7 @@ return [
     'asked to participate to :' => 'asked to participate to:',
     'asked to participate to' => 'asked to participate to',
     'Associa Sedi' => 'Associate Locations',
+    '#associa_m2m_page_title' => 'Associate employees',
     '#attachments' => 'Attachments',
     '#attachments_field' => 'attachments field',
     '#attachments_field_hint' => 'Hold down the "CAPS" key while selecting files, to load more than one at a time',

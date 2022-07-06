@@ -533,9 +533,7 @@ class OrganizationsMembersWidget extends Widget
                 'firstGridSearch' => true,
                 'isModal' => $this->enableModal,
                 'createAdditionalAssociateButtonsEnabled' => false,
-                'disableCreateButton' => (is_null(Yii::$app->getModule('invitations')) || !Yii::$app->user->can(
-                        'INVITATION_CREATE'
-                    )),
+                'disableCreateButton' => (!$invitationsModulePresent || !Yii::$app->user->can('INVITATION_CREATE')),
                 'checkPermWithNewMethod' => false,
                 'btnAssociaLabel' => Module::t('amosorganizzazioni', 'Associate employees'),
                 'btnAssociaClass' => 'btn btn-primary',

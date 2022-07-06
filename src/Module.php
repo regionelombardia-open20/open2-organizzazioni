@@ -40,12 +40,12 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     public $controllerNamespace = 'open20\amos\organizzazioni\controllers';
     public $newFileMode = 0666;
     public $name = 'organizzazioni';
-
+    
     /**
      * @var bool $enableMembershipOrganizations If true enable the membership organizations. You can set a parent organization in form.
      */
     public $enableMembershipOrganizations = false;
-
+    
     /**
      * @var array $defaultListViews This set the default order for the views in lists
      */
@@ -55,7 +55,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      * @var bool $enableAddOtherLegalHeadquarters If true it's possible to add other legal headquarters. The headquarter type is visible in create headquarter select.
      */
     public $enableAddOtherLegalHeadquarters = false;
-
+    
     /**
      * @inheritdoc
      */
@@ -71,74 +71,74 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
             'category' => 'amosorganizzazioni',
         ],
     ];
-
+    
     /**
      * @var bool $enableSocial
      */
     public $enableSocial = true;
-
+    
     /**
      * @var bool $oldStyleAddressEnabled
      */
     public $oldStyleAddressEnabled = false;
-
+    
     /**
      * @var bool $enableSediRequired
      */
     public $enableSediRequired = true;
-
+    
     /**
      * @var bool $enableCodeIstatRequired
      */
     public $enableCodeIstatRequired = true;
-
+    
     /**
      * @var bool $enableRappresentanteLegaleText
      */
     public $enableRappresentanteLegaleText = false;
-
+    
     /**
      * @var bool $forceSameSede
      */
     public $forceSameSede = false;
-
+    
     /**
      * If true this configuration enable the user to request to join an organization and a validator confirm the request.
      * The confirm can be made by legal representative, operative referee and the validator.
      * @var bool $enableConfirmUsersJoinRequests
      */
     public $enableConfirmUsersJoinRequests = false;
-
+    
     /**
      * @var array $htmlMailSubject
      */
     public $htmlMailSubject = [];
-
+    
     /**
      * @var array $htmlMailContent
      */
     public $htmlMailContent = [];
-
+    
     /**
      * @var bool $enabled_widget_sedi
      */
     public $enabled_widget_sedi = true;
-
+    
     /**
      * @var bool $viewEmailEmployees
      */
     public $viewEmailEmployees = false;
-
+    
     /**
      * @var bool $inviteUserOfOrganizationParent
      */
     public $inviteUserOfOrganizationParent = false;
-
+    
     /**
      * @var bool $disableFieldChecks
      */
     public $disableFieldChecks = false;
-
+    
     /**
      * If true this configuration enable Organizzazioni module manager to create
      * a reserved community.
@@ -146,24 +146,24 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      * @var bool $enableConfirmUsersJoinRequests
      */
     public $enableCommunityCreation = false;
-
+    
     /**
      * Is community amos module loaded?
      *
      * @var \open20\amos\community\AmosCommunity
      */
     public $communityModule = null;
-
+    
     /**
      * @var bool $enableProfiloEntiType
      */
     public $enableProfiloEntiType = true;
-
+    
     /**
      * @var bool $enableProfiloTipologiaStruttura
      */
     public $enableProfiloTipologiaStruttura = false;
-
+    
     /**
      * @var bool $enableContattoReferenteOperativo
      */
@@ -173,27 +173,37 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      * @var bool $externalInvitationUsers
      */
     public $externalInvitationUsers = false;
-
+    
     /**
      * @var string $overrideUserContextAssociationStatus
      */
     public $overrideUserContextAssociationStatus = '';
-
+    
+    /**
+     * @var bool $enableTipologiaOrganizzazione
+     */
+    public $enableTipologiaOrganizzazione = true;
+    
+    /**
+     * @var bool $enableProfiloEntiType
+     */
+    public $enableFormaLegale = true;
+    
     /**
      * @inheritdoc
      */
     public function init()
     {
         parent::init();
-
+        
         \Yii::setAlias('@open20/amos/' . static::getModuleName() . '/controllers/', __DIR__ . '/controllers/');
         // custom initialization code goes here
         $config = require(__DIR__ . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'config.php');
         \Yii::configure($this, ArrayHelper::merge($config, ["params" => $this->params]));
-
+        
         $this->communityModule = Yii::$app->getModule('community');
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -216,7 +226,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
             'ProfiloTipoStruttura' => __NAMESPACE__ . '\\' . 'models\ProfiloTipoStruttura',
         ];
     }
-
+    
     /**
      * @return string
      */
@@ -224,7 +234,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         return 'organizzazioni';
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -232,7 +242,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         return __NAMESPACE__ . '\models\search\ProfiloSearch';
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -244,7 +254,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
             return 'building-o';
         }
     }
-
+    
     /**
      * @return |null
      */
@@ -252,7 +262,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         return NULL;
     }
-
+    
     /**
      * @return array
      */
@@ -262,7 +272,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
             \open20\amos\organizzazioni\widgets\icons\WidgetIconProfilo::className(),
         ];
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -270,7 +280,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         return $this->model('Profilo');
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -278,7 +288,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         return ProfiloCardWidget::className();
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -286,7 +296,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         return JoinedOrganizationsWidget::className();
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -294,7 +304,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         return JoinedOrgParticipantsTasksWidget::className();
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -304,10 +314,10 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
         $profiloModel = $this->createModel('Profilo');
         $query = $profiloModel::find();
         $query->orderBy(['name' => SORT_ASC]);
-
+        
         return $query;
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -343,7 +353,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
             return false;
         }
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -359,7 +369,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
         }
         return $model;
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -367,7 +377,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         return OrganizzazioniUtility::getUserOrganizations($userId);
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -375,7 +385,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         return OrganizzazioniUtility::getUserHeadquarters($userId);
     }
-
+    
     /**
      * @return ProfiloGrammar
      */
@@ -383,7 +393,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         return new ProfiloGrammar();
     }
-
+    
     /**
      * @param int $userId
      * @param bool $onlyIds
@@ -395,7 +405,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
     {
         return OrganizzazioniUtility::getOrganizationsRepresentedOrReferredByUserId($userId, $onlyIds, $returnQuery);
     }
-
+    
     /**
      * @inheritdoc
      */

@@ -11,6 +11,7 @@
 
 namespace open20\amos\organizzazioni\models\base;
 
+use open20\amos\admin\AmosAdmin;
 use open20\amos\core\record\Record;
 use open20\amos\organizzazioni\Module;
 
@@ -82,56 +83,10 @@ abstract class ProfiloSedi extends Record
      */
     public function rules()
     {
-        $enableSediRequired = Module::instance()->enableSediRequired;
         $requiredFields = [
-//            'name',
             'profilo_id',
             'profilo_sedi_type_id',
         ];
-//        if ($this->organizzazioniModule->oldStyleAddressEnabled) {
-//            $requiredFields[] = 'cap_text';
-//            $requiredFields[] = 'address_text';
-//            $requiredFields[] = 'country_id';
-//            $requiredFields[] = 'province_id';
-//            $requiredFields[] = 'city_id';
-//        } else {
-//            if ($enableSediRequired) {
-//                $requiredFields[] = 'address';
-//            }
-//        }
-
-
-
-
-
-
-//        if ($this->is_main == 1) {
-//            if ($this->organizzazioniModule->enableSediRequired) {
-//                $requiredFields[] = 'name';
-//                if ($this->organizzazioniModule->oldStyleAddressEnabled) {
-//                    $requiredFields[] = 'cap_text';
-//                    $requiredFields[] = 'address_text';
-//                    $requiredFields[] = 'country_id';
-//                    $requiredFields[] = 'province_id';
-//                    $requiredFields[] = 'city_id';
-//                } else {
-//                    $requiredFields[] = 'address';
-//                }
-//            }
-//        } else {
-//            $requiredFields[] = 'name';
-//            if ($this->organizzazioniModule->oldStyleAddressEnabled) {
-//                $requiredFields[] = 'cap_text';
-//                $requiredFields[] = 'address_text';
-//                $requiredFields[] = 'country_id';
-//                $requiredFields[] = 'province_id';
-//                $requiredFields[] = 'city_id';
-//            } else {
-//                $requiredFields[] = 'address';
-//            }
-//        }
-
-
         if (
             (($this->is_main == 1) && $this->organizzazioniModule->enableSediRequired) ||
             ($this->is_main == 0)
@@ -147,7 +102,6 @@ abstract class ProfiloSedi extends Record
                 $requiredFields[] = 'address';
             }
         }
-
 
         return [
             [$requiredFields, 'required'],
@@ -242,7 +196,7 @@ abstract class ProfiloSedi extends Record
      */
     public function getProfiloSediUsers()
     {
-        return $this->hasMany(\open20\amos\core\user\User::className(), ['id' => 'user_id'])->via('profiloSediUserMms');
+        return $this->hasMany(AmosAdmin::instance()->model('User'), ['id' => 'user_id'])->via('profiloSediUserMms');
     }
 
     /**

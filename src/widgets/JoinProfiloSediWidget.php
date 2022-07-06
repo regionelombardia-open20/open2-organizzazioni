@@ -34,11 +34,21 @@ class JoinProfiloSediWidget extends Widget
         'data-dismiss' => 'modal'
     ];
     const BTN_CLASS_DFL = 'btn btn-navigation-primary';
+    
+    /**
+     * @var Module $organizzazioniModule
+     */
+    protected $organizzazioniModule = null;
 
     /**
      * @var ProfiloSedi $model
      */
     public $model = null;
+    
+    /**
+     * @var int $userId
+     */
+    public $userId = 0;
 
     /**
      * @var bool|false true if we are in edit mode, false if in view mode or otherwise
@@ -48,6 +58,7 @@ class JoinProfiloSediWidget extends Widget
     public $modalButtonCancelStyle = '';
     public $modalButtonCancelOptions = [];
     public $divClassBtnContainer = '';
+    public $customBtnLabel = '';
     public $btnClass = '';
     public $btnStyle = '';
     public $btnOptions = [];
@@ -63,8 +74,10 @@ class JoinProfiloSediWidget extends Widget
      */
     public function init()
     {
+        $this->organizzazioniModule = Module::instance();
+    
         parent::init();
-
+    
         if (is_null($this->model)) {
             throw new \Exception(Module::t('amosorganizzazioni', '#missing_model'));
         }
@@ -106,7 +119,7 @@ class JoinProfiloSediWidget extends Widget
             }
         }
     }
-
+    
     /**
      * @inheritdoc
      */
@@ -115,31 +128,32 @@ class JoinProfiloSediWidget extends Widget
         /** @var ProfiloSediUserMm $model */
         $model = $this->model;
         $buttonUrl = null;
+        $title = '';
         $dataTarget = '';
         $dataToggle = '';
-        $loggedUserId = Yii::$app->getUser()->getId();
-
+        $userId = (($this->userId > 0) ? $this->userId : Yii::$app->getUser()->getId());
+        
         if ($model instanceof ProfiloSediUserMm) {
             $userHeadquarter = $model;
-
+            
             /** @var Profilo $modelProfilo */
-            $modelProfilo = Module::instance()->createModel('ProfiloSedi');
+            $modelProfilo = $this->organizzazioniModule->createModel('ProfiloSedi');
             $model = $modelProfilo::findOne($userHeadquarter->profilo_sedi_id);
         } else {
             /** @var ProfiloSediUserMm $modelMm */
-            $modelMm = Module::instance()->createModel('ProfiloSediUserMm');
-            $userHeadquarter = $modelMm::findOne(['profilo_sedi_id' => $model->id, 'user_id' => $loggedUserId]);
+            $modelMm = $this->organizzazioniModule->createModel('ProfiloSediUserMm');
+            $userHeadquarter = $modelMm::findOne(['profilo_sedi_id' => $model->id, 'user_id' => $userId]);
         }
-
+        
         if (is_null($userHeadquarter)) {
             $icon = 'plus';
-            $title = Module::t('amosorganizzazioni', '#join');
+            $title = (!empty($this->customBtnLabel) ? $this->customBtnLabel : Module::t('amosorganizzazioni', '#join'));
             $dataToggle = 'modal';
             $dataTarget = '#joinPopup-' . $model->id;
             $buttonUrl = null;
             Modal::begin([
                 'id' => 'joinPopup-' . $model->id,
-                'header' => Module::t('amosorganizzazioni', "#join")
+                'header' => $title
             ]);
             echo Html::tag('div',
                 Module::t('amosorganizzazioni', "#do_you_wish_add_headquarter") .
@@ -148,13 +162,13 @@ class JoinProfiloSediWidget extends Widget
                 Html::a(Module::t('amosorganizzazioni', '#cancel'), null,
                     $this->modalButtonCancelOptions)
                 . Html::a(Module::t('amosorganizzazioni', '#yes'),
-                    ['/organizzazioni/profilo-sedi/join-headquarter', 'headquarterId' => $model->id],
+                    ['/organizzazioni/profilo-sedi/join-headquarter', 'headquarterId' => $model->id, 'userId' => $userId],
                     $this->modalButtonConfirmationOptions),
                 ['class' => 'pull-right m-15-0']
             );
             Modal::end();
         }
-
+        
         if (empty($title) || $this->onlyModals) {
             return '';
         } else {
@@ -180,7 +194,7 @@ class JoinProfiloSediWidget extends Widget
         if (!empty($this->divClassBtnContainer)) {
             $btn = Html::tag('div', $btn, ['class' => $this->divClassBtnContainer]);
         }
-
+        
         return $btn;
     }
 }

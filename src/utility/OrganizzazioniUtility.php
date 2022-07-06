@@ -420,7 +420,7 @@ class OrganizzazioniUtility extends BaseObject
      * @return ActiveQuery
      * @throws InvalidConfigException
      */
-    public static function getOrganizationEmployeesQuery($model, $isUpdate, $showRoles = [], $organizzazioniModule = null)
+    public static function getOrganizationEmployeesQuery($model, $isUpdate, $showRoles = [], $organizzazioniModule = null, $excludeReferees = false)
     {
         if (is_null($organizzazioniModule)) {
             $organizzazioniModule = Module::instance();
@@ -446,6 +446,19 @@ class OrganizzazioniUtility extends BaseObject
         $query->andWhere([$userProfileTable . '.attivo' => UserProfile::STATUS_ACTIVE]);
         $query->andWhere([$userTable . '.status' => User::STATUS_ACTIVE]);
         $query->andWhere(['<>', $userProfileTable . '.nome', UserProfileUtility::DELETED_ACCOUNT_NAME]);
+        
+        if ($excludeReferees) {
+            $refereesUserIds = [];
+            if ($model->rappresentante_legale) {
+                $refereesUserIds[] = $model->rappresentante_legale;
+            }
+            if ($model->referente_operativo) {
+                $refereesUserIds[] = $model->referente_operativo;
+            }
+            if (!empty($refereesUserIds)) {
+                $query->andWhere(['not in', $profiloUserMmTable . '.user_id', $refereesUserIds]);
+            }
+        }
 
         return $query;
     }

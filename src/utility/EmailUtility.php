@@ -122,7 +122,7 @@ class EmailUtility
      * EmailUtility constructor.
      * @param string $type
      * @param string $role
-     * @param Profilo $model
+     * @param Profilo|ProfiloSedi $model
      * @param string $userName
      * @param string $refereeName
      * @param string|null $url

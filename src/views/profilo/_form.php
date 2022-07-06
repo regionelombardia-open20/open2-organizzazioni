@@ -25,6 +25,7 @@ use open20\amos\core\icons\AmosIcons;
 use open20\amos\cwh\AmosCwh;
 use open20\amos\cwh\widgets\DestinatariPlusTagWidget;
 use open20\amos\organizzazioni\assets\OrganizzazioniAsset;
+use open20\amos\organizzazioni\controllers\ProfiloController;
 use open20\amos\organizzazioni\models\Profilo;
 use open20\amos\organizzazioni\models\ProfiloEntiType;
 use open20\amos\organizzazioni\models\ProfiloLegalForm;
@@ -35,8 +36,8 @@ use open20\amos\organizzazioni\Module;
 use open20\amos\organizzazioni\utility\OrganizzazioniUtility;
 use open20\amos\organizzazioni\widgets\maps\PlaceWidget;
 use open20\amos\tag\AmosTag;
+use kartik\alert\Alert;
 use yii\helpers\ArrayHelper;
-use yii\helpers\Url;
 use yii\web\JsExpression;
 use yii\web\View;
 use yii\widgets\ActiveForm as ActiveForm2;
@@ -76,6 +77,9 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
 
 /** @var AmosTag $moduleTag */
 $moduleTag = Yii::$app->getModule('tag');
+
+/** @var ProfiloController $appController */
+$appController = Yii::$app->controller;
 
 $profiloEntiTypeElementId = Html::getInputId($model, 'profilo_enti_type_id');
 $istatCodeElementId = Html::getInputId($model, 'istat_code');
@@ -210,33 +214,37 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                     <?= $form->field($model, 'istat_code')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#istat_code_field_placeholder')]) ?>
                 </div>
             <?php endif; ?>
-
-            <div class="col-md-6 col-xs-12">
-                <?= $form->field($model, 'tipologia_di_organizzazione')->widget(Select::classname(), [
-                    'data' => ArrayHelper::map($modelProfiloTypesPmi::find()->asArray()->all(), 'id', 'name'),
-                    'language' => substr(Yii::$app->language, 0, 2),
-                    'options' => [
-                        'multiple' => false,
-                        'placeholder' => Module::t('amosorganizzazioni', 'Seleziona') . '...',
-                    ],
-                    'pluginOptions' => [
-                        'allowClear' => true
-                    ],
-                ]) ?>
-            </div>
-            <div class="col-md-6 col-xs-12">
-                <?= $form->field($model, 'forma_legale')->widget(Select::classname(), [
-                    'data' => ArrayHelper::map($modelProfiloLegalForm::find()->all(), 'id', 'name'),
-                    'language' => substr(Yii::$app->language, 0, 2),
-                    'options' => [
-                        'multiple' => false,
-                        'placeholder' => Module::t('amosorganizzazioni', 'Seleziona') . '...',
-                    ],
-                    'pluginOptions' => [
-                        'allowClear' => true
-                    ],
-                ]) ?>
-            </div>
+            
+            <?php if ($organizzazioniModule->enableTipologiaOrganizzazione === true): ?>
+                <div class="col-md-6 col-xs-12">
+                    <?= $form->field($model, 'tipologia_di_organizzazione')->widget(Select::classname(), [
+                        'data' => ArrayHelper::map($modelProfiloTypesPmi::find()->asArray()->all(), 'id', 'name'),
+                        'language' => substr(Yii::$app->language, 0, 2),
+                        'options' => [
+                            'multiple' => false,
+                            'placeholder' => Module::t('amosorganizzazioni', 'Seleziona') . '...',
+                        ],
+                        'pluginOptions' => [
+                            'allowClear' => true
+                        ],
+                    ]) ?>
+                </div>
+            <?php endif; ?>
+            <?php if ($organizzazioniModule->enableFormaLegale === true): ?>
+                <div class="col-md-6 col-xs-12">
+                    <?= $form->field($model, 'forma_legale')->widget(Select::classname(), [
+                        'data' => ArrayHelper::map($modelProfiloLegalForm::find()->all(), 'id', 'name'),
+                        'language' => substr(Yii::$app->language, 0, 2),
+                        'options' => [
+                            'multiple' => false,
+                            'placeholder' => Module::t('amosorganizzazioni', 'Seleziona') . '...',
+                        ],
+                        'pluginOptions' => [
+                            'allowClear' => true
+                        ],
+                    ]) ?>
+                </div>
+            <?php endif; ?>
             <!--            <div class="clearfix"></div>-->
             <div class="col-md-6 col-xs-12">
                 <?php echo $form->field($model, 'partita_iva')->textInput(['maxlength' => true, 'placeholder' => Module::t('amosorganizzazioni', '#partita_iva_field_placeholder')]) ?>
@@ -333,7 +341,7 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                             'allowClear' => true,
                             'minimumInputLength' => 3,
                             'ajax' => [
-                                'url' => Url::to(['/' . AmosAdmin::getModuleName(). '/user-profile-ajax/ajax-user-list']),
+                                'url' => $appController->getRappresentanteLegaleAjaxUrl($model),
                                 'dataType' => 'json',
                                 'data' => new JsExpression('function(params) { return {q:params.term}; }')
                             ],
@@ -342,22 +350,30 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                 </div>
             <?php endif; ?>
             <div class="col-md-6 col-xs-12"><!-- referente_operativo string -->
-                <?= $form->field($model, 'referente_operativo')->widget(Select::className(), [
-                    'initValueText' => empty($model->referente_operativo) ? '' : $modelUserProfile::findOne(['user_id' => $model->referente_operativo])->nomeCognome,
-                    'language' => substr(Yii::$app->language, 0, 2),
-                    'options' => [
-                        'placeholder' => Module::t('amosorganizzazioni', 'Seleziona') . '...',
-                    ],
-                    'pluginOptions' => [
-                        'allowClear' => true,
-                        'minimumInputLength' => 3,
-                        'ajax' => [
-                            'url' => Url::to(['/' . AmosAdmin::getModuleName(). '/user-profile-ajax/ajax-user-list']),
-                            'dataType' => 'json',
-                            'data' => new JsExpression('function(params) { return {q:params.term}; }')
+                <?php if (!$model->isNewRecord): ?>
+                    <?= $form->field($model, 'referente_operativo')->widget(Select::className(), [
+                        'initValueText' => empty($model->referente_operativo) ? '' : $modelUserProfile::findOne(['user_id' => $model->referente_operativo])->nomeCognome,
+                        'language' => substr(Yii::$app->language, 0, 2),
+                        'options' => [
+                            'placeholder' => Module::t('amosorganizzazioni', 'Seleziona') . '...',
                         ],
-                    ],
-                ]); ?>
+                        'pluginOptions' => [
+                            'allowClear' => true,
+                            'minimumInputLength' => 3,
+                            'ajax' => [
+                                'url' => $appController->getReferenteOperativoAjaxUrl($model),
+                                'dataType' => 'json',
+                                'data' => new JsExpression('function(params) { return {q:params.term}; }')
+                            ],
+                        ],
+                    ]); ?>
+                <?php else: ?>
+                    <?= Alert::widget([
+                        'type' => Alert::TYPE_WARNING,
+                        'body' => Module::t('amosorganizzazioni', '#alert_select_delegated'),
+                        'closeButton' => false
+                    ]); ?>
+                <?php endif; ?>
             </div>
             <?php if ($organizzazioniModule->enableContattoReferenteOperativo): ?>
                 <div class="col-xs-12">

@@ -9,12 +9,12 @@
  * @category   CategoryName
  */
 
+use open20\amos\admin\AmosAdmin;
+use open20\amos\admin\models\UserProfile;
 use open20\amos\core\forms\editors\m2mWidget\M2MWidget;
 use open20\amos\core\helpers\Html;
-use open20\amos\organizzazioni\models\ProfiloSedi;
+use open20\amos\organizzazioni\controllers\ProfiloSediController;
 use open20\amos\organizzazioni\Module;
-use open20\amos\organizzazioni\widgets\JoinProfiloSediWidget;
-use yii\db\ActiveQuery;
 
 /**
  * @var yii\web\View $this
@@ -24,19 +24,25 @@ use yii\db\ActiveQuery;
 $this->title = Module::t('amosorganizzazioni', '#add_headquarter');
 $this->params['breadcrumbs'][] = $this->title;
 
-$userId = Yii::$app->request->get("id");
+/** @var AmosAdmin $adminModule */
+$adminModule = AmosAdmin::instance();
 
-/** @var ProfiloSedi $headquarter */
-$headquarter = Module::instance()->createModel('ProfiloSedi');
-/** @var ActiveQuery $query */
-$query = $headquarter->getAssociateHeadquarterQuery($userId);
+/** @var Module $organizzazioniModule */
+$organizzazioniModule = Module::instance();
 
-$post = Yii::$app->request->post();
-$modelProfiloSedi = Module::instance()->createModel('ProfiloSedi');
-if (isset($post['genericSearch'])) {
-    /** @var ProfiloSedi $modelProfiloSedi */
-    $query->andFilterWhere(['like', $modelProfiloSedi::tableName() . '.name', $post['genericSearch']]);
-}
+/** @var ProfiloSediController $appController */
+$appController = Yii::$app->controller;
+
+$userProfileId = Yii::$app->request->get("id");
+
+/** @var UserProfile $userProfileModel */
+$userProfileModel = $adminModule->createModel('UserProfile');
+$userProfile = $userProfileModel::findOne(['id' => $userProfileId]);
+$userId = $userProfile->user_id;
+
+$query = $appController->getAssociateHeadquarterM2mQuery($userId);
+
+$closeLabel = Module::t('amosorganizzazioni', '#close');
 
 ?>
 <?= M2MWidget::widget([
@@ -48,46 +54,21 @@ if (isset($post['genericSearch'])) {
         'to' => 'id'
     ],
     'modelTargetSearch' => [
-        'class' => Module::instance()->createModel('ProfiloSedi')->className(),
+        'class' => $organizzazioniModule->model('ProfiloSedi'),
         'query' => $query,
     ],
-    'targetFooterButtons' => Html::a(Module::t('amosorganizzazioni', '#close'), Yii::$app->urlManager->createUrl([
+    'targetFooterButtons' => Html::a($closeLabel, Yii::$app->urlManager->createUrl([
         '/organizzazioni/profilo-sedi/annulla-m2m',
         'id' => $userId
-    ]), ['class' => 'btn btn-secondary', 'AmosOrganizzazioni' => Module::t('amosorganizzazioni', '#close')]),
+    ]), ['class' => 'btn btn-secondary', 'title' => $closeLabel]),
     'renderTargetCheckbox' => false,
     'viewSearch' => (isset($viewM2MWidgetGenericSearch) ? $viewM2MWidgetGenericSearch : false),
 //    'relationAttributesArray' => ['status', 'role'],
-    'targetUrlController' => 'profilo',
+    'targetUrlController' => 'profilo-sedi',
     'targetActionColumnsTemplate' => '{joinOrganization}',
     'moduleClassName' => Module::className(),
     'postName' => 'Organization',
     'postKey' => 'organization',
-    'targetColumnsToView' => [
-        'profilo_sedi_type_id' => [
-            'attribute' => 'profilo_sedi_type_id',
-            'value' => 'profiloSediType.name'
-        ],
-        'name',
-        [
-            'attribute' => 'addressField',
-            'format' => 'raw',
-            'label' => $modelProfiloSedi->getAttributeLabel('addressField')
-        ],
-        [
-            'label' => $modelProfiloSedi->getAttributeLabel('profilo'),
-            'value' => 'profilo.name'
-        ],
-        [
-            'class' => 'open20\amos\core\views\grid\ActionColumn',
-            'template' => '{info}{view}{joinOrganization}',
-            'buttons' => [
-                'joinOrganization' => function ($url, $model) {
-                    $btn = JoinProfiloSediWidget::widget(['model' => $model, 'isGridView' => true]);
-                    return $btn;
-                }
-            ]
-        ]
-    ]
+    'targetColumnsToView' => $appController->getAssociateHeadquarterM2mTargetColumns($userId)
 ]);
 ?>

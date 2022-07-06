@@ -18,6 +18,7 @@ use open20\amos\core\interfaces\OrganizationsModelInterface;
 use open20\amos\organizzazioni\components\OrganizationsPlacesComponents;
 use open20\amos\organizzazioni\i18n\grammar\ProfiloSediGrammar;
 use open20\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\widgets\UserNetworkWidgetSedi;
 use yii\db\ActiveQuery;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
@@ -58,8 +59,9 @@ class ProfiloSedi extends \open20\amos\organizzazioni\models\base\ProfiloSedi im
 
         if ($this->isNewRecord) {
             $this->active = 1;
+            // TODO COUNTRIES DISABLED inizializzato con id dell'Italia. Rimuovere tutto l'if se viene abilitata la tendina nella form.
             if (empty($this->country_id)) {
-                $this->country_id = 1; // TODO COUNTRIES DISABLED inizializzato con id dell'Italia. Rimuovere la riga se viene abilitata la tendina nella form.
+                $this->country_id = 1;
             }
         }
     }
@@ -193,6 +195,14 @@ class ProfiloSedi extends \open20\amos\organizzazioni\models\base\ProfiloSedi im
                 'value' => 'profiloSedi.profilo.name'
             ]
         ];
+    }
+    
+    /**
+     * @return string
+     */
+    public static function getUserNetworkWidgetSediClassName()
+    {
+        return UserNetworkWidgetSedi::className();
     }
 
     /**

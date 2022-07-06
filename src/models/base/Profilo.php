@@ -12,6 +12,8 @@
 namespace open20\amos\organizzazioni\models\base;
 
 use open20\amos\admin\AmosAdmin;
+use open20\amos\admin\models\UserProfile;
+use open20\amos\admin\utility\UserProfileUtility;
 use open20\amos\community\AmosCommunity;
 use open20\amos\community\models\Community;
 use open20\amos\community\models\CommunityUserMm;
@@ -346,7 +348,16 @@ abstract class Profilo extends NetworkModel
         if ($this->referente_operativo) {
             $refereesUserIds[] = $this->referente_operativo;
         }
+        /** @var ProfiloUserMm $profiloUserMmModel */
+        $profiloUserMmModel = $this->organizzazioniModule->createModel('ProfiloUserMm');
+        $profiloUserMmTable = $profiloUserMmModel::tableName();
+        /** @var UserProfile $userProfileModel */
+        $userProfileModel = AmosAdmin::instance()->createModel('UserProfile');
+        $userProfileTable = $userProfileModel::tableName();
         $query = $this->getProfiloUserMms();
+        $query->innerJoin($userProfileTable, $userProfileTable . '.user_id = ' . $profiloUserMmTable . '.user_id');
+        $query->andWhere([$userProfileTable . '.deleted_at' => null]);
+        $query->andWhere(['<>', $userProfileTable . '.nome', UserProfileUtility::DELETED_ACCOUNT_NAME]);
         if (!empty($refereesUserIds)) {
             $query->andWhere(['not in', \open20\amos\organizzazioni\models\ProfiloUserMm::tableName() . '.user_id', $refereesUserIds]);
         }

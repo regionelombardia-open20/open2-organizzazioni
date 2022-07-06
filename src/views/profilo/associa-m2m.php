@@ -22,7 +22,7 @@ use open20\amos\organizzazioni\Module;
  * @var \open20\amos\organizzazioni\models\Profilo $model
  */
 
-$this->title = Module::t('amosorganizzazioni', 'Invite employees');
+$this->title = Module::t('amosorganizzazioni', '#associa_m2m_page_title');
 $this->params['breadcrumbs'][] = $this->title;
 
 /** @var ProfiloController $appController */
