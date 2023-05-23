@@ -1180,7 +1180,7 @@ class ProfiloController extends base\ProfiloController
             $filterForRole = $params['filterForRole'];
             $userStatusAssociate = $params['userStatusAssociate'];
             $isUpdate = $params['isUpdate'];
-
+            $isUpdate = (strpos(\Yii::$app->request->referrer, 'profilo/update') !== false) ? true : $isUpdate;
             return $this->render(
                 'organization-employees',
                 [
