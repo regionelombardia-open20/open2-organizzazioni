@@ -59,4 +59,13 @@ class ProfiloGrammar implements ModelGrammarInterface
     {
         return Module::t('amosorganizzazioni', '#article_indefinite');
     }
+
+    /**
+     * @return mixed
+     */
+    public function getArticleInvitation()
+    {
+        return Module::t('amosorganizzazioni', '#article_invitation');
+    }
+
 }

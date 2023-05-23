@@ -31,19 +31,27 @@ $appController = Yii::$app->controller;
 /** @var UserProfile $emptyUserProfile */
 $emptyUserProfile = AmosAdmin::instance()->createModel('UserProfile');
 
+$userQuery = $model->getProfiloUsers();
+$associaM2mQuery = $appController->getAssociaM2mQuery($model);
+if (!empty(\Yii::$app->request->get('role_name'))) {
+    $userQuery->leftJoin('auth_assignment', 'auth_assignment.user_id = user.id')
+        ->andWhere(['auth_assignment.item_name' => \Yii::$app->request->get('role_name')]);
+    $associaM2mQuery->leftJoin('auth_assignment', 'auth_assignment.user_id = user.id')
+        ->andWhere(['auth_assignment.item_name' => \Yii::$app->request->get('role_name')]);
+}
 ?>
 
 <?= M2MWidget::widget([
     'model' => $model,
     'modelId' => $model->id,
-    'modelData' => $model->getProfiloUsers(),
+    'modelData' => $userQuery,
     'modelDataArrFromTo' => [
         'from' => 'id',
         'to' => 'id'
     ],
     'modelTargetSearch' => [
         'class' => User::className(),
-        'query' => $appController->getAssociaM2mQuery($model),
+        'query' => $associaM2mQuery,
     ],
     'gridId' => 'organizations-employees-grid',
     'viewSearch' => (isset($viewM2MWidgetGenericSearch) ? $viewM2MWidgetGenericSearch : false),
@@ -53,6 +61,7 @@ $emptyUserProfile = AmosAdmin::instance()->createModel('UserProfile');
     'moduleClassName' => Module::className(),
     'postName' => 'Profilo',
     'postKey' => 'user',
+    'redirectCancelButton' => \Yii::$app->request->get('redirectUrlAfterAssociate'),
     'targetColumnsToView' => [
         'userImage' => [
             'label' => $emptyUserProfile->getAttributeLabel('userProfileImage'),

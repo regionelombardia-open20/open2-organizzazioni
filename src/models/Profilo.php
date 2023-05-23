@@ -29,8 +29,10 @@ use open20\amos\cwh\AmosCwh;
 use open20\amos\cwh\models\CwhAuthAssignment;
 use open20\amos\cwh\models\CwhConfig;
 use open20\amos\organizzazioni\components\OrganizationsPlacesComponents;
+use open20\amos\organizzazioni\controllers\ProfiloController;
 use open20\amos\organizzazioni\i18n\grammar\ProfiloGrammar;
 use open20\amos\organizzazioni\Module;
+use open20\amos\organizzazioni\utility\OrganizzazioniUtility;
 use open20\amos\organizzazioni\widgets\icons\WidgetIconProfilo;
 use open20\amos\organizzazioni\widgets\ProfiloCardWidget;
 use open20\amos\organizzazioni\widgets\UserNetworkWidget;
@@ -43,6 +45,8 @@ use yii\helpers\ArrayHelper;
 use open20\amos\workflow\behaviors\WorkflowLogFunctionsBehavior;
 use raoul2000\workflow\base\SimpleWorkflowBehavior;
 use open20\amos\community\utilities\CommunityUtil;
+use yii\base\Event;
+
 
 /**
  * Class Profilo
@@ -1568,5 +1572,95 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     public function getModelControllerName()
     {
         return 'profilo';
+    }
+
+    /**
+     *
+     */
+    public function createCommunityOrganizzazione(){
+        if (is_null($this->community_id)) {
+            $managerStatus = CommunityUserMm::STATUS_ACTIVE; //$this->getManagerStatus($model, $oldAttributes);
+
+            $eventBefore = new Event();
+            $eventBefore->sender = [
+                'organization' => $this
+            ];
+            $this->trigger(ProfiloController::EVENT_BEFORE_CREATE_COMMUNITY, $eventBefore);
+
+            $ok = OrganizzazioniUtility::createCommunity($this, $managerStatus);
+
+            $eventAfter = new Event();
+            $eventAfter->sender = [
+                'organization' => $this,
+                'creationOk' => $ok
+            ];
+            $this->trigger(ProfiloController::EVENT_AFTER_CREATE_COMMUNITY, $eventAfter);
+
+            if ($ok) {
+                // If it's the first validation, check if the logged user is the same as the manager.
+                // In that case set the manager in the active status.
+                $managers = OrganizzazioniUtility::findOrganizzazioneManagers($this);
+
+                foreach ($managers as $eventManager) {
+                    /** @var CommunityUserMm $eventManager */
+                    if (($eventManager->user_id == Yii::$app->getUser()->getId()) && ($eventManager->status != CommunityUserMm::STATUS_ACTIVE)) {
+                        $eventManager->status = CommunityUserMm::STATUS_ACTIVE;
+                        $eventManager->save();
+                    }
+                }
+            }
+
+            if ($this->save(false) && $ok) {
+                Yii::$app->getSession()->addFlash(
+                    'success',
+                    Module::t('amosorganizzazioni', '#community_create_success')
+                );
+            } else {
+                Yii::$app->getSession()->addFlash('danger', Module::t('amosorganizzazioni', '#community_create_error'));
+            }
+        } else {
+            Yii::$app->getSession()->addFlash(
+                'info',
+                Module::t('amosorganizzazioni', '#community_create_already_exists')
+            );
+        }
+    }
+
+    /**
+     * @param $user_id
+     * @throws \Throwable
+     * @throws \yii\db\StaleObjectException
+     */
+    public function removeMembershipFromCommunities($user_id){
+        $community = $this->community;
+        if($community){
+            $this->recursiveRemoveMembershipFromCommunitiesDelete($community->id, $user_id);
+        }
+    }
+
+    /**
+     * @param $community_id
+     * @param $user_id
+     * @return bool
+     * @throws \Throwable
+     * @throws \yii\db\StaleObjectException
+     */
+    public function recursiveRemoveMembershipFromCommunitiesDelete($community_id, $user_id){
+        $currentCommunity = Community::findOne($community_id);
+        $children = Community::find()->andWhere(['parent_id' => $community_id])->all();
+
+        /** @var  $node Community*/
+        foreach ($children as $community) {
+            $this->recursiveRemoveMembershipFromCommunitiesDelete($community->id, $user_id);
+        }
+        //DELETE user assigned and the node
+        $members = $currentCommunity->getCommunityUserMms()->andWhere(['community_user_mm.user_id' => $user_id])->all();
+        if($members){
+            foreach ($members as $member){
+            $member->delete();
+            }
+
+        }
+        return true;
     }
 }

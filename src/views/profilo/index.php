@@ -36,6 +36,9 @@ $form = ActiveForm::begin([
         'enctype' => 'multipart/form-data'
     ]
 ]);
+
+$dataProvider->pagination->pageSize = 21;
+
 ?>
 <?= $this->render('_modal', ['form' => $form, 'model' => $model]) ?>
 

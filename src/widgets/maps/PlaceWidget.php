@@ -15,7 +15,7 @@ use Yii;
 use yii\base\Widget;
 use yii\helpers\Html;
 
-use yii\base\Model;
+use open20\amos\core\models\AmosModel as Model;
 use yii\base\InvalidConfigException;
 use yii\web\View;
 use open20\amos\organizzazioni\components\OrganizationsPlacesComponents;

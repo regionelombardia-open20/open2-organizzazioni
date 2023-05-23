@@ -49,7 +49,7 @@ return [
     '#associa_m2m_groups_page_title' => 'Aggiungi organizzazioni',
     '#associa_m2m_page_title' => 'Associa dipendenti',
     '#attachments' => 'Allegati',
-    '#attachments_field' => 'Campo allegati',
+    '#attachments_field' => 'Allegati',
     '#attachments_field_hint' => 'Tieni premuto il tasto "MAIUSCOLO" mentre selezioni i file, per caricarne più di uno alla volta',
     '#attachments_title' => 'Allegati',
     'Associate employees' => 'Associa dipendenti',
@@ -396,7 +396,6 @@ return [
     'You are now linked to the organization' => 'Sei ora collegato alla organizzazione',
     'You cannot access the headquarters list directly' => 'Non puoi accedere alla lista delle sedi in modo diretto',
     'Your role is: ' => 'Il tuo ruolo è: ',
-    
     '#visit_community_btn_title' => 'Entra nella Community',
     'Draft' => 'Bozza',
     'To Validate' => 'Da validare',
@@ -415,4 +414,19 @@ return [
     '#DRAFT_VALIDATED_buttonLabel' => 'Togli dalla pubblicazione',
     '#DRAFT_VALIDATED_description' => "riporta l'organizzazione in bozza e richiedi un intervento al redattore",
     'save draft' => 'Salva in bozza',
+    "#beforeActionCtaLoginRegister" => "accedi o registrati alla piattaforma",
+    "#beforeActionCtaLoginRegisterTitle" => "Clicca per accedere o registrarti alla piattaforma {platformName}",
+    "#beforeActionCtaLogin" => "accedi alla piattaforma",
+    "#beforeActionCtaLoginTitle" => "Clicca per accedere alla piattaforma {platformName}",
+    "#beforeActionSubtitleSectionGuest" => "Per partecipare alla creazione di nuove organizzazioni sulla piattaforma {platformName}, {ctaLoginRegister}",
+    "#beforeActionSubtitleSectionLogged" => "",
+    "Sede operativa" => "Sede operativa",
+    "Sede legale" => "Sede legale",
+    "Non sei ancora iscritto a nessuna organizzazione!" => "Non sei ancora iscritto a nessuna organizzazione!",
+    "Clicca e scopri tutte le organizzazioni della piattaforma" => "Clicca e scopri tutte le organizzazioni della piattaforma",
+    "e scopri ora tutte le organizzazioni di " => "e scopri ora tutte le organizzazioni di ",
+    "Non sono presenti organizzazioni" => "Non sono presenti organizzazioni",
+    '#article_invitation' => 'alla',
+    "My organizations" => "Le mie organizzazioni"
+
 ];

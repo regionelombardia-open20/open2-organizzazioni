@@ -38,8 +38,13 @@ $urlConf = [
     'name' => $invitation->name,
     'surname' => $invitation->surname,
     'email' => $invitation->invitationUser->email,
-    'iuid' => \Yii::$app->user->id
+    'iuid' => \Yii::$app->user->id,
+    'iid' => $invitation->id,
 ];
+
+if(!empty($invitation->token)){
+    $urlConf['invitation_token'] = $invitation->token;
+}
 
 if (!empty($invitation->module_name) && !empty($invitation->context_model_id)) {
     $urlConf['moduleName'] = $invitation->module_name;

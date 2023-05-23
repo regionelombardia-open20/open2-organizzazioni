@@ -11,6 +11,7 @@
 
 namespace open20\amos\organizzazioni;
 
+use open20\amos\community\models\CommunityUserMm;
 use open20\amos\core\exceptions\AmosException;
 use open20\amos\core\interfaces\BreadcrumbInterface;
 use open20\amos\core\interfaces\InvitationExternalInterface;
@@ -27,15 +28,16 @@ use open20\amos\organizzazioni\utility\OrganizzazioniUtility;
 use open20\amos\organizzazioni\widgets\JoinedOrganizationsWidget;
 use open20\amos\organizzazioni\widgets\JoinedOrgParticipantsTasksWidget;
 use open20\amos\organizzazioni\widgets\ProfiloCardWidget;
-use Yii;
+use Yii; 
 use yii\helpers\ArrayHelper;
 use yii\log\Logger;
+use open20\amos\core\interfaces\CmsModuleInterface;
 
 /**
  * Class Module
  * @package open20\amos\organizzazioni
  */
-class Module extends AmosModule implements OrganizationsModuleInterface, SearchModuleInterface, InvitationExternalInterface, BreadcrumbInterface
+class Module extends AmosModule implements OrganizationsModuleInterface, SearchModuleInterface, InvitationExternalInterface, BreadcrumbInterface, CmsModuleInterface
 {
     /**
      * @var Profilo|null $contextModelOrganization
@@ -189,6 +191,11 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      * @var bool $enableConfirmUsersJoinRequests
      */
     public $enableCommunityCreation = false;
+
+    /**
+     * @var bool
+     */
+    public $createCommunityAutomatically = false;
     
     /**
      * Is community amos module loaded?
@@ -276,6 +283,16 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      * @var ImportManager $importManager
      */
     public $importManager = null;
+    
+    /**
+     * @var disableAssociaButton $disableAssociaButton
+     */
+    public $disableAssociaButton = false;
+
+    /**
+     * @var bool
+     */
+    public $enableManageLinks = false;
     
     /**
      * @inheritdoc
@@ -445,6 +462,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
                     $org->status = ($this->enableConfirmUsersJoinRequests ? $profiloUserMm::STATUS_WAITING_REQUEST_CONFIRM : $profiloUserMm::STATUS_WAITING_OK_USER);
 //                  $org->status = ($this->enableConfirmUsersJoinRequests ? $profiloUserMm::STATUS_WAITING_REQUEST_CONFIRM : $profiloUserMm::STATUS_ACTIVE);
                 }
+
                 return $org->save(false);
             }
             return true;
@@ -511,7 +529,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
      */
     public function addUserContextAssociation($userId, $modelId)
     {
-        if (is_string($modelId)) {
+        if (!is_numeric($modelId) && is_string($modelId)) {
             if (strpos($modelId, 'org-') === false) {
                 return false;
             }
@@ -598,6 +616,7 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
         return [
             'profilo/index',
             'profilo/to-validate',
+            'profilo/my-organizations',
         ];
     }
     
@@ -611,5 +630,17 @@ class Module extends AmosModule implements OrganizationsModuleInterface, SearchM
             'profilo-groups' => self::t('amosorganizzazioni', "#organizations_groups"),
             'profilo-sedi' => self::t('amosorganizzazioni', "Sedi"),
         ];
+    }
+
+    /*
+     * CmsModuleInterface
+     */
+
+  
+    /**
+     * @inheritdoc
+     */
+    public static function getModelClassName() {
+        return Module::instance()->model('Profilo');
     }
 }

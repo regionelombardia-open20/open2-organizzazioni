@@ -35,7 +35,7 @@ if (!empty($profile)) {
                 <?= ProfiloCardWidget::widget([
                     'model' => $util->model,
                     'onlyLogo' => true,
-                    'absoluteUrl' => true,
+                    'absoluteUrl' => false,
                     'inEmail' => true
                 ]) ?>
                 <?php

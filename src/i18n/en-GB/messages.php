@@ -394,7 +394,6 @@ return [
     'You are now linked to the organization' => 'You are now linked to the organization',
     'You cannot access the headquarters list directly' => 'You cannot access the headquarters list directly',
     'Your role is: ' => 'Your role is: ',
-    
     '#visit_community_btn_title' => 'Go to the Community',
     'Draft' => 'Draft',
     'To Validate' => 'To Validate',
@@ -412,4 +411,19 @@ return [
     '#DRAFT_label' => 'You can still edit the organization and ask to publish it later',
     '#DRAFT_VALIDATED_buttonLabel' => 'Unpublish',
     '#DRAFT_VALIDATED_description' => 'revert the content as a draft and ask a redactor to take an action',
+    "#beforeActionCtaLoginRegister" => "log in or register on the platform",
+    "#beforeActionCtaLoginRegisterTitle" => "Click here to log in or register on the platform {platformName}",
+    "#beforeActionCtaLogin" => "log in on the platform",
+    "#beforeActionCtaLoginTitle" => "Click here to log in on the platform {platformName}",
+    "#beforeActionSubtitleSectionGuest" => "To participate in the creation of new organizations, {ctaLoginRegister}",
+    "#beforeActionSubtitleSectionLogged" => "",
+    "Sede operativa" => "Operational headquarters",
+    "Sede legale" => "Sede legale",
+    "Non sei ancora iscritto a nessuna organizzazione!" => "You are not yet a member of any organization!",
+    "Clicca e scopri tutte le organizzazioni della piattaforma" => "Click and discover all organizations of the platform",
+    "e scopri ora tutte le organizzazioni di " => "and now discover all the organizations of",
+    "Non sono presenti organizzazioni" => "There are no organizations",
+    '#article_invitation' => 'the',
+    'Le mie organizzazioni' => "My organizations",
+
 ];

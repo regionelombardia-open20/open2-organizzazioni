@@ -264,6 +264,7 @@ class UserNetworkWidgetOrganizzazioni extends Widget
             'itemsSenderPageSize' => 10,
             'pageParam' => 'page-organizations',
             'disableCreateButton' => true,
+            'disableAssociaButton' => $this->organizationsModule->disableAssociaButton,
             'createAssociaButtonsEnabled' => $this->isUpdate,
             'btnAssociaLabel' => Module::t('amosorganizzazioni', '#add_new_organization'),
             'actionColumnsTemplate' => $this->isUpdate ? $defaultActionColumnsTemplate : '',

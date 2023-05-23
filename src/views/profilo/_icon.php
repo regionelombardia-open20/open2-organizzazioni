@@ -29,10 +29,12 @@ if (!is_null($model->logoOrganization)) {
     $url = $model->logoOrganization->getUrl('original', [
         'class' => 'img-responsive'
     ]);
-    $contentImage = Html::img($url, ['alt' => $imgTitle, 'class' => 'img-responsive']);
 } else {
-    $contentImage = AmosIcons::show('building', ['class' => 'icona-organizzazioni h-100'], 'dash');
+    $url = '/img/img_default.jpg';
 }
+
+$contentImage = Html::img($url, ['alt' => $imgTitle, 'class' => 'img-responsive']);
+
 
 if (!empty($model->community_id) && $organizzazioniModule->directAccessToCommunityOrganization) {
     $viewUrl = ['/community/join/open-join', 'id' => $model->community_id];
@@ -42,7 +44,7 @@ if (!empty($model->community_id) && $organizzazioniModule->directAccessToCommuni
 
 ?>
 
-<div class="organizzazioni-wrapper mb-0 ">
+<div class="organizzazioni-wrapper m-b-30 ">
     <div class="organizzazioni-container row flex-sm-nowrap h-100">
         <div class="organizzazioni-containter-img col-xs-12 col-sm-4 nop">
             <?= ContextMenuWidget::widget([

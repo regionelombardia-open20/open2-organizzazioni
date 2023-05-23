@@ -12,7 +12,7 @@
 namespace open20\amos\organizzazioni\models\search;
 
 use open20\amos\organizzazioni\models\ProfiloGroups;
-use yii\base\Model;
+use open20\amos\core\models\AmosModel as Model;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
 

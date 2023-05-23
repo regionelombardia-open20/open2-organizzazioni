@@ -106,6 +106,7 @@ class ProfiloController extends base\ProfiloController
                         'actions' => [
                             'user-network',
                             'organization-employees',
+                            'my-organizations'
                         ],
                         'roles' => ['PROFILO_READ']
                     ],
@@ -189,17 +190,99 @@ class ProfiloController extends base\ProfiloController
             ]
         ]);
     }
-    
+
     /**
      * disabled csrf token for send-message
      */
-    
-    public function beforeAction($action) {
-      if ($action->id == 'user-network') {
-        $this->enableCsrfValidation = false;
-     // Yii::$app->controller->enableCsrfValidation = FALSE;
-      }
-      return true;
+
+    public function beforeAction($action)
+    {
+        if ($action->id == 'user-network') {
+            $this->enableCsrfValidation = false;
+            // Yii::$app->controller->enableCsrfValidation = FALSE;
+        }
+
+        if (\Yii::$app->user->isGuest) {
+            $titleSection = Module::t('amosorganizzazioni', 'Organizzazioni');
+            $urlLinkAll = '';
+
+            $labelSigninOrSignup = Module::t('amosorganizzazioni', '#beforeActionCtaLoginRegister');
+            $titleSigninOrSignup = Module::t(
+                'amosorganizzazioni',
+                '#beforeActionCtaLoginRegisterTitle',
+                ['platformName' => \Yii::$app->name]
+            );
+            $labelSignin = Module::t('amosorganizzazioni', '#beforeActionCtaLogin');
+            $titleSignin = Module::t(
+                'amosorganizzazioni',
+                '#beforeActionCtaLoginTitle',
+                ['platformName' => \Yii::$app->name]
+            );
+
+            $labelLink = $labelSigninOrSignup;
+            $titleLink = $titleSigninOrSignup;
+            $socialAuthModule = Yii::$app->getModule('socialauth');
+            if ($socialAuthModule && ($socialAuthModule->enableRegister == false)) {
+                $labelLink = $labelSignin;
+                $titleLink = $titleSignin;
+            }
+
+            $ctaLoginRegister = Html::a(
+                $labelLink,
+                isset(\Yii::$app->params['linkConfigurations']['loginLinkCommon']) ? \Yii::$app->params['linkConfigurations']['loginLinkCommon']
+                    : \Yii::$app->params['platform']['backendUrl'] . '/' . AmosAdmin::getModuleName() . '/security/login',
+                [
+                    'title' => $titleLink
+                ]
+            );
+            $subTitleSection = Html::tag(
+                'p',
+                Module::t(
+                    'amosorganizzazioni',
+                    '#beforeActionSubtitleSectionGuest',
+                    ['platformName' => \Yii::$app->name, 'ctaLoginRegister' => $ctaLoginRegister]
+                )
+            );
+        } else {
+            $titleSection = Module::t('amosorganizzazioni', 'Organizzazioni');
+            $labelLinkAll = Module::t('amosorganizzazioni', 'Tutte le organizzazioni');
+            $urlLinkAll = '/organizzazioni/profilo/index';
+            $titleLinkAll = Module::t('amosorganizzazioni', 'Visualizza la lista delle organizzazioni');
+
+            $subTitleSection = Html::tag('p', Module::t('amosorganizzazioni', '#beforeActionSubtitleSectionLogged'));
+        }
+
+        $labelCreate = Module::t('amosorganizzazioni', 'Nuova');
+        $titleCreate = Module::t('amosorganizzazioni', 'Crea una nuova organizzazione');
+        $labelManage = Module::t('amosorganizzazioni', 'Gestisci');
+        $titleManage = Module::t('amosorganizzazioni', 'Gestisci le organizzazioni');
+        $urlCreate = '/organizzazioni/profilo/create';
+        $urlManage = null;
+
+        $this->view->params = [
+            'isGuest' => \Yii::$app->user->isGuest,
+            'modelLabel' => 'organizzazioni',
+            'titleSection' => $titleSection,
+            'subTitleSection' => $subTitleSection,
+            'urlLinkAll' => $urlLinkAll,
+            'labelLinkAll' => $labelLinkAll,
+            'titleLinkAll' => $titleLinkAll,
+            'labelCreate' => $labelCreate,
+            'titleCreate' => $titleCreate,
+            'labelManage' => $labelManage,
+            'titleManage' => $titleManage,
+            'urlCreate' => $urlCreate,
+            'urlManage' => $urlManage,
+        ];
+
+        if (!parent::beforeAction($action)) {
+            return false;
+        }
+
+        // other custom code here
+
+        return true;
+
     }
 
     /**
@@ -305,7 +388,11 @@ class ProfiloController extends base\ProfiloController
             $profiloUserMmModel = $this->organizzazioniModule->createModel('ProfiloUserMm');
 
             $profilo = $profiloModel::findOne($profiloId);
+
             $redirectUrl = ['/organizzazioni/profilo/update', 'id' => $profilo->id];
+            if (!empty(\Yii::$app->request->get('redirectUrlAfterAssociate'))) {
+                $redirectUrl = \Yii::$app->request->get('redirectUrlAfterAssociate');
+            }
 
             $loggedUser = User::findOne(Yii::$app->getUser()->id);
             /** @var UserProfile $loggedUserProfile */
@@ -313,7 +400,8 @@ class ProfiloController extends base\ProfiloController
 
             $profiloUserMms = $profiloUserMmModel::find()->andWhere([
                 'status' => $this->defaultAssociaM2mStatus,
-                'profilo_id' => $profiloId
+                'profilo_id' => $profiloId,
+                'email_sent' => 0,
             ])->all();
             $userStatus = (!is_null($userStatus) ? $userStatus : $profiloUserMmModel::STATUS_WAITING_OK_USER);
             if (!empty($emailTypeCustom)) {
@@ -326,6 +414,7 @@ class ProfiloController extends base\ProfiloController
             foreach ($profiloUserMms as $profiloUserMm) {
                 /** @var ProfiloUserMm $profiloUserMm */
                 $profiloUserMm->status = $userStatus;
+                $profiloUserMm->email_sent = 1;
                 $profiloUserMm->save(false);
                 $userToInvite = $profiloUserMm->user;
                 $emailUtil = new EmailUtility(
@@ -340,6 +429,17 @@ class ProfiloController extends base\ProfiloController
                 $subject = $emailUtil->getSubject();
                 $text = $emailUtil->getText();
                 $emailUtil->sendMail(null, $userToInvite->email, $subject, $text, [], []);
+
+
+                //add user to community
+                if ($this->organizzazioniModule->enableCommunityCreation && $this->organizzazioniModule->createCommunityAutomatically) {
+                    if (!empty($profilo->community_id)) {
+                        $communityModule = \Yii::$app->getModule('community');
+                        if ($communityModule) {
+                            OrganizzazioniUtility::addOrganizationCommunityUser($profilo, $userToInvite->id, $profilo->getBaseRole(), $communityModule);
+                        }
+                    }
+                }
             }
 
             $this->setRedirectArray($redirectUrl);
@@ -347,8 +447,10 @@ class ProfiloController extends base\ProfiloController
     }
 
     /**
-     * @param Event $event
+     * @param $event
+     * @throws \Throwable
      * @throws \yii\base\InvalidConfigException
+     * @throws \yii\db\StaleObjectException
      */
     public function beforeDeleteM2m($event)
     {
@@ -366,6 +468,10 @@ class ProfiloController extends base\ProfiloController
         /** @var ProfiloUserMm $profiloUserMmRow */
         $profiloUserMmRow = $profiloUserMmModel::findOne(['profilo_id' => $profiloId, 'user_id' => $userId]);
 
+        if ($this->organizzazioniModule->enableCommunityCreation) {
+            $profilo->removeMembershipFromCommunities($userId);
+        }
+
         // Remove all cwh permissions for domain = community
         $profilo->setCwhAuthAssignments($profiloUserMmRow, true);
     }
@@ -375,6 +481,7 @@ class ProfiloController extends base\ProfiloController
      */
     public function afterDeleteM2m($event)
     {
+
         $this->setRedirectArray([Url::previous()]);
     }
 
@@ -385,12 +492,15 @@ class ProfiloController extends base\ProfiloController
     {
         $urlPrevious = Url::previous();
         $id = Yii::$app->request->get('id');
-
         if (strstr($urlPrevious, 'associate-organization-m2m')) {
             $this->setRedirectArray('/' . AmosAdmin::getModuleName() . '/user-profile/update?id=' . $id);
         }
         if (strstr($urlPrevious, 'associate-project-m2m')) {
             $this->setRedirectArray('/project_management/projects/update?id=' . $id . '#tab-organizations');
+        }
+        if (!empty(\Yii::$app->request->get('redirectCancelButton'))) {
+            $redirectUrl = \Yii::$app->request->get('redirectCancelButton');
+            $this->setRedirectArray($redirectUrl);
         }
     }
 
@@ -698,9 +808,9 @@ class ProfiloController extends base\ProfiloController
                     // If the confirm of an user that request to join an organization is disabled set directly the active status and do anything else.
                     $userOrganization->status = ProfiloUserMm::STATUS_ACTIVE;
                     $message = Module::tHtml(
-                        'amosorganizzazioni',
-                        "You are now linked to the organization"
-                    ) . ' ' . $organizationName;
+                            'amosorganizzazioni',
+                            "You are now linked to the organization"
+                        ) . ' ' . $organizationName;
                     if ($this->forceSendWelcomeInJoinOrganization) {
                         $emailUtil = new EmailUtility(
                             EmailUtility::WELCOME,
@@ -750,9 +860,9 @@ class ProfiloController extends base\ProfiloController
                     $organization->setCwhAuthAssignments($userOrganization);
                     Yii::$app->getSession()->addFlash('success', $message);
                     if (strpos($redirectAction, 'associate-organization-m2m') && !Yii::$app->user->can(
-                        'ASSOCIATE_ORGANIZZAZIONI_TO_USER',
-                        ['model' => $userProfile]
-                    )) {
+                            'ASSOCIATE_ORGANIZZAZIONI_TO_USER',
+                            ['model' => $userProfile]
+                        )) {
                         $redirectAction = '/' . AmosAdmin::getModuleName() . '/user-profile/update?id=' . $userProfile->id . '#tab-network';
                     }
                     $action = (isset($redirectAction) ? $redirectAction : $defaultAction);
@@ -1049,6 +1159,7 @@ class ProfiloController extends base\ProfiloController
      */
     public function actionOrganizationEmployees($id, $classname, array $params)
     {
+
         if (\Yii::$app->request->isAjax) {
             $this->setUpLayout(false);
 
@@ -1066,6 +1177,10 @@ class ProfiloController extends base\ProfiloController
             $enableModal = $params['enableModal'];
             $gridId = $params['gridId'];
             $organizationManagerRoleName = $params['organizationManagerRoleName'];
+            $redirectUrlAfterAssociate = $params['redirectUrlAfterAssociate'];
+            $filterForRole = $params['filterForRole'];
+            $userStatusAssociate = $params['userStatusAssociate'];
+            $isUpdate = $params['isUpdate'];
 
             return $this->render(
                 'organization-employees',
@@ -1085,7 +1200,12 @@ class ProfiloController extends base\ProfiloController
                     'enableModal' => $enableModal,
                     'gridId' => $gridId,
                     'organizationManagerRoleName' => $organizationManagerRoleName,
-                ]
+                    'redirectUrlAfterAssociate' => $redirectUrlAfterAssociate,
+                    'filterForRole' => $filterForRole,
+                    'userStatusAssociate' => $userStatusAssociate,
+                    'isUpdate' => $isUpdate
+
+            ]
             );
         }
         return null;
@@ -1143,53 +1263,7 @@ class ProfiloController extends base\ProfiloController
 
         /** @var Profilo $model */
         $model = $this->findModel($id);
-
-        if (is_null($model->community_id)) {
-            $managerStatus = CommunityUserMm::STATUS_ACTIVE; //$this->getManagerStatus($model, $oldAttributes);
-
-            $eventBefore = new Event();
-            $eventBefore->sender = [
-                'organization' => $model
-            ];
-            $this->trigger(self::EVENT_BEFORE_CREATE_COMMUNITY, $eventBefore);
-
-            $ok = OrganizzazioniUtility::createCommunity($model, $managerStatus);
-
-            $eventAfter = new Event();
-            $eventAfter->sender = [
-                'organization' => $model,
-                'creationOk' => $ok
-            ];
-            $this->trigger(self::EVENT_AFTER_CREATE_COMMUNITY, $eventAfter);
-
-            if ($ok) {
-                // If it's the first validation, check if the logged user is the same as the manager.
-                // In that case set the manager in the active status.
-                $managers = OrganizzazioniUtility::findOrganizzazioneManagers($model);
-
-                foreach ($managers as $eventManager) {
-                    /** @var CommunityUserMm $eventManager */
-                    if (($eventManager->user_id == Yii::$app->getUser()->getId()) && ($eventManager->status != CommunityUserMm::STATUS_ACTIVE)) {
-                        $eventManager->status = CommunityUserMm::STATUS_ACTIVE;
-                        $eventManager->save();
-                    }
-                }
-            }
-
-            if ($model->save(false) && $ok) {
-                Yii::$app->getSession()->addFlash(
-                    'success',
-                    Module::t('amosorganizzazioni', '#community_create_success')
-                );
-            } else {
-                Yii::$app->getSession()->addFlash('danger', Module::t('amosorganizzazioni', '#community_create_error'));
-            }
-        } else {
-            Yii::$app->getSession()->addFlash(
-                'info',
-                Module::t('amosorganizzazioni', '#community_create_already_exists')
-            );
-        }
+        $model->createCommunityOrganizzazione();
 
         return $this->redirect($model->getFullViewUrl());
     }
@@ -1320,6 +1394,46 @@ class ProfiloController extends base\ProfiloController
     }
 
     /**
+     *
+     */
+    public function actionMyOrganizations()
+    {
+        Url::remember();
+        Yii::$app->view->params['textHelp']['filename'] = 'organizzazioni_dashboard_description';
+        $this->setDataProvider($this->modelSearch->searchMyOrganizations(Yii::$app->request->getQueryParams()));
+
+
+        if ($this->organizzazioniModule->enableManageLinks) {
+            $labelLinkAll = Module::t('amosorganizzazioni', 'Tutte le organizzazioni');
+            $urlLinkAll = '/organizzazioni/profilo/index';
+            Yii::$app->view->params['labelLinkAll'] = $labelLinkAll;
+            Yii::$app->view->params['urlLinkAll'] = $urlLinkAll;
+        }
+
+        \Yii::$app->controller->view->params['titleSection'] = Module::t('amosorganizzazioni', 'Le mie organizzazioni');
+        $this->view->params['currentDashboard'] = $this->getCurrentDashboard();
+
+        $this->setImportButton();
+
+
+        $this->setUpLayout('list');
+        return $this->render(
+            'index',
+            [
+                'dataProvider' => $this->getDataProvider(),
+                'model' => $this->getModelSearch(),
+                'currentView' => $this->getCurrentView(),
+                'availableViews' => $this->getAvailableViews(),
+                'url' => ($this->url) ? $this->url : null,
+                'parametro' => ($this->parametro) ? $this->parametro : null,
+                'moduleName' => ($this->moduleName) ? $this->moduleName : null,
+                'contextModelId' => ($this->contextModelId) ? $this->contextModelId : null,
+            ]
+        );
+    }
+
+
+    /**
      * @param int $id
      * @return \yii\web\Response
      * @throws \yii\web\NotFoundHttpException
@@ -1350,4 +1464,34 @@ class ProfiloController extends base\ProfiloController
 
         return $this->redirect(Url::previous());
     }
+
+
+    /**
+     *
+     * @return array
+     */
+    public static function getManageLinks()
+    {
+        $links = [];
+
+        $module = \Yii::$app->getModule('organizzazioni');
+        if ($module && $module->enableManageLinks) {
+            if (!\Yii::$app->user->isGuest) {
+                $links[] = [
+                    'title' => Module::t('amosorganizzazioni', 'Visualizza tutte le mie organizzazioni'),
+                    'label' => Module::t('amosorganizzazioni', 'Le mie organizzazioni'),
+                    'url' => '/organizzazioni/profilo/my-organizations'
+                ];
+            }
+
+            $links[] = [
+                'title' => Module::t('amosorganizzazioni', 'Visualizza tutte le organizzazioni'),
+                'label' => Module::t('amosorganizzazioni', 'Tutte'),
+                'url' => '/organizzazioni/profilo/index'
+            ];
+        }
+
+        return $links;
+    }
+
 }

@@ -109,6 +109,11 @@ class OrganizationsMembersWidget extends Widget
     public $targetUrlParams = null;
 
     /**
+     * @var null
+     */
+    public $userStatusAssociate = null;
+
+    /**
      * @var string $gridId
      */
     public $gridId = 'organizations-employees-grid';
@@ -127,6 +132,34 @@ class OrganizationsMembersWidget extends Widget
      * @var string
      */
     public $organizationManagerRoleName = '';
+
+    /**
+     * @var array
+     */
+    public $filterForRole = null;
+
+    /**
+     * @var string
+     */
+    public $labelAssociate = '';
+    /**
+     * @var string
+     */
+    public $labelCreateNewBtn = '';
+
+    /**
+     * @var string
+     */
+    public $redirectUrlAfterAssociate = '';
+
+    /**
+     * @var null
+     */
+    public $filterCategoryInvitation = null;
+
+
+    public $isUpdate = null;
+
 
     /**
      * @throws InvalidConfigException
@@ -186,6 +219,10 @@ class OrganizationsMembersWidget extends Widget
         $params['enableModal'] = $this->enableModal;
         $params['gridId'] = $this->gridId;
         $params['organizationManagerRoleName'] = $this->organizationManagerRoleName;
+        $params['redirectUrlAfterAssociate'] = $this->redirectUrlAfterAssociate;
+        $params['filterForRole'] = $this->filterForRole;
+        $params['userStatusAssociate'] = $this->userStatusAssociate;
+        $params['isUpdate'] = $this->isUpdate;
 
         $url = \Yii::$app->urlManager->createUrl(
             [
@@ -514,6 +551,11 @@ class OrganizationsMembersWidget extends Widget
                 );
             }
         }
+        $roleName = $this->filterForRole;
+        if (!empty($roleName)) {
+            $query->leftJoin('auth_assignment', 'auth_assignment.user_id = user.id')
+                ->andWhere(['auth_assignment.item_name' => $roleName]);
+        }
 
         /** @var \open20\amos\invitations\Module $invitationsModule */
         $invitationsModule = Yii::$app->getModule('invitations');
@@ -528,12 +570,27 @@ class OrganizationsMembersWidget extends Widget
             '/invitations/invitation/index' . (\Yii::$app->user->can('INVITATIONS_ADMINISTRATOR') ? '-all' : '') . '/',
             'moduleName' => Module::getModuleName()
         ];
+        if(!empty($this->filterCategoryInvitation)){
+            $createNewTargetUrl['category'] = $this->filterCategoryInvitation;
+        }
         if ($this->organizationsModule->enableUniqueSecretCodeForInvitation) {
             $createNewTargetUrl['contextModelId'] = $model->unique_secret_code;
             $createNewTargetUrl['registerAction'] = 'register-with-code';
         } else {
             $createNewTargetUrl['contextModelId'] = $model->id;
         }
+
+        $targetUrlParams = [];
+        if (!empty($roleName)) {
+            $targetUrlParams = ['role_name' => $roleName];
+        }
+        if (!empty($this->redirectUrlAfterAssociate)) {
+            $targetUrlParams = ArrayHelper::merge($targetUrlParams, ['redirectUrlAfterAssociate' => $this->redirectUrlAfterAssociate]);
+        }
+        if(!empty($this->userStatusAssociate)){
+            $targetUrlParams['userStatus'] = $this->userStatusAssociate;
+        }
+
         $widget = M2MWidget::widget(
             [
                 'model' => $model,
@@ -552,14 +609,15 @@ class OrganizationsMembersWidget extends Widget
                 'createAdditionalAssociateButtonsEnabled' => false,
                 'disableCreateButton' => (!$invitationsModulePresent || !Yii::$app->user->can('INVITATION_CREATE')),
                 'checkPermWithNewMethod' => false,
-                'btnAssociaLabel' => Module::t('amosorganizzazioni', 'Associate employees'),
-                'btnAssociaClass' => 'btn btn-primary',
-                'createNewBtnLabel' => Module::t('amosorganizzazioni', 'Invite employees'),
+                'btnAssociaLabel' => !empty($this->labelAssociate) ? $this->labelAssociate : Module::t('amosorganizzazioni', 'Associate employees'),
+                'btnAssociaClass' => 'btn btn-primary m-l-5',
+                'createNewBtnLabel' => !empty($this->labelCreateNewBtn) ? $this->labelCreateNewBtn : Module::t('amosorganizzazioni', 'Invite employees'),
                 'btnAdditionalAssociateLabel' => Module::t('amosorganizzazioni', 'Invite employees'),
                 'actionColumnsTemplate' => $actionColumnsTemplate,
                 'deleteRelationTargetIdField' => 'user_id',
 //            'targetUrl' => $insass ? '/community/community/insass-m2m' : '/community/community/associa-m2m',
                 'targetUrl' => '/organizzazioni/profilo/associa-m2m',
+                'targetUrlParams' => $targetUrlParams,
                 'additionalTargetUrl' => '/organizzazioni/profilo/additional-associate-m2m',
                 'createNewTargetUrl' => $createNewTargetUrl,
                 'moduleClassName' => Module::className(),
@@ -575,7 +633,7 @@ class OrganizationsMembersWidget extends Widget
             ]
         );
 
-        return "<div id='" . $gridId . "' data-pjax-container='" . $gridId . "-pjax' data-pjax-timeout=\"10000\"  class=\"table-responsive\">" . $widget . "</div>";
+        return "<div id='" . $gridId . "' data-pjax-container='" . $gridId . "-pjax' data-pjax-timeout=\"10000\" >" . $widget . "</div>";
     }
 
     /**
