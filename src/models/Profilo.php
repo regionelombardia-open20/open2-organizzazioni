@@ -389,9 +389,9 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     /**
      * @return array
      */
-    public static function getEditFields()
+    public function getEditFields()
     {
-        $labels = self::attributeLabels();
+        $labels = $this->attributeLabels();
 
         return [
             [

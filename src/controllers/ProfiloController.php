@@ -995,7 +995,7 @@ class ProfiloController extends base\ProfiloController
                     Module::tHtml('amosorganizzazioni', "Error occured while subscribing the user") . $nomeCognome . Module::tHtml(
                         'amosorganizzazioni',
                         "to community"
-                    ) . $communityName
+                    ) . $organizationName
                 );
                 return $this->redirect($defaultAction);
             }

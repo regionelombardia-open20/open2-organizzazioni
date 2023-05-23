@@ -541,6 +541,7 @@ class OrganizationsMembersWidget extends Widget
         if (!empty($this->userStatusAssociate)) {
             $targetUrlParams['userStatus'] = $this->userStatusAssociate;
         }
+        
 
         $widget = M2MWidget::widget([
             'model' => $model,
@@ -552,7 +553,6 @@ class OrganizationsMembersWidget extends Widget
                 'exportColumns' => $exportColumns
             ],
             'forceListRender' => true,
-            'targetUrlParams' => $this->targetUrlParams,
             'gridId' => $gridId,
             'firstGridSearch' => true,
             'isModal' => $this->enableModal,
