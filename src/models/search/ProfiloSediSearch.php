@@ -13,7 +13,7 @@ namespace open20\amos\organizzazioni\models\search;
 
 use open20\amos\organizzazioni\models\ProfiloSedi;
 use open20\amos\organizzazioni\Module;
-use open20\amos\core\models\AmosModel as Model;
+use yii\base\Model;
 use yii\data\ActiveDataProvider;
 
 /**

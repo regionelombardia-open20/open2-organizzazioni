@@ -37,7 +37,6 @@ $organizzazioniModule = Yii::$app->getModule(Module::getModuleName());
 $emptyUserProfile = AmosAdmin::instance()->createModel('UserProfile');
 $emptyUser = new User();
 $isUpdate = (isset($isUpdate) ? $isUpdate : false);
-
 ?>
 
 <?php if ($model->isNewRecord): ?>
@@ -58,12 +57,20 @@ $isUpdate = (isset($isUpdate) ? $isUpdate : false);
                     return UserCardWidget::widget(['model' => $model->user->userProfile]);
                 }
             ],
-            'user.userProfile.surnameName',
+            [
+                'attribute' => 'user.userProfile.nameSurname',
+                'label' => Module::t('amosadmin', 'Nome Cognome'),
+                'value' => function ($model) {
+                    /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
+                    return $model->user->userProfile->nomeCognome;
+                }
+            ],
             [
                 'attribute' => 'user.email',
                 'label' => $emptyUser->getAttributeLabel('email')
             ],
         ];
+
         if ($organizzazioniModule->viewStatusEmployees) {
             $statusLabel = Module::t('amosorganizzazioni', '#profilo_user_mm_status_label');
             $columns['status'] = [
@@ -81,6 +88,7 @@ $isUpdate = (isset($isUpdate) ? $isUpdate : false);
                 }
             ];
         }
+        
         if ($organizzazioniModule->viewRoleEmployees) {
             $roleLabel = Module::t('amosorganizzazioni', '#profilo_user_mm_role_label');
             $columns['role'] = [
@@ -99,13 +107,15 @@ $isUpdate = (isset($isUpdate) ? $isUpdate : false);
             ];
         }
         ?>
+        
         <div class="col-xs-12">
-            <?= AmosGridView::widget([
-                'dataProvider' => new ActiveDataProvider([
-                    'query' => $appController->getOrganizationEmployeesQuery($model, false)
-                ]),
-                'columns' => $columns
-            ]); ?>
+        <?= AmosGridView::widget([
+            'dataProvider' => new ActiveDataProvider([
+                'query' => $appController->getOrganizationEmployeesQuery($model, false)
+            ]),
+            'columns' => $columns
+        ])
+        ?>
         </div>
     <?php else: ?>
         <?php

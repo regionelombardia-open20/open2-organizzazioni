@@ -180,8 +180,14 @@ abstract class Profilo extends NetworkModel
             [['istat_code'], 'string', 'max' => 10],
             [['unique_secret_code'], 'string', 'max' => 50],
             [['logoOrganization'], 'file', 'extensions' => 'jpeg, jpg, png, gif', 'maxFiles' => 1],
-            [['allegati'], 'file', 'maxFiles' => 0]
         ];
+
+        if (!empty($this->organizzazioniModule->allowedFileExtensions)) {
+            $extensions = join(', ', $this->organizzazioniModule->allowedFileExtensions);
+            $rules[] = [['allegati'], 'file', 'extensions' => $extensions, 'maxFiles' => 0];
+        } else {
+            $rules[] = [['allegati'], 'file', 'maxFiles' => 0];
+        }
 
         if ($this->organizzazioniModule->enableProfiloEntiType === true) {
             $rules[] = [['istat_code'], 'required', 'when' => function ($model) use ($typeMunicipalityId, $disableFieldChecks) {

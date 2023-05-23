@@ -13,7 +13,6 @@ namespace open20\amos\organizzazioni\controllers;
 
 use open20\amos\admin\AmosAdmin;
 use open20\amos\admin\models\UserProfile;
-use open20\amos\community\models\CommunityUserMm;
 use open20\amos\core\forms\editors\m2mWidget\controllers\M2MWidgetControllerTrait;
 use open20\amos\core\forms\editors\m2mWidget\M2MEventsEnum;
 use open20\amos\core\helpers\Html;

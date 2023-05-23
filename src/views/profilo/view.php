@@ -10,11 +10,7 @@
  */
 
 use open20\amos\attachments\components\AttachmentsList;
-use open20\amos\community\models\CommunityUserMm;
-use open20\amos\community\widgets\JoinCommunityWidget;
 use open20\amos\core\forms\AccordionWidget;
-use open20\amos\core\forms\ContextMenuWidget;
-use open20\amos\core\forms\ListTagsWidget;
 use open20\amos\core\forms\MapWidget;
 use open20\amos\core\helpers\Html;
 use open20\amos\core\icons\AmosIcons;
@@ -23,8 +19,6 @@ use open20\amos\organizzazioni\assets\OrganizzazioniAsset;
 use open20\amos\organizzazioni\models\ProfiloSedi;
 use open20\amos\organizzazioni\Module;
 use open20\amos\organizzazioni\widgets\JoinProfiloWidget;
-use open20\amos\core\utilities\StringUtils;
-
 
 /**
  * @var yii\web\View $this
@@ -147,7 +141,7 @@ $hasLegalHeadquarter = !is_null($legalHeadquarter);
         <hr class="m-t-30 m-b-30 border-dotted" style="border-style:dotted">
 
         <?php
-        $classSectionSedi = (!$organizzazioniModule->forceSameSede && $hasLegalHeadquarter) ? 'col-md-6' : '';
+        $classSectionSedi = ($organizzazioniModule->forceSameSede || !$hasLegalHeadquarter || $model->la_sede_legale_e_la_stessa_del) ? 'col-md-12' : 'col-md-6';
         ?>
         <div class="row">
             <div class="col-xs-12 <?= $classSectionSedi ?>">
@@ -201,129 +195,130 @@ $hasLegalHeadquarter = !is_null($legalHeadquarter);
             </div>
 
             <!-- < ?php if (!$organizzazioniModule->forceSameSede) : ?> -->
+            <?php if (!$model->la_sede_legale_e_la_stessa_del) { ?>
+                <div class="col-xs-12 <?= $classSectionSedi ?>">
 
-            <div class="col-xs-12 <?= $classSectionSedi ?>">
-
-                <div class="callout callout-secondary">
-                    <div class="callout-title">
-                        <?= Module::t('amosorganizzazioni', 'Sede legale') ?>
-                    </div>
+                    <div class="callout callout-secondary">
+                        <div class="callout-title">
+                            <?= Module::t('amosorganizzazioni', 'Sede legale') ?>
+                        </div>
 
 
-                    <?php
-                    $accordionSedeLegale = '';
-                    $sedeLegaleIndirizzo = '';
-                    $mapSedeLegale = '';
+                        <?php
+                        $accordionSedeLegale = '';
+                        $sedeLegaleIndirizzo = '';
+                        $mapSedeLegale = '';
 
-                    if (!$organizzazioniModule->oldStyleAddressEnabled) {
-                        $sedeLegaleIndirizzo = $model->sedeLegaleIndirizzo;
-                        if ($sedeLegaleIndirizzo) {
-                            $mapSedeLegale = MapWidget::widget([
-                                'coordinates' => [
-                                    'lat' => $sedeLegaleIndirizzo->latitude,
-                                    'lng' => $sedeLegaleIndirizzo->longitude,
-                                ],
-                                'zoom' => 17
-                            ]);
+                        if (!$organizzazioniModule->oldStyleAddressEnabled) {
+                            $sedeLegaleIndirizzo = $model->sedeLegaleIndirizzo;
+                            if ($sedeLegaleIndirizzo) {
+                                $mapSedeLegale = MapWidget::widget([
+                                    'coordinates' => [
+                                        'lat' => $sedeLegaleIndirizzo->latitude,
+                                        'lng' => $sedeLegaleIndirizzo->longitude,
+                                    ],
+                                    'zoom' => 17
+                                ]);
+                            }
                         }
-                    }
 
-                    if ($hasLegalHeadquarter) {
-                        $slIndirizzo = Html::tag(
-                            'div',
-                            Html::tag(
+                        if ($hasLegalHeadquarter) {
+                            $slIndirizzo = Html::tag(
                                 'div',
-                                $legalHeadquarter->getAttributeLabel('address'),
-                                ['class' => 'col-xs-12 col-sm-4 info-label']
-                            ) .
                                 Html::tag(
                                     'div',
-                                    $model->getAddressFieldSedeLegaleForView(),
-                                    ['class' => 'col-xs-12 col-sm-8 info-value']
-                                ),
-                            ['class' => 'col-xs-12 nop']
-                        );
+                                    $legalHeadquarter->getAttributeLabel('address'),
+                                    ['class' => 'col-xs-12 col-sm-4 info-label']
+                                ) .
+                                    Html::tag(
+                                        'div',
+                                        $model->getAddressFieldSedeLegaleForView(),
+                                        ['class' => 'col-xs-12 col-sm-8 info-value']
+                                    ),
+                                ['class' => 'col-xs-12 nop']
+                            );
 
-                        $slEmail = Html::tag(
-                            'div',
-                            Html::tag(
+                            $slEmail = Html::tag(
                                 'div',
-                                $legalHeadquarter->getAttributeLabel('email'),
-                                ['class' => 'col-xs-12 col-sm-4 info-label']
-                            ) .
                                 Html::tag(
                                     'div',
-                                    $legalHeadquarter->email,
-                                    ['class' => 'col-xs-12 col-sm-8 info-value']
-                                ),
-                            ['class' => 'col-xs-12 nop']
-                        );
+                                    $legalHeadquarter->getAttributeLabel('email'),
+                                    ['class' => 'col-xs-12 col-sm-4 info-label']
+                                ) .
+                                    Html::tag(
+                                        'div',
+                                        $legalHeadquarter->email,
+                                        ['class' => 'col-xs-12 col-sm-8 info-value']
+                                    ),
+                                ['class' => 'col-xs-12 nop']
+                            );
 
-                        $slPec = Html::tag(
-                            'div',
-                            Html::tag(
+                            $slPec = Html::tag(
                                 'div',
-                                $legalHeadquarter->getAttributeLabel('pec'),
-                                ['class' => 'col-xs-12 col-sm-4 info-label']
-                            ) .
                                 Html::tag(
                                     'div',
-                                    $legalHeadquarter->pec,
-                                    ['class' => 'col-xs-12 col-sm-8 info-value']
-                                ),
-                            ['class' => 'col-xs-12 nop']
-                        );
+                                    $legalHeadquarter->getAttributeLabel('pec'),
+                                    ['class' => 'col-xs-12 col-sm-4 info-label']
+                                ) .
+                                    Html::tag(
+                                        'div',
+                                        $legalHeadquarter->pec,
+                                        ['class' => 'col-xs-12 col-sm-8 info-value']
+                                    ),
+                                ['class' => 'col-xs-12 nop']
+                            );
 
-                        $slTelefono = Html::tag(
-                            'div',
-                            Html::tag(
+                            $slTelefono = Html::tag(
                                 'div',
-                                $legalHeadquarter->getAttributeLabel('phone'),
-                                ['class' => 'col-xs-12 col-sm-4 info-label']
-                            ) .
                                 Html::tag(
                                     'div',
-                                    $legalHeadquarter->phone,
-                                    ['class' => 'col-xs-12 col-sm-8 info-value']
-                                ),
-                            ['class' => 'col-xs-12 nop']
-                        );
+                                    $legalHeadquarter->getAttributeLabel('phone'),
+                                    ['class' => 'col-xs-12 col-sm-4 info-label']
+                                ) .
+                                    Html::tag(
+                                        'div',
+                                        $legalHeadquarter->phone,
+                                        ['class' => 'col-xs-12 col-sm-8 info-value']
+                                    ),
+                                ['class' => 'col-xs-12 nop']
+                            );
 
-                        $slFax = Html::tag(
-                            'div',
-                            Html::tag(
+                            $slFax = Html::tag(
                                 'div',
-                                $legalHeadquarter->getAttributeLabel('fax'),
-                                ['class' => 'col-xs-12 col-sm-4 info-label']
-                            ) .
                                 Html::tag(
                                     'div',
-                                    $legalHeadquarter->fax,
-                                    ['class' => 'col-xs-12 col-sm-8 info-value']
-                                ),
-                            ['class' => 'col-xs-12 nop']
-                        );
+                                    $legalHeadquarter->getAttributeLabel('fax'),
+                                    ['class' => 'col-xs-12 col-sm-4 info-label']
+                                ) .
+                                    Html::tag(
+                                        'div',
+                                        $legalHeadquarter->fax,
+                                        ['class' => 'col-xs-12 col-sm-8 info-value']
+                                    ),
+                                ['class' => 'col-xs-12 nop']
+                            );
 
-                        $accordionSedeLegale .= Html::tag(
-                            'div',
-                            $slEmail . $slPec . $slTelefono . $slFax . $slIndirizzo,
-                            ['class' => 'row']
-                        );
+                            $accordionSedeLegale .= Html::tag(
+                                'div',
+                                $slEmail . $slPec . $slTelefono . $slFax . $slIndirizzo,
+                                ['class' => 'row']
+                            );
 
-                        $accordionSedeLegale .= Html::tag(
-                            'div',
-                            $mapSedeLegale,
-                            ['class' => 'm-t-30']
-                        );
-                    }
+                            $accordionSedeLegale .= Html::tag(
+                                'div',
+                                $mapSedeLegale,
+                                ['class' => 'm-t-30']
+                            );
+                        }
 
-                    ?>
-                    <?= $accordionSedeLegale ?>
+                        ?>
+                        <?= $accordionSedeLegale ?>
+
+                    </div>
+                    <!-- < ?php endif; ?> -->
 
                 </div>
-                <!-- < ?php endif; ?> -->
-
-            </div>
+            <?php } ?>
 
             <div class="col-xs-12">
                 <?= AccordionWidget::widget([

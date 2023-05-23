@@ -9,7 +9,6 @@
  * @category   CategoryName
  */
 
-use open20\amos\core\forms\AccordionWidget;
 use open20\amos\core\forms\ContextMenuWidget;
 use open20\amos\organizzazioni\Module;
 use yii\helpers\Html;

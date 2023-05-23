@@ -281,7 +281,7 @@ class OrganizzazioniUtility extends BaseObject
      * @param string $managerStatus
      * @return bool
      */
-    public static function createCommunity($model, $managerStatus = '')
+    public static function createCommunity($model, $managerStatus = '', $type)
     {
         /** @var Module $organizationsModule */
         $organizationsModule = Module::instance();
@@ -291,8 +291,6 @@ class OrganizzazioniUtility extends BaseObject
 
         $title = ($model->title ? $model->title : '');
         $description = ($model->description ? $model->description : '');
-
-        $type = CommunityType::COMMUNITY_TYPE_CLOSED; // DEFAULT TYPE
         $context = $organizationsModule->model('Profilo');
         $managerRole = $model->getManagerRole();
 
@@ -439,6 +437,7 @@ class OrganizzazioniUtility extends BaseObject
                 ? $model->getProfiloUserMms()->andWhere([$profiloUserMmTable . '.role' => $showRoles])
                 : $model->getProfiloUserMms();
         }
+        $query->andWhere([$profiloUserMmTable . '.status' => ProfiloUserMm::STATUS_ACTIVE]);
 
         $query->innerJoin($userTable, $profiloUserMmTable . '.user_id = ' . $userTable . '.id AND ' . $userTable . '.deleted_at IS NULL');
         $query->innerJoin($userProfileTable, $userProfileTable . '.user_id = ' . $userTable . '.id AND ' . $userProfileTable . '.deleted_at IS NULL');

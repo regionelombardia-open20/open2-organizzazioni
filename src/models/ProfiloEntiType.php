@@ -23,6 +23,9 @@ use open20\amos\organizzazioni\Module;
  */
 class ProfiloEntiType extends \open20\amos\organizzazioni\models\base\ProfiloEntiType
 {
+    /**
+     * 
+     */
     const TYPE_MUNICIPALITY = 1;
     const TYPE_OTHER_ENTITY = 2;
 

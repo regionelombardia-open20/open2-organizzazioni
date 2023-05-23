@@ -10,7 +10,6 @@
  */
 
 use open20\amos\core\forms\ContextMenuWidget;
-use open20\amos\core\icons\AmosIcons;
 use open20\amos\organizzazioni\Module;
 use yii\helpers\Html;
 

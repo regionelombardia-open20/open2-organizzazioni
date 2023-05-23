@@ -134,9 +134,9 @@ function manageEnabledFields() {
 
 //manageEnabledFields();
 
-//profiloEntiTypeElement.change(function() {
-//    manageEnabledFields();
-//});
+profiloEntiTypeElement.change(function() {
+   manageEnabledFields();
+});
 JS;
 
 if (!$disableFieldChecks) {
@@ -311,7 +311,8 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
                     ],
                     'pluginOptions' => [ // Plugin options of the Kartik's FileInput widget
                         'maxFileCount' => 100, // Client max files
-                        'showPreview' => false
+                        'showPreview' => false,
+                        'allowedFileExtensions' => !empty($organizzazioniModule->allowedFileExtensions)? $organizzazioniModule->allowedFileExtensions: null,
                     ]
                 ])->label(Module::t('amosorganizzazioni', '#attachments_field'))->hint(Module::t('amosorganizzazioni', '#attachments_field_hint')) ?>
 
@@ -540,7 +541,7 @@ $modelUserProfile = AmosAdmin::instance()->createModel('UserProfile');
             </div>
         </div>
 
-        <?php if (!is_null($moduleTag)) : ?>
+        <?php if (isset($moduleTag) && in_array(get_class($model), $moduleTag->modelsEnabled) && $moduleTag->behaviors) : ?>
             <div class="col-xs-12">
                 <?= Html::tag('h2', Module::t('amosorganizzazioni', '#settings_receiver_title'), ['class' => 'subtitle-form']) ?>
                 <div class="col-xs-12 receiver-section">

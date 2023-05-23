@@ -77,11 +77,21 @@ class UserNetworkWidget extends Widget
         $post = \Yii::$app->request->post();
         $organizzazioniPostName = $userNetworkWidgetOrganizzazioniClassName::getSearchPostName();
         $sediPostName = $userNetworkWidgetSediClassName::getSearchPostName();
+        
         $organizzazioniWidget = '';
         $sediWidget = '';
         $sedi_enabled = true;
         
-        if (($organizationsModule->enabled_widget_organizzazioni === true) && (!$post || ($post && isset($post[$organizzazioniPostName])))) {
+        if (
+            $organizationsModule->enabled_widget_organizzazioni === true
+            && (
+                !$post
+                || (
+                    $post
+                    && isset($post[$organizzazioniPostName])
+                )
+            )
+        ) {
             $organizzazioniWidget = $userNetworkWidgetOrganizzazioniClassName::widget([
                 'userId' => $this->userId,
                 'isUpdate' => $this->isUpdate,
@@ -100,6 +110,8 @@ class UserNetworkWidget extends Widget
                 'gridId' => $this->gridSediId,
             ]);
         }
-        return $organizzazioniWidget . $sediWidget;
+    
+        return $organizzazioniWidget
+            . $sediWidget;
     }
 }

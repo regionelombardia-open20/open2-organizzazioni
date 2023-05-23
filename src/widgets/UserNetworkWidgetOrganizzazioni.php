@@ -105,18 +105,30 @@ class UserNetworkWidgetOrganizzazioni extends Widget
 
         /** @var UserProfile $userProfileModel */
         $userProfileModel = AmosAdmin::instance()->createModel('UserProfile');
+
         /** @var UserProfile $model */
         $model = $userProfileModel::findOne(['user_id' => $this->userId]);
+
         /** @var AmosUser $loggedUser */
         $loggedUser = Yii::$app->getUser();
         $loggedUserId = $loggedUser->id;
-        $this->isUpdate = $this->isUpdate && (($loggedUserId == $model->user_id) || Yii::$app->user->can('AMMINISTRATORE_ORGANIZZAZIONI'));
+        $this->isUpdate = $this->isUpdate
+            && (
+                ($loggedUserId == $model->user_id)
+                || Yii::$app->user->can('AMMINISTRATORE_ORGANIZZAZIONI')
+            );
 
         /** @var Profilo $profilo */
         $profilo = $this->organizationsModule->createModel('Profilo');
         $itemsMittente = $profilo->getUserNetworkWidgetColumns();
 
-        $actionColumnsButtons = $profilo->getUserNetworkWidgetActionColumns($model, $this->userId, $loggedUser, $loggedUserId);
+        $actionColumnsButtons = $profilo->getUserNetworkWidgetActionColumns(
+            $model,
+            $this->userId,
+            $loggedUser,
+            $loggedUserId
+        );
+        
         $defaultActionColumnsTemplate = $profilo->getUserNetworkWidgetActionColumnsTemplate();
 
         if ($this->adminModule->roleAndAreaOnOrganizations) {
@@ -144,6 +156,8 @@ class UserNetworkWidgetOrganizzazioni extends Widget
                 }
             ];
 
+          
+
             $actionColumnsButtons['relationAttributeManage'] = function ($url, $model) {
                 /** @var ProfiloUserMm $model */
                 $url = Yii::$app->urlManager->createUrl($createUrlParamsRole = [
@@ -161,32 +175,48 @@ class UserNetworkWidgetOrganizzazioni extends Widget
                     'id' => $modalId,
                 ]);
 
-                echo Html::tag('div', Html::label('Ruolo', 'user_profile_role_id') . Select::widget([
-                        'auto_fill' => true,
-                        'hideSearch' => true,
-                        'theme' => 'bootstrap',
-                        'data' => ArrayHelper::map($this->getUserProfileRoles($model), 'id', 'name'),
-                        'model' => $model,
-                        'attribute' => 'user_profile_role_id',
-                        'options' => [
-                            'prompt' => Module::t('amosorganizzazioni', 'Select/Choose') . '...',
-                            'disabled' => false,
-                            'id' => $selectRoleId
-                        ],
-                        'pluginOptions' => [
-                            'allowClear' => false,
-                        ]
-                    ]), ['class' => 'm-15-0']);
+                echo Html::tag(
+                    'div',
+                    Html::label('Ruolo', 'user_profile_role_id')
+                        . Select::widget([
+                            'auto_fill' => true,
+                            'hideSearch' => true,
+                            'theme' => 'bootstrap',
+                            'data' => ArrayHelper::map(
+                                $this->getUserProfileRoles($model),
+                                'id',
+                                'name'
+                            ),
+                            'model' => $model,
+                            'attribute' => 'user_profile_role_id',
+                            'options' => [
+                                'prompt' => Module::t('amosorganizzazioni', '#choose...'),
+                                'disabled' => false,
+                                'id' => $selectRoleId
+                            ],
+                            'pluginOptions' => [
+                                'allowClear' => false,
+                            ]
+                        ]),
+                    ['class' => 'm-15-0']
+                );
 
-                echo Html::tag('div', Html::label('Area', 'user_profile_area_id') . Select::widget([
-                        'auto_fill' => true,
-                        'hideSearch' => true,
-                        'theme' => 'bootstrap',
-                        'data' => ArrayHelper::map($this->getUserProfileAreas($model), 'id', 'name'),
-                        'model' => $model,
-                        'attribute' => 'user_profile_area_id',
-                        'options' => [
-                            'prompt' => Module::t('amosorganizzazioni', 'Select/Choose') . '...',
+                echo Html::tag(
+                    'div',
+                    Html::label('Area', 'user_profile_area_id')
+                        . Select::widget([
+                            'auto_fill' => true,
+                            'hideSearch' => true,
+                            'theme' => 'bootstrap',
+                            'data' => ArrayHelper::map(
+                                $this->getUserProfileAreas($model),
+                                'id',
+                                'name'
+                            ),
+                            'model' => $model,
+                            'attribute' => 'user_profile_area_id',
+                            'options' => [
+                                'prompt' => Module::t('amosorganizzazioni', '#choose...'),
                             'disabled' => false,
                             'id' => $selectAreaId
                         ],
@@ -205,7 +235,7 @@ class UserNetworkWidgetOrganizzazioni extends Widget
                             'class' => 'btn btn-primary',
                             'onclick' => "
                                 $.ajax({
-                                    url : '$url', 
+                                    url : '$url',
                                     type: 'POST',
                                     async: true,
                                     data: {
@@ -230,7 +260,15 @@ class UserNetworkWidgetOrganizzazioni extends Widget
                     'title' => Module::t('amosorganizzazioni', '#change_role_area'),
                     'data-toggle' => 'modal',
                     'data-target' => '#' . $modalId,
-                    'onclick' => 'checkSelect2Init("' . $modalId . '", "' . $selectRoleId . '");checkSelect2Init("' . $modalId . '", "' . $selectAreaId . '");'
+                    'onclick' => 'checkSelect2Init("'
+                        . $modalId
+                        . '", "'
+                        . $selectRoleId
+                        . '");checkSelect2Init("'
+                        . $modalId
+                        . '", "'
+                        . $selectAreaId
+                        . '");'
                 ]);
 
                 return $btn;
@@ -248,7 +286,7 @@ class UserNetworkWidgetOrganizzazioni extends Widget
             ];
         }
 
-        $defaultActionColumnsTemplate .= '{deleteRelation}';
+        $defaultActionColumnsTemplate .= '{joinOrganizzation}{deleteRelation}';
 
         $widget = M2MWidget::widget([
             'model' => $model,
@@ -269,8 +307,12 @@ class UserNetworkWidgetOrganizzazioni extends Widget
             'btnAssociaLabel' => Module::t('amosorganizzazioni', '#add_new_organization'),
             'actionColumnsTemplate' => $this->isUpdate ? $defaultActionColumnsTemplate : '',
             'deleteRelationTargetIdField' => 'user_id',
-            'targetUrl' => '/' . Module::getModuleName() . '/profilo/associate-organization-m2m',
-            'createNewTargetUrl' => '/' . AmosAdmin::getModuleName() . '/user-profile/create',
+            'targetUrl' => '/'
+                . Module::getModuleName()
+                . '/profilo/associate-organization-m2m',
+            'createNewTargetUrl' => '/'
+                . AmosAdmin::getModuleName()
+                . '/user-profile/create',
             'moduleClassName' => Module::className(),
             'targetUrlController' => 'organizzazioni',
             'postName' => 'User',
@@ -283,9 +325,16 @@ class UserNetworkWidgetOrganizzazioni extends Widget
             'itemsMittente' => $itemsMittente,
         ]);
 
-        return "<div id='" . $gridId . "' data-pjax-container='" . $gridId . "-pjax' data-pjax-timeout=\"1000\">"
-            . "<h3>" . Module::tHtml('amosorganizzazioni', '#user_network_widget_organization') . "</h3>"
-            . $widget . "</div>";
+        return "<div id='"
+            . $gridId
+            . "' data-pjax-container='"
+            . $gridId
+            . "-pjax' data-pjax-timeout=\"1000\">"
+            . "<h3>"
+            . Module::tHtml('amosorganizzazioni', '#user_network_widget_organization')
+            . "</h3>"
+            . $widget
+            . "</div>";
     }
 
     /**
@@ -302,9 +351,14 @@ class UserNetworkWidgetOrganizzazioni extends Widget
         /** @var ActiveQuery $query */
         $query = $profiloUserMm::find();
         $query->innerJoinWith('profilo');
-        $query->andWhere([$profiloUserMm::tableName() . '.user_id' => $this->userId]);
+        $query->andWhere([
+            $profiloUserMm::tableName() . '.user_id' => $this->userId
+        ]);
+        
         if ($this->organizationsModule->enableWorkflow) {
-            $query->andWhere([$profilo::tableName() . '.status' => $profilo->getValidatedStatus()]);
+            $query->andWhere([
+                $profilo::tableName() . '.status' => $profilo->getValidatedStatus()
+            ]);
         }
 
         $searchName = Yii::$app->request->post($searchPostName);
@@ -323,12 +377,21 @@ class UserNetworkWidgetOrganizzazioni extends Widget
     {
         /** @var ActiveQuery $query */
         $query = UserProfileArea::find();
-        if ($this->adminModule->roleAndAreaOnOrganizations && $this->adminModule->roleAndAreaFromOrganizationsWithTypeCat) {
-            $query->andWhere(['type_cat' => [UserProfileArea::TYPE_CAT_GENERIC, $profiloUserMm->profilo->profilo_enti_type_id]]);
+        if (
+            $this->adminModule->roleAndAreaOnOrganizations
+            && $this->adminModule->roleAndAreaFromOrganizationsWithTypeCat
+        ) {
+            $query->andWhere([
+                'type_cat' => [
+                    UserProfileArea::TYPE_CAT_GENERIC,
+                    $profiloUserMm->profilo->profilo_enti_type_id
+                ]
+            ]);
         }
+
         $query->orderBy(['order' => SORT_ASC]);
-        $areas = $query->all();
-        return $areas;
+
+        return $query->all();
     }
 
     /**

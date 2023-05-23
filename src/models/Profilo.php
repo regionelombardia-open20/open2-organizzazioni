@@ -156,18 +156,18 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     {
         $behaviors = [
             'fileBehavior' => [
-                'class' => FileBehavior::className()
+                'class' => FileBehavior::class
             ],
         ];
 
         if ($this->organizzazioniModule->enableWorkflow) {
             $behaviors['workflow'] = [
-                'class' => SimpleWorkflowBehavior::className(),
+                'class' => SimpleWorkflowBehavior::class,
                 'defaultWorkflowId' => self::PROFILO_WORKFLOW,
                 'propagateErrorsToModel' => true
             ];
             $behaviors['workflowLog'] = [
-                'class' => WorkflowLogFunctionsBehavior::className(),
+                'class' => WorkflowLogFunctionsBehavior::class,
             ];
         }
 
@@ -228,8 +228,8 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     {
         $rules = ArrayHelper::merge(parent::rules(),
             [
-                [['partita_iva'], PIVAValidator::className()],
-                [['codice_fiscale'], CfPivaValidator::className()],
+                [['partita_iva'], PIVAValidator::class],
+                [['codice_fiscale'], CfPivaValidator::class],
                 [['email'], 'email'],
                 [['pec'], 'email'],
                 [['sede_legale_email'], 'email'],
@@ -699,12 +699,6 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     {
         $columns = [];
 
-        if ($this->organizzazioniModule->enableProfiloEntiType === true) {
-            $columns['profilo.profilo_enti_type_id'] = [
-                'attribute' => 'profilo.profilo_enti_type_id',
-                'value' => 'profilo.profiloEntiType.name'
-            ];
-        }
         $columns['logo_id'] = [
             'headerOptions' => [
                 'id' => Module::t('amosorganizzazioni', '#logo'),
@@ -720,8 +714,14 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
             }
         ];
 
-        $columns[] = 'profilo.name';
+        if ($this->organizzazioniModule->enableProfiloEntiType === true) {
+            $columns['profilo.profilo_enti_type_id'] = [
+                'attribute' => 'profilo.profilo_enti_type_id',
+                'value' => 'profilo.profiloEntiType.name'
+            ];
+        }
 
+        $columns[] = 'profilo.name';
         $columns[] = [
             'attribute' => 'profilo.createdUserProfile.created_by',
             'value' => 'profilo.createdUserProfile.nomeCognome'
@@ -748,23 +748,36 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     public function getUserNetworkWidgetActionColumns($model, $widgetUserId, $loggedUser, $loggedUserId)
     {
         return  [
+            'joinOrganizzation' => function ($url, $model) {
+                return Html::a(
+                    Module::t('amosorganizzazioni', '#view_details')
+                        . AmosIcons::show('sign-in'),
+                    Yii::$app->urlManager->createUrl([
+                        '/' . Module::getModuleName() . '/profilo/view',
+                        'id' => $model->profilo_id,
+                    ]),
+                    [
+                        'title' => Module::t('amosorganizzazioni', '#view_details'),
+                        'class' => 'btn btn-navigation-primary btn-join-community font08'
+                    ]
+                );
+            },
             'deleteRelation' => function ($url, $model_mm) use ($loggedUser, $loggedUserId, $model, $widgetUserId) {
                 /** @var ProfiloUserMm $model_mm */
-                $url = '/' . Module::getModuleName() . '/profilo/elimina-m2m';
                 $organizationId = $model_mm->profilo_id;
                 $targetId = $widgetUserId;
                 $urlDelete = Yii::$app->urlManager->createUrl([
-                    $url,
+                    '/' . Module::getModuleName() . '/profilo/elimina-m2m',
                     'id' => $organizationId,
                     'targetId' => $targetId,
                     'redirectAction' => \yii\helpers\Url::current()
                 ]);
-                $btnDelete = '';
+
                 if (
                     (($loggedUserId == $widgetUserId) && \Yii::$app->user->can('REMOVE_ORGANIZZAZIONI_FROM_USER', ['model' => $model]) && (($model_mm->profilo->created_by != $loggedUserId) || $loggedUser->can('AMMINISTRATORE_ORGANIZZAZIONI'))) ||
                     $loggedUser->can('AMMINISTRATORE_ORGANIZZAZIONI')
                 ) {
-                    $btnDelete = Html::a(AmosIcons::show('close', ['class' => 'btn-delete-relation']),
+                    return Html::a(AmosIcons::show('close', ['class' => 'btn-delete-relation']),
                         $urlDelete,
                         [
                             'title' => Module::t('amosorganizzazioni', '#delete'),
@@ -772,7 +785,6 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
                         ]
                     );
                 }
-                return $btnDelete;
             }
         ];
     }
@@ -790,7 +802,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
      */
     public function getPluginWidgetClassname()
     {
-        return WidgetIconProfilo::className();
+        return WidgetIconProfilo::class;
     }
 
     /**
@@ -914,9 +926,12 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
         /** @var AmosAdmin $adminModule */
         $adminModule = AmosAdmin::instance();
         $organizationsModuleName = $adminModule->getOrganizationModuleName();
-        if (is_null(Yii::$app->getModule($organizationsModuleName))) {
+        $organizationsModule = Yii::$app->getModule($organizationsModuleName);
+
+        if (is_null($organizationsModule) || $organizationsModule->hideUserNetworkWidget) {
             return '';
         }
+
         return UserNetworkWidget::widget(['userId' => $userId, 'isUpdate' => $isUpdate]);
     }
 
@@ -925,7 +940,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
      */
     public static function getUserNetworkWidgetOrganizzazioniClassName()
     {
-        return UserNetworkWidgetOrganizzazioni::className();
+        return UserNetworkWidgetOrganizzazioni::class;
     }
 
     /**
@@ -935,28 +950,6 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     {
         return [];
     }
-
-//    Uses the common method in NetworkModel
-//    /**
-//     * @param null $userId
-//     * @return mixed
-//     */
-//    public function getUserNetworkAssociationQuery($userId = null)
-//    {
-//        if (empty($userId)) {
-//            $userId = Yii::$app->user->id;
-//        }
-//        $query = self::find()->distinct();
-//        $queryJoined = Profilo::find()->distinct();
-//        $queryJoined->innerJoin(\open20\amos\organizzazioni\models\ProfiloUserMm::tableName(),
-//            Profilo::tableName() . '.id = ' . ProfiloUserMm::tableName() . '.profilo_id'
-//            . ' AND ' . ProfiloUserMm::tableName() . '.user_id = ' . $userId)
-//            ->andWhere(ProfiloUserMm::tableName() . '.deleted_at is null');
-//        $queryJoined->select(Profilo::tableName() . '.id');
-//        $query->andWhere(['not in', Profilo::tableName() . '.id', $queryJoined]);
-//        $query->andWhere(Profilo::tableName() . '.deleted_at is null');
-//        return $query;
-//    }
 
     /**
      * Get Id of configuration record for network model Profilo
@@ -1577,7 +1570,8 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
     /**
      *
      */
-    public function createCommunityOrganizzazione(){
+    public function createCommunityOrganizzazione($communityType)
+    {
         if (is_null($this->community_id)) {
             $managerStatus = CommunityUserMm::STATUS_ACTIVE; //$this->getManagerStatus($model, $oldAttributes);
 
@@ -1587,7 +1581,7 @@ class Profilo extends \open20\amos\organizzazioni\models\base\Profilo implements
             ];
             $this->trigger(ProfiloController::EVENT_BEFORE_CREATE_COMMUNITY, $eventBefore);
 
-            $ok = OrganizzazioniUtility::createCommunity($this, $managerStatus);
+            $ok = OrganizzazioniUtility::createCommunity($this, $managerStatus, $communityType);
 
             $eventAfter = new Event();
             $eventAfter->sender = [

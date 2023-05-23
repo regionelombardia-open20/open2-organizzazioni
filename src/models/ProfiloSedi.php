@@ -32,8 +32,14 @@ use yii\helpers\Url;
  *
  * @package open20\amos\organizzazioni\models
  */
-class ProfiloSedi extends \open20\amos\organizzazioni\models\base\ProfiloSedi implements BaseContentModelInterface, ModelLabelsInterface, CrudModelInterface, OrganizationsModelInterface
+class ProfiloSedi
+    extends \open20\amos\organizzazioni\models\base\ProfiloSedi
+    implements BaseContentModelInterface, ModelLabelsInterface, CrudModelInterface,
+        OrganizationsModelInterface
 {
+    /**
+     * 
+     */
     const SCENARIO_CREATE = 'scenario_create';
 
     /**
@@ -59,7 +65,8 @@ class ProfiloSedi extends \open20\amos\organizzazioni\models\base\ProfiloSedi im
 
         if ($this->isNewRecord) {
             $this->active = 1;
-            // TODO COUNTRIES DISABLED inizializzato con id dell'Italia. Rimuovere tutto l'if se viene abilitata la tendina nella form.
+            // TODO COUNTRIES DISABLED inizializzato con id dell'Italia.
+            // Rimuovere tutto l'if se viene abilitata la tendina nella form.
             if (empty($this->country_id)) {
                 $this->country_id = 1;
             }
@@ -83,10 +90,13 @@ class ProfiloSedi extends \open20\amos\organizzazioni\models\base\ProfiloSedi im
             }
         }
         return ArrayHelper::merge(parent::scenarios(), [
-            self::SCENARIO_CREATE => $scenarioCreateFields
+                self::SCENARIO_CREATE => $scenarioCreateFields
         ]);
     }
 
+    /**
+     * 
+     */
     public function organizationsBeforeValidate()
     {
         if (!$this->organizzazioniModule->oldStyleAddressEnabled) {
@@ -114,7 +124,7 @@ class ProfiloSedi extends \open20\amos\organizzazioni\models\base\ProfiloSedi im
     public function attributeLabels()
     {
         return ArrayHelper::merge(parent::attributeLabels(), [
-            'addressField' => Module::t('amosorganizzazioni', 'Address'),
+                'addressField' => Module::t('amosorganizzazioni', 'Address'),
         ]);
     }
 
@@ -196,7 +206,7 @@ class ProfiloSedi extends \open20\amos\organizzazioni\models\base\ProfiloSedi im
             ]
         ];
     }
-    
+
     /**
      * @return string
      */
@@ -463,4 +473,5 @@ class ProfiloSedi extends \open20\amos\organizzazioni\models\base\ProfiloSedi im
     {
         return $this->getFullUrl($this->getDeleteUrl());
     }
+
 }

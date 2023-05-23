@@ -157,9 +157,11 @@ class OrganizationsMembersWidget extends Widget
      */
     public $filterCategoryInvitation = null;
 
-
+    /**
+     * 
+     * @var type
+     */
     public $isUpdate = null;
-
 
     /**
      * @throws InvalidConfigException
@@ -172,11 +174,9 @@ class OrganizationsMembersWidget extends Widget
             throw new InvalidConfigException($this->throwErrorMessage('model'));
         }
 
-//        if ($this->model instanceof Profilo) {
-//            $this->enableModal = true;
-//        }
-
-        $this->delete_member_message = ($this->delete_member_message) ? $this->delete_member_message : Module::t('amosorganizzazioni', '#organizations_members_widget_delete_message');
+        $this->delete_member_message = $this->delete_member_message
+            ? $this->delete_member_message
+            : Module::t('amosorganizzazioni', '#organizations_members_widget_delete_message');
         $this->organizationsModule = Module::instance();
     }
 
@@ -198,10 +198,13 @@ class OrganizationsMembersWidget extends Widget
      */
     public function run()
     {
-//        $customInvitationForm = $this->organizationsModule->customInvitationForm;
-//        $inviteUserOfcommunityParent = $this->organizationsModule->inviteUserOfcommunityParent;
+        $gridId = $this->gridId
+            . (!empty($this->showRoles)
+                ? '-'
+                    . implode('-', $this->showRoles)
+                : ''
+            );
 
-        $gridId = $this->gridId . (!empty($this->showRoles) ? '-' . implode('-', $this->showRoles) : '');
         $model = $this->model;
         $params = [];
         $params['showRoles'] = $this->showRoles;
@@ -224,15 +227,18 @@ class OrganizationsMembersWidget extends Widget
         $params['userStatusAssociate'] = $this->userStatusAssociate;
         $params['isUpdate'] = $this->isUpdate;
 
-        $url = \Yii::$app->urlManager->createUrl(
-            [
-                '/organizzazioni/profilo/organization-employees',
-                'id' => $model->id,
-                'classname' => $model->className(),
-                'params' => $params
-            ]
-        );
-        $searchPostName = 'searchEmployeeName' . (!empty($this->showRoles) ? implode('', $this->showRoles) : '');
+        $url = \Yii::$app->urlManager->createUrl([
+            '/organizzazioni/profilo/organization-employees',
+            'id' => $model->id,
+            'classname' => $model->className(),
+            'params' => $params
+        ]);
+
+        $searchPostName = 'searchEmployeeName'
+            . (!empty($this->showRoles)
+                ? implode('', $this->showRoles)
+                : ''
+            );
 
         $js = JsUtility::getSearchM2mFirstGridJs($gridId, $url, $searchPostName);
         PjaxAsset::register($this->getView());
@@ -297,10 +303,6 @@ class OrganizationsMembersWidget extends Widget
                 'label' => Module::t('amosorganizzazioni', 'Email')
             ],
             'user.userProfile.codice_fiscale',
-//            'partnerOf.userProfile.nomeCognome' => [
-//                'attribute' => 'partnerOf.userProfile.nomeCognome',
-//                'label' => Module::t('amosorganizzazioni', 'Invited by')
-//            ],
         ];
 
         if ($this->organizationsModule->viewStatusEmployees) {
@@ -347,15 +349,6 @@ class OrganizationsMembersWidget extends Widget
             ];
         }
 
-//        $exportColumns['invitation_accepted_at'] = [
-//            'attribute' => 'invitation_accepted_at',
-//            'label' => Module::t('amosorganizzazioni', 'Confirm date'),
-//            'value' => function ($model) {
-//                /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
-//                return \Yii::$app->formatter->asDatetime($model->invitation_accepted_at, 'humanalwaysdatetime');
-//            }
-//        ];
-
         $viewEmailEmployees = false;
         if (isset($this->organizationsModule->viewEmailEmployees)) {
             $viewEmailEmployees = $this->organizationsModule->viewEmailEmployees;
@@ -377,50 +370,6 @@ class OrganizationsMembersWidget extends Widget
             ];
         }
 
-//        if ($this->viewInvitation) {
-//            $itemsMittente['invited_at'] = [
-//                'attribute' => 'invited_at',
-//                'label' => Module::t('amosorganizzazioni', '#invited_at'),
-//                'headerOptions' => [
-//                    'id' => Module::t('amosorganizzazioni', '#invited_at'),
-//                ],
-//                'contentOptions' => [
-//                    'headers' => Module::t('amosorganizzazioni', '#invited_at'),
-//                ],
-//                'value' => function ($model) {
-//                    /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
-//                    return \Yii::$app->formatter->asDatetime($model->invited_at);
-//                }
-//            ];
-//            $itemsMittente['invitation_accepted_at'] = [
-//                'attribute' => 'invitation_accepted_at',
-//                'label' => Module::t('amosorganizzazioni', '#invitation_accepted_at'),
-//                'headerOptions' => [
-//                    'id' => Module::t('amosorganizzazioni', '#invitation_accepted_at'),
-//                ],
-//                'contentOptions' => [
-//                    'headers' => Module::t('amosorganizzazioni', '#invitation_accepted_at'),
-//                ],
-//                'value' => function ($model) {
-//                    /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
-//                    return \Yii::$app->formatter->asDatetime($model->invitation_accepted_at);
-//                }
-//            ];
-//            $itemsMittente['partner_of'] = [
-//                'attribute' => 'invitation_partner_of',
-//                'label' => Module::t('amosorganizzazioni', '#invitation_partner_of'),
-//                'headerOptions' => [
-//                    'id' => Module::t('amosorganizzazioni', '#invitation_partner_of'),
-//                ],
-//                'contentOptions' => [
-//                    'headers' => Module::t('amosorganizzazioni', '#invitation_partner_of'),
-//                ],
-//                'value' => function ($model) {
-//                    /** @var \open20\amos\organizzazioni\models\ProfiloUserMm $model */
-//                    return (!is_null($model->partnerOf) ? $model->partnerOf->userProfile->surnameName : '-');
-//                }
-//            ];
-//        }
         $isSubOrganization = !empty($model->parent_id);
 
         //Merge additional solumns
@@ -564,15 +513,15 @@ class OrganizationsMembersWidget extends Widget
             Yii::$app->session->set($invitationsModule::beginCreateNewSessionKey(), Url::current());
         }
 
-//        $insass = ($inviteUserOfcommunityParent && !$isSubCommunity && $customInvitationForm) || (!$inviteUserOfcommunityParent && $customInvitationForm);
-
         $createNewTargetUrl = [
             '/invitations/invitation/index' . (\Yii::$app->user->can('INVITATIONS_ADMINISTRATOR') ? '-all' : '') . '/',
             'moduleName' => Module::getModuleName()
         ];
-        if(!empty($this->filterCategoryInvitation)){
+        
+        if (!empty($this->filterCategoryInvitation)) {
             $createNewTargetUrl['category'] = $this->filterCategoryInvitation;
         }
+        
         if ($this->organizationsModule->enableUniqueSecretCodeForInvitation) {
             $createNewTargetUrl['contextModelId'] = $model->unique_secret_code;
             $createNewTargetUrl['registerAction'] = 'register-with-code';
@@ -584,56 +533,68 @@ class OrganizationsMembersWidget extends Widget
         if (!empty($roleName)) {
             $targetUrlParams = ['role_name' => $roleName];
         }
+        
         if (!empty($this->redirectUrlAfterAssociate)) {
             $targetUrlParams = ArrayHelper::merge($targetUrlParams, ['redirectUrlAfterAssociate' => $this->redirectUrlAfterAssociate]);
         }
-        if(!empty($this->userStatusAssociate)){
+        
+        if (!empty($this->userStatusAssociate)) {
             $targetUrlParams['userStatus'] = $this->userStatusAssociate;
         }
 
-        $widget = M2MWidget::widget(
-            [
-                'model' => $model,
-                'modelId' => $model->id,
-                'modelData' => $query,
-                'overrideModelDataArr' => true,
-                'exportMittenteConfig' => [
-                    'exportEnabled' => true,
-                    'exportColumns' => $exportColumns
-                ],
-                'forceListRender' => true,
-                'targetUrlParams' => $this->targetUrlParams,
-                'gridId' => $gridId,
-                'firstGridSearch' => true,
-                'isModal' => $this->enableModal,
-                'createAdditionalAssociateButtonsEnabled' => false,
-                'disableCreateButton' => (!$invitationsModulePresent || !Yii::$app->user->can('INVITATION_CREATE')),
-                'checkPermWithNewMethod' => false,
-                'btnAssociaLabel' => !empty($this->labelAssociate) ? $this->labelAssociate : Module::t('amosorganizzazioni', 'Associate employees'),
-                'btnAssociaClass' => 'btn btn-primary m-l-5',
-                'createNewBtnLabel' => !empty($this->labelCreateNewBtn) ? $this->labelCreateNewBtn : Module::t('amosorganizzazioni', 'Invite employees'),
-                'btnAdditionalAssociateLabel' => Module::t('amosorganizzazioni', 'Invite employees'),
-                'actionColumnsTemplate' => $actionColumnsTemplate,
-                'deleteRelationTargetIdField' => 'user_id',
-//            'targetUrl' => $insass ? '/community/community/insass-m2m' : '/community/community/associa-m2m',
-                'targetUrl' => '/organizzazioni/profilo/associa-m2m',
-                'targetUrlParams' => $targetUrlParams,
-                'additionalTargetUrl' => '/organizzazioni/profilo/additional-associate-m2m',
-                'createNewTargetUrl' => $createNewTargetUrl,
-                'moduleClassName' => Module::className(),
-                'targetUrlController' => 'profilo',
-                'postName' => 'Profilo',
-                'postKey' => 'user',
-                'permissions' => [
-                    'add' => $this->addPermission,
-                    'manageAttributes' => $this->manageAttributesPermission
-                ],
-                'actionColumnsButtons' => $actionColumnButtons,
-                'itemsMittente' => $itemsMittente,
-            ]
-        );
+        $widget = M2MWidget::widget([
+            'model' => $model,
+            'modelId' => $model->id,
+            'modelData' => $query,
+            'overrideModelDataArr' => true,
+            'exportMittenteConfig' => [
+                'exportEnabled' => true,
+                'exportColumns' => $exportColumns
+            ],
+            'forceListRender' => true,
+            'targetUrlParams' => $this->targetUrlParams,
+            'gridId' => $gridId,
+            'firstGridSearch' => true,
+            'isModal' => $this->enableModal,
+            'createAdditionalAssociateButtonsEnabled' => false,
+            'disableCreateButton' => (
+                !$invitationsModulePresent
+                || !Yii::$app->user->can('INVITATION_CREATE')
+            ),
+            'checkPermWithNewMethod' => false,
+            'btnAssociaLabel' => empty($this->labelAssociate)
+                ? Module::t('amosorganizzazioni', 'Associate employees')
+                : $this->labelAssociate,
+            'btnAssociaClass' => 'btn btn-primary m-l-5',
+            'createNewBtnLabel' => empty($this->labelCreateNewBtn)
+                ? Module::t('amosorganizzazioni', 'Invite employees')
+                : $this->labelCreateNewBtn,
+            'btnAdditionalAssociateLabel' => Module::t('amosorganizzazioni', 'Invite employees'),
+            'actionColumnsTemplate' => $actionColumnsTemplate,
+            'deleteRelationTargetIdField' => 'user_id',
+            'targetUrl' => '/organizzazioni/profilo/associa-m2m',
+            'targetUrlParams' => $targetUrlParams,
+            'additionalTargetUrl' => '/organizzazioni/profilo/additional-associate-m2m',
+            'createNewTargetUrl' => $createNewTargetUrl,
+            'moduleClassName' => Module::class,
+            'targetUrlController' => 'profilo',
+            'postName' => 'Profilo',
+            'postKey' => 'user',
+            'permissions' => [
+                'add' => $this->addPermission,
+                'manageAttributes' => $this->manageAttributesPermission
+            ],
+            'actionColumnsButtons' => $actionColumnButtons,
+            'itemsMittente' => $itemsMittente,
+        ]);
 
-        return "<div id='" . $gridId . "' data-pjax-container='" . $gridId . "-pjax' data-pjax-timeout=\"10000\" >" . $widget . "</div>";
+        return '<div id="'
+            . $gridId
+            . '" data-pjax-container="'
+            . $gridId
+            . '-pjax data-pjax-timeout="10000">'
+            . $widget
+            . '</div>';
     }
 
     /**
@@ -655,8 +616,10 @@ class OrganizationsMembersWidget extends Widget
         if ($model->status == ProfiloUserMm::STATUS_ACTIVE) {
             /** @var \open20\amos\events\AmosEvents $eventsModule */
             $eventsModule = Yii::$app->getModule('events');
+            
             return $eventsModule->getInviteUserToEventWidget($model->user->userProfile);
         }
+
         return '';
     }
 
@@ -668,10 +631,13 @@ class OrganizationsMembersWidget extends Widget
      */
     public function getSubscribeUserToFADCourseWidget($url, $model)
     {
-
         /** @var \open20\amos\moodle\AmosMoodle $moodleModule */
         $moodleModule = \Yii::$app->getModule('moodle');
-        if (!is_null($moodleModule) && $moodleModule->hasMethod('getSubscribeUserToFADCourseWidget') && $moodleModule->enableSubscribeUserToFADCourse) {
+        if (
+            !is_null($moodleModule)
+            && $moodleModule->hasMethod('getSubscribeUserToFADCourseWidget')
+            && $moodleModule->enableSubscribeUserToFADCourse
+        ) {
             if ($model->status == ProfiloUserMm::STATUS_ACTIVE) {
                 return $moodleModule->getSubscribeUserToFADCourseWidget(
                     $model->user->userProfile,

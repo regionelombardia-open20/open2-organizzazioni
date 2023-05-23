@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * Aria S.p.A.
+ * OPEN 2.0
+ *
+ *
+ * @package    open20\amos\organizzazioni
+ * @category   CategoryName
+ */
+
 namespace open20\amos\organizzazioni\controllers\api;
 
 /**

@@ -77,7 +77,8 @@ class ProfiloCardWidget extends Widget
         $html = '';
         $confirm = $this->getConfirm();
 
-        $url = $model->getModelImageUrl('square_small', $this->absoluteUrl, '/img/img_default.jpg', true);
+        $defaultImageUrl = \Yii::$app->params['platform']['frontendUrl'] . '/img/img_default.jpg';
+        $url = $model->getModelImageUrl('square_small', false, $defaultImageUrl, $this->absoluteUrl);
         $htmlOptions = [
             'class' => !empty($class) ? 'img-responsive ' . $class : 'img-responsive',
             'alt' => $model->getAttributeLabel('logoOrganization')

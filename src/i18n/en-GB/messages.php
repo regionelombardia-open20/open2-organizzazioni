@@ -10,6 +10,7 @@
  */
 
 return [
+    '#view_details' => "Vai all'Organizzazione",
     'Accedi' => 'Sign in',
     'Accedi al Plugin organizzazioni' => 'Log in to Organizations Plugin',
     '#accepted_invitation_mail_text_1' => 'accepted the invitation to ',
@@ -331,6 +332,7 @@ return [
     '#sede_legale_telefono' => 'Headquarter phone',
     'Sei sicuro di voler cancellare questa azienda?' => 'Are you sure you want to delete this company?',
     'Select/Choose' => 'Select/Choose',
+    '#choose...' => 'Seleziona...',
     'Seleziona' => 'Select',
     '#settings_general_title' => 'General information',
     '#settings_receiver_title' => 'Publication mode',

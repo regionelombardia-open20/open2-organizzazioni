@@ -15,7 +15,6 @@ use open20\amos\organizzazioni\Module;
 use open20\amos\core\icons\AmosIcons;
 use open20\amos\core\widget\WidgetAbstract;
 use open20\amos\core\widget\WidgetIcon;
-use yii\base\Widget;
 use yii\helpers\ArrayHelper;
 
 class WidgetIconProfiloToValidate extends WidgetIcon

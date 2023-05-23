@@ -14,9 +14,6 @@ namespace open20\amos\organizzazioni\controllers\api;
 /**
  * This is the class for REST controller "ProfiloController".
  */
-use yii\filters\AccessControl;
-use yii\helpers\ArrayHelper;
-
 class ProfiloController extends \yii\rest\ActiveController
 {
 	public $modelClass = 'open20\amos\organizzazioni\models\Profilo';

@@ -12,7 +12,7 @@
 namespace open20\amos\organizzazioni\models\search;
 
 use open20\amos\organizzazioni\models\ProfiloGroups;
-use open20\amos\core\models\AmosModel as Model;
+use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use yii\db\ActiveQuery;
 
@@ -31,7 +31,7 @@ class ProfiloGroupsSearch extends ProfiloGroups
             [['name', 'description'], 'safe']
         ];
     }
-    
+
     /**
      * @inheritdoc
      */
@@ -40,7 +40,7 @@ class ProfiloGroupsSearch extends ProfiloGroups
         // bypass scenarios() implementation in the parent class
         return Model::scenarios();
     }
-    
+
     /**
      * This is the base search.
      * @param array $params
@@ -56,7 +56,7 @@ class ProfiloGroupsSearch extends ProfiloGroups
         $this->setOrderVars($params); // Check params to get orders value
         return $query;
     }
-    
+
     /**
      * Search sort.
      * @param ActiveDataProvider $dataProvider
@@ -75,7 +75,7 @@ class ProfiloGroupsSearch extends ProfiloGroups
             ]);
         }
     }
-    
+
     /**
      * Base filter.
      * @param ActiveQuery $query
@@ -87,7 +87,7 @@ class ProfiloGroupsSearch extends ProfiloGroups
         $query->andFilterWhere(['like', self::tableName() . '.description', $this->description]);
         return $query;
     }
-    
+
     /**
      * Generic search for this model. It return all records.
      * @param array $params

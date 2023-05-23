@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Aria S.p.A.
  * OPEN 2.0
@@ -42,6 +43,7 @@ use yii\log\Logger;
  */
 class ProfiloController extends CrudController
 {
+
     /**
      * @var Module|null $organizzazioniModule
      */
@@ -96,7 +98,6 @@ class ProfiloController extends CrudController
             'url' => '?currentView=icon'
         ];
 
-
         $defaultViews = [
             'grid' => $this->viewGrid,
             'icon' => $this->viewIcon,
@@ -118,7 +119,8 @@ class ProfiloController extends CrudController
      */
     public function beforeAction($action)
     {
-        // TODO da pensare come rimuovere tutta sta roba facendo una classe o interfaccia fatta bene contanto di adeguamento delle viste nei layout.
+        // TODO da pensare come rimuovere tutta sta roba facendo una classe
+        // o interfaccia fatta bene contanto di adeguamento delle viste nei layout.
 
         /** @var ProfiloGrammar $grammar */
         $grammar = $this->model->getGrammar();
@@ -128,33 +130,47 @@ class ProfiloController extends CrudController
             $urlLinkAll = '';
             $url = isset(\Yii::$app->params['linkConfigurations']['loginLinkCommon']) ?
                 \Yii::$app->params['linkConfigurations']['loginLinkCommon'] :
-                \Yii::$app->params['platform']['backendUrl'] . '/' . AmosAdmin::getModuleName() . '/security/login';
+                \Yii::$app->params['platform']['backendUrl']
+                . '/'
+                . AmosAdmin::getModuleName()
+                . '/security/login';
+            
             $ctaLoginRegister = Html::a(
-                Module::t('amosorganizzazioni', '#beforeActionCtaLoginRegister'), $url,
+                Module::t('amosorganizzazioni', '#beforeActionCtaLoginRegister'),
+                $url,
                 [
-                    'title' => Module::t('amosorganizzazioni', '#click_to_access_or_register',
-                        ['platformName' => \Yii::$app->name])
+                    'title' => Module::t('amosorganizzazioni', '#click_to_access_or_register', [
+                        'platformName' => \Yii::$app->name
+                    ])
                 ]
             );
-            $subTitleSection = Html::tag('p',
-                Module::t('amosorganizzazioni', '#beforeActionSubtitleSectionGuest',
-                    [
-                        'ctaLoginRegister' => $ctaLoginRegister
-                    ])
+            
+            $subTitleSection = Html::tag(
+                'p',
+                Module::t('amosorganizzazioni', '#beforeActionSubtitleSectionGuest', [
+                    'ctaLoginRegister' => $ctaLoginRegister
+                ])
             );
         } else {
             $titleSection = ucfirst($grammar->getModelLabel());
             $labelLinkAll = Module::t('amosorganizzazioni', '#all_organizations');
             $urlLinkAll = '/organizzazioni/profilo/index';
             $titleLinkAll = Module::t('amosorganizzazioni', '#view_organizations_list');
-            $subTitleSection = Html::tag('p', Module::t('amosorganizzazioni', '#beforeActionSubtitleSectionLogged'));
+            $subTitleSection = Html::tag(
+                'p',
+                Module::t('amosorganizzazioni', '#beforeActionSubtitleSectionLogged')
+            );
         }
 
         $labelCreate = Module::t('amosorganizzazioni', '#createLabel');
         $titleCreate = Module::t('amosorganizzazioni', '#createTitle');
         $labelManage = Module::t('amosorganizzazioni', '#manage');
 
-        $titleManage = Module::t('amosorganizzazioni', '#manage') . ' ' . $grammar->getArticlePlural() . ' ' . strtolower($grammar->getModelLabel());
+        $titleManage = Module::t('amosorganizzazioni', '#manage')
+            . ' '
+            . $grammar->getArticlePlural()
+            . ' '
+            . strtolower($grammar->getModelLabel());
         $urlCreate = '/' . $this->model->getCreateUrl();
         $urlManage = null;
 
@@ -171,6 +187,7 @@ class ProfiloController extends CrudController
 //            'hideCreate' => $hideCreateNewButton,
             'urlManage' => $urlManage,
         ];
+
         if (Yii::$app->controller->action->id == 'profilo-to-publish') {
             $viewParams['urlLinkAll'] = $urlLinkAll;
             $viewParams['labelLinkAll'] = $labelLinkAll;
@@ -187,7 +204,6 @@ class ProfiloController extends CrudController
      */
     public function beforeSaveOperations()
     {
-
     }
 
     /**
@@ -195,7 +211,6 @@ class ProfiloController extends CrudController
      */
     public function afterSaveOperations()
     {
-
     }
 
     /**
@@ -209,10 +224,21 @@ class ProfiloController extends CrudController
     {
         Url::remember();
         Yii::$app->view->params['textHelp']['filename'] = 'organizzazioni_dashboard_description';
-        if ($this->organizzazioniModule->enableWorkflow && !Yii::$app->user->can('AMMINISTRATORE_ORGANIZZAZIONI')) {
-            $this->setDataProvider($this->modelSearch->searchAll(Yii::$app->request->getQueryParams()));
+        if (
+            $this->organizzazioniModule->enableWorkflow
+            && !Yii::$app->user->can('AMMINISTRATORE_ORGANIZZAZIONI')
+        ) {
+            $this->setDataProvider(
+                $this->modelSearch->searchAll(
+                    Yii::$app->request->getQueryParams()
+                )
+            );
         } else {
-            $this->setDataProvider($this->modelSearch->search(Yii::$app->request->getQueryParams()));
+            $this->setDataProvider(
+                $this->modelSearch->search(
+                    Yii::$app->request->getQueryParams()
+                )
+            );
         }
         $this->view->params['currentDashboard'] = $this->getCurrentDashboard();
         $this->child_of = WidgetIconProfilo::className();
@@ -224,17 +250,22 @@ class ProfiloController extends CrudController
             Yii::$app->view->params['urlLinkAll'] = $urlLinkAll;
         }
 
-        if ($this->organizzazioniModule->importManager->isImporterEnabled() && \Yii::$app->user->can('IMPORT_ORGANIZATIONS')) {
-
+        if (
+            $this->organizzazioniModule->importManager->isImporterEnabled()
+            && \Yii::$app->user->can('IMPORT_ORGANIZATIONS')
+        ) {
             $this->organizzazioniModule->importManager->importOrganizationsFromExcel();
 
             $btnTitle = Module::t('amosorganizzazioni', '#import_organizations');
-            $import = Html::button($btnTitle, [
-                'class' => 'btn btn-outline-secondary',
-                'data-toggle' => 'modal',
-                'data-target' => '#modalImport',
-                'title' => $btnTitle
-            ]);
+            $import = Html::button(
+                $btnTitle,
+                [
+                    'class' => 'btn btn-outline-secondary',
+                    'data-toggle' => 'modal',
+                    'data-target' => '#modalImport',
+                    'title' => $btnTitle
+                ]
+            );
             $additionalButtons[] = $import;
 
             Yii::$app->view->params['additionalButtons'] = [
@@ -245,18 +276,27 @@ class ProfiloController extends CrudController
         return parent::actionIndex();
     }
 
+    /**
+     * 
+     */
     public function setImportButton()
     {
-        if ($this->organizzazioniModule->importManager->isImporterEnabled() && \Yii::$app->user->can('IMPORT_ORGANIZATIONS')) {
+        if (
+            $this->organizzazioniModule->importManager->isImporterEnabled()
+            && \Yii::$app->user->can('IMPORT_ORGANIZATIONS')
+        ) {
             $this->organizzazioniModule->importManager->importOrganizationsFromExcel();
 
             $btnTitle = Module::t('amosorganizzazioni', '#import_organizations');
-            $import = Html::button($btnTitle, [
-                'class' => 'btn btn-outline-secondary',
-                'data-toggle' => 'modal',
-                'data-target' => '#modalImport',
-                'title' => $btnTitle
-            ]);
+            $import = Html::button(
+                $btnTitle,
+                [
+                    'class' => 'btn btn-outline-secondary',
+                    'data-toggle' => 'modal',
+                    'data-target' => '#modalImport',
+                    'title' => $btnTitle
+                ]
+            );
             $additionalButtons[] = $import;
 
             Yii::$app->view->params['additionalButtons'] = [
@@ -274,7 +314,11 @@ class ProfiloController extends CrudController
     public function actionDownloadImportTemplate()
     {
         if (!$this->organizzazioniModule->importManager->isImporterEnabled()) {
-            Yii::$app->getSession()->addFlash('danger', Module::t('amosorganizzazioni', '#importer_disabled'));
+            Yii::$app->getSession()->addFlash(
+                'danger',
+                Module::t('amosorganizzazioni', '#importer_disabled')
+            );
+            
             $urlPrevious = Url::previous();
             $redirectUrl = (!is_null($urlPrevious) ? $urlPrevious : ['index']);
             return $this->redirect($redirectUrl);
@@ -298,10 +342,14 @@ class ProfiloController extends CrudController
         $this->view->params['textHelp']['filename'] = 'organizzazioni_dashboard_description';
         $this->model = $this->findModel($id);
 
-        if (!empty(\Yii::$app->params['dashboardEngine']) && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS) {
+        if (
+            !empty(\Yii::$app->params['dashboardEngine'])
+            && \Yii::$app->params['dashboardEngine'] == WidgetAbstract::ENGINE_ROWS
+        ) {
             $this->setUpLayout('main_organizzazioni');
             Yii::$app->view->params['CommunityParams']['outsideCommunity'] = true;
         }
+        
         return $this->render('view', ['model' => $this->model]);
     }
 
@@ -340,18 +388,24 @@ class ProfiloController extends CrudController
             $mainLegalHeadquarter->address = $this->model->mainLegalHeadquarterAddress;
         }
 
-        $mainOperativeHeadquarterLoadValidate = $mainOperativeHeadquarter->load($post) && $mainOperativeHeadquarter->validate();
+        $mainOperativeHeadquarterLoadValidate = $mainOperativeHeadquarter->load($post)
+            && $mainOperativeHeadquarter->validate();
+
         if ($this->model->la_sede_legale_e_la_stessa_del) {
-            $mainLegalHeadquarter = OrganizzazioniUtility::copyOperativeToLegalHeadquarterValues($mainOperativeHeadquarter, $mainLegalHeadquarter);
+            $mainLegalHeadquarter = OrganizzazioniUtility::copyOperativeToLegalHeadquarterValues(
+                $mainOperativeHeadquarter,
+                $mainLegalHeadquarter
+            );
             $mainLegalHeadquarterLoadValidate = $mainLegalHeadquarter->validate();
         } else {
-            $mainLegalHeadquarterLoadValidate = $mainLegalHeadquarter->load($post) && $mainLegalHeadquarter->validate();
+            $mainLegalHeadquarterLoadValidate = $mainLegalHeadquarter->load($post)
+                && $mainLegalHeadquarter->validate();
         }
 
         if (
-            $modelLoadValidate &&
-            $mainLegalHeadquarterLoadValidate &&
-            $mainOperativeHeadquarterLoadValidate
+            $modelLoadValidate
+            && $mainLegalHeadquarterLoadValidate
+            && $mainOperativeHeadquarterLoadValidate
         ) {
             $this->beforeSaveOperations();
             $transaction = Yii::$app->db->beginTransaction();
@@ -383,12 +437,12 @@ class ProfiloController extends CrudController
                 if ($ok) {
                     $ok = $this->model->save($validateOnSave);
                     if ($this->organizzazioniModule->enableCommunityCreation && $this->organizzazioniModule->createCommunityAutomatically) {
-                        $this->model->createCommunityOrganizzazione();
+                        $communityType = $this->setOrganizationCommunityType();
+                        $this->model->createCommunityOrganizzazione($communityType);
                     }
                 }
 
                 if ($ok) {
-
                     // Save operative headquarter
                     $okMainSedeOperativa = $this->saveMainSede($mainOperativeHeadquarter,
                         Module::t('amosorganizzazioni', 'Error while saving operative headquarter'));
@@ -398,16 +452,21 @@ class ProfiloController extends CrudController
                         Module::t('amosorganizzazioni', 'Error while saving legal headquarter'));
 
                     // Rappresentante Legale / Referente Operativo presente?
-                    $okLegalRepresentative = $this->addOrganizationToLegalOrOperative($this->model->rappresentante_legale,
-                        $this->model->id);
-                    $okOperativeReferent = $this->addOrganizationToLegalOrOperative($this->model->referente_operativo,
-                        $this->model->id);
+                    $okLegalRepresentative = $this->addOrganizationToLegalOrOperative(
+                        $this->model->rappresentante_legale,
+                        $this->model->id
+                    );
+                    
+                    $okOperativeReferent = $this->addOrganizationToLegalOrOperative(
+                        $this->model->referente_operativo,
+                        $this->model->id
+                    );
 
                     if (
-                        $okMainSedeOperativa &&
-                        $okMainSedeLegale &&
-                        $okLegalRepresentative &&
-                        $okOperativeReferent
+                        $okMainSedeOperativa
+                        && $okMainSedeLegale
+                        && $okLegalRepresentative
+                        && $okOperativeReferent
                     ) {
                         $transaction->commit();
                         $this->afterSaveOperations();
@@ -425,17 +484,17 @@ class ProfiloController extends CrudController
                 $transaction->rollBack();
             }
         }
-        return $this->render('create',
-            [
-                'model' => $this->model,
-                'mainLegalHeadquarter' => $mainLegalHeadquarter,
-                'mainOperativeHeadquarter' => $mainOperativeHeadquarter,
-                'fid' => null,
-                'dataField' => null,
-                'dataEntity' => null,
-                'moduleCwh' => $this->moduleCwh,
-                'scope' => $this->scope
-            ]);
+
+        return $this->render('create', [
+            'model' => $this->model,
+            'mainLegalHeadquarter' => $mainLegalHeadquarter,
+            'mainOperativeHeadquarter' => $mainOperativeHeadquarter,
+            'fid' => null,
+            'dataField' => null,
+            'dataEntity' => null,
+            'moduleCwh' => $this->moduleCwh,
+            'scope' => $this->scope
+        ]);
     }
 
     /**
@@ -453,20 +512,23 @@ class ProfiloController extends CrudController
 
         $this->model = $this->organizzazioniModule->createModel('Profilo');
 
-        if (\Yii::$app->request->isAjax && $this->model->load(Yii::$app->request->post()) && $this->model->validate()) {
+        if (
+            \Yii::$app->request->isAjax
+            && $this->model->load(Yii::$app->request->post())
+            && $this->model->validate()
+        ) {
             if ($this->model->save()) {
                 return json_encode($this->model->toArray());
             }
         }
 
-        return $this->renderAjax('_formAjax',
-            [
-                'model' => $this->model,
-                'fid' => $fid,
-                'dataField' => $dataField,
-                'moduleCwh' => $this->moduleCwh,
-                'scope' => $this->scope
-            ]);
+        return $this->renderAjax('_formAjax', [
+            'model' => $this->model,
+            'fid' => $fid,
+            'dataField' => $dataField,
+            'moduleCwh' => $this->moduleCwh,
+            'scope' => $this->scope
+        ]);
     }
 
     /**
@@ -521,16 +583,14 @@ class ProfiloController extends CrudController
         if ($this->model->la_sede_legale_e_la_stessa_del) {
             $skipColumns = ['profilo_sedi_type_id', 'profilo_id', 'id'];
             $mainLegalHeadquarter = OrganizzazioniUtility::copyOperativeToLegalHeadquarterValues($mainOperativeHeadquarter,
-                $mainLegalHeadquarter, $skipColumns);
+                    $mainLegalHeadquarter, $skipColumns);
             $mainLegalHeadquarterLoadValidate = $mainLegalHeadquarter->validate();
         } else {
             $mainLegalHeadquarterLoadValidate = $mainLegalHeadquarter->load($post) && $mainLegalHeadquarter->validate();
         }
 
         if (
-            $modelLoadValidate &&
-            $mainLegalHeadquarterLoadValidate &&
-            $mainOperativeHeadquarterLoadValidate
+            $modelLoadValidate && $mainLegalHeadquarterLoadValidate && $mainOperativeHeadquarterLoadValidate
         ) {
             $this->beforeSaveOperations();
             $transaction = Yii::$app->db->beginTransaction();
@@ -582,16 +642,16 @@ class ProfiloController extends CrudController
         }
 
         return $this->render('update',
-            [
-                'model' => $this->model,
-                'mainLegalHeadquarter' => $mainLegalHeadquarter,
-                'mainOperativeHeadquarter' => $mainOperativeHeadquarter,
-                'fid' => null,
-                'dataField' => null,
-                'dataEntity' => null,
-                'moduleCwh' => $this->moduleCwh,
-                'scope' => $this->scope
-            ]);
+                [
+                    'model' => $this->model,
+                    'mainLegalHeadquarter' => $mainLegalHeadquarter,
+                    'mainOperativeHeadquarter' => $mainOperativeHeadquarter,
+                    'fid' => null,
+                    'dataField' => null,
+                    'dataEntity' => null,
+                    'moduleCwh' => $this->moduleCwh,
+                    'scope' => $this->scope
+        ]);
     }
 
     /**

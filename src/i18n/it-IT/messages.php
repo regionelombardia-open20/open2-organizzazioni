@@ -10,6 +10,7 @@
  */
 
 return [
+    '#view_details' => "Vai all'Organizzazione",
     'Accedi' => 'Accedi',
     'Accedi al Plugin organizzazioni' => 'Accedi al Plugin organizzazioni',
     '#accepted_invitation_mail_text_1' => "ha accettato l'invito al",
@@ -333,6 +334,7 @@ return [
     '#sede_legale_telefono' => 'Telefono sede legale',
     'Sei sicuro di voler cancellare questa azienda?' => 'Sei sicuro di voler cancellare questa azienda?',
     'Select/Choose' => 'Seleziona',
+    '#choose...' => 'Seleziona...',
     'Seleziona' => 'Seleziona',
     '#settings_general_title' => 'Informazioni generali',
     '#settings_receiver_title' => 'Modalità di pubblicazione',

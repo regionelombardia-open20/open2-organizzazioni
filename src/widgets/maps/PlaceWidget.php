@@ -15,7 +15,7 @@ use Yii;
 use yii\base\Widget;
 use yii\helpers\Html;
 
-use open20\amos\core\models\AmosModel as Model;
+use yii\base\Model;
 use yii\base\InvalidConfigException;
 use yii\web\View;
 use open20\amos\organizzazioni\components\OrganizationsPlacesComponents;
@@ -96,7 +96,7 @@ function initMap_{$this->attribute}() {
 
     //init the geocoder
     geocoder_{$this->attribute} = new google.maps.Geocoder;
-    
+
     //bind the input for the autocomplete and put it in the map
     input_{$this->attribute} = document.getElementById('pac-input-{$this->attribute}');
     autocomplete_{$this->attribute} = new google.maps.places.Autocomplete(input_{$this->attribute});
@@ -120,7 +120,7 @@ function initMap_{$this->attribute}() {
         document.getElementById('map-loader-{$this->attribute}').classList.add("hidden");
         document.getElementById('pac-input-{$this->attribute}').classList.remove("hidden");
     });
-    
+
     autocomplete_{$this->attribute}.addListener('place_changed', function() {
         infowindow_{$this->attribute}.close();
         var place = autocomplete_{$this->attribute}.getPlace();
@@ -136,7 +136,7 @@ function initMap_{$this->attribute}() {
         marker_{$this->attribute}.setVisible(true);
         updateInfoWindow('{$this->attribute}', place.formatted_address);
     });
-    
+
     addCurrentLocationButton('$this->attribute');
 }
 JS;
